@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "622475624344",
+    "project_id": "mads-df824",
+    "storage_bucket": "mads-df824.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622475624344:android:c5a581e2bd847ce69635ed",
+        "android_client_info": {
+          "package_name": "com.example.mad"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA61Nue5JodtUAQojy5mhtadERBdaqmSPM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
