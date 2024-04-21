@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -133,9 +134,13 @@ class _LoginPageState extends State<LoginPage> {
       if (user != null) {
         print("User signed in successfully");
 
-        // Navigate to the appropriate page after sign-in
+        // Add the user's email to the "UserEmails" collection
+        await FirebaseFirestore.instance
+            .collection('UserEmails')
+            .doc(user.uid)
+            .set({'email': email});
 
-        // Navigate to the home page after sign-in for other platforms
+        // Navigate to the appropriate page after sign-in
         if (kIsWeb) {
           Navigator.pushReplacement(
             context,

@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mad/admin/admin_settings_page/accountsettings.dart';
+import 'package:mad/admin/admin_settings_page/sheltersettings.dart';
+import 'package:mad/admin/admin_settings_page/userlist.dart';
 import 'package:mad/features/user_auth/presentation/pages/login_page.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
@@ -62,7 +64,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
 
   List<Widget> _pages = [
     AccountSettingsPage(),
-    ShelterSettingsPage(),
+    ShelterSettingsForm(),
     UserListsPage(),
     SizedBox.shrink(), // Placeholder for no content on logout
   ];
@@ -134,50 +136,6 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class ShelterSettingsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Shelter Settings",
-              style: Theme.of(context).textTheme.headline5),
-          TextFormField(
-            decoration: InputDecoration(
-              labelText: "Shelter Name",
-              helperText: "Change the shelter's name",
-            ),
-          ),
-          SizedBox(height: 10),
-          ElevatedButton(onPressed: () {}, child: Text("Update Settings")),
-        ],
-      ),
-    );
-  }
-}
-
-class UserListsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: ListView.builder(
-        itemCount: 20, // Example count
-        itemBuilder: (context, index) => ListTile(
-          title: Text("User ${index + 1}"),
-          subtitle: Text("User details here"),
-          trailing: Icon(Icons.edit),
-          onTap: () {
-            // Implement user edit functionality
-          },
-        ),
       ),
     );
   }

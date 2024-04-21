@@ -487,27 +487,30 @@ class _BlogsAdminState extends State<BlogsAdmin> {
                                       String userEmail =
                                           await getCurrentUserEmail();
                                       // Add the comment to Firestore
-                                      await addCommentToFirestore(
-                                          _commentController.text,
-                                          userEmail,
-                                          blogPostId);
-                                      // Clear the text field after sending the comment
-                                      _commentController.clear();
-                                      // Update the comment count in AdminBlogs collection
-                                      await updateCommentCount(blogPostId);
-                                      // Refresh the dialog to reflect the updated comment count
-                                      setState(() {
-                                        commentCount++;
-                                      });
+                                      bool commentAdded =
+                                          await addCommentToFirestore(
+                                        _commentController.text,
+                                        userEmail,
+                                        blogPostId,
+                                        context,
+                                      );
+                                      if (commentAdded) {
+                                        // Update the comment count in AdminBlogs collection
+                                        await updateCommentCount(blogPostId);
+                                        // Refresh the dialog to reflect the updated comment count
+                                        setState(() {
+                                          commentCount++;
+                                        });
+                                      }
                                     } catch (e) {
                                       // Handle errors or exceptions
                                       print("Error sending comment: $e");
                                     } finally {
-                                      setState(
-                                        () {
-                                          _isCommentUploading = false;
-                                        },
-                                      );
+                                      // Clear the text field after sending the comment
+                                      _commentController.clear();
+                                      setState(() {
+                                        _isCommentUploading = false;
+                                      });
                                     }
                                   },
                           ),
@@ -730,8 +733,8 @@ class _BlogsAdminState extends State<BlogsAdmin> {
     }
   }
 
-  Future<void> addCommentToFirestore(
-      String comment, String userEmail, String blogId) async {
+  Future<bool> addCommentToFirestore(String comment, String userEmail,
+      String blogId, BuildContext context) async {
     try {
       // Get the current date and time
       DateTime now = DateTime.now();
@@ -742,12 +745,33 @@ class _BlogsAdminState extends State<BlogsAdmin> {
           .doc(userEmail)
           .get();
 
-      // Explicitly cast the data to a map
-      Map<String, dynamic> userProfile =
-          userProfileSnapshot.data() as Map<String, dynamic>? ?? {};
+      if (!userProfileSnapshot.exists) {
+        // If the userProfileSnapshot does not exist, show a dialog
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Profile Setup Required'),
+              content: Text(
+                  'Cannot upload comment. Please setup your Profile in [SETTINGS]'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+        return false; // Indicate failure
+      }
 
-      // Extract username or use 'Unknown' if not found
-      String username = userProfile['username'] as String? ?? 'Unknown';
+      // Explicitly cast the data to a map and extract username
+      Map<String, dynamic>? userProfile =
+          userProfileSnapshot.data() as Map<String, dynamic>?;
+      String username = userProfile?['username'] as String? ?? 'Unknown';
 
       // Add the comment to Firestore with username
       await FirebaseFirestore.instance.collection('blogsComments').add({
@@ -758,9 +782,10 @@ class _BlogsAdminState extends State<BlogsAdmin> {
             username, // Store the username along with other comment details
         'blogId': blogId,
       });
+      return true; // Indicate success
     } catch (error) {
       print('Error adding comment: $error');
-      // Handle error as needed
+      return false; // Indicate failure
     }
   }
 
