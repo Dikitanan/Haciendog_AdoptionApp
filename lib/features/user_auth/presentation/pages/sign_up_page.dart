@@ -1,10 +1,14 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:mad/admin/admin_dashboard.dart';
 import 'package:mad/features/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
 import 'package:mad/features/user_auth/presentation/pages/home_page.dart';
 import 'package:mad/features/user_auth/presentation/pages/login_page.dart';
 import 'package:mad/features/user_auth/presentation/widget/form_container_widget.dart';
+import 'package:mad/screens/root_app.dart';
 
 void main() => runApp(SignUpApp());
 
@@ -151,13 +155,27 @@ class _SignUpPageState extends State<SignUpPage> {
           password: password,
         );
 
+        await FirebaseFirestore.instance
+            .collection('UserEmails')
+            .doc(user.uid)
+            .set({'email': email, 'ban': false});
+
         // Navigate to the home page after sign-up and sign-in
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HomePage(),
-          ),
-        );
+        if (kIsWeb) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AdminDashboard(),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const RootApp(),
+            ),
+          );
+        }
 
         // Display success message
         ScaffoldMessenger.of(context).showSnackBar(

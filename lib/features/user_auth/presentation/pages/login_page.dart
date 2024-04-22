@@ -23,6 +23,13 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Check if the current user's account is banned
+    _checkAndLogoutBannedUser();
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -121,6 +128,14 @@ class _LoginPageState extends State<LoginPage> {
     String password = _passwordController.text;
 
     try {
+      // Check if the user's account is banned
+      bool isBanned = await _checkUserBan(email);
+      if (isBanned) {
+        // Show modal indicating account is banned
+        _showBannedModal();
+        return;
+      }
+
       // Sign in the user
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -133,12 +148,6 @@ class _LoginPageState extends State<LoginPage> {
 
       if (user != null) {
         print("User signed in successfully");
-
-        // Add the user's email to the "UserEmails" collection
-        await FirebaseFirestore.instance
-            .collection('UserEmails')
-            .doc(user.uid)
-            .set({'email': email});
 
         // Navigate to the appropriate page after sign-in
         if (kIsWeb) {
@@ -168,6 +177,66 @@ class _LoginPageState extends State<LoginPage> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<bool> _checkUserBan(String email) async {
+    try {
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('UserEmails')
+          .where('email', isEqualTo: email)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final userData = snapshot.docs.first.data() as Map<String, dynamic>?;
+
+        // Check if userData is not null and contains the 'ban' field
+        if (userData != null && userData.containsKey('ban')) {
+          final isBanned = userData['ban'] as bool? ?? false;
+          return isBanned;
+        }
+      }
+    } catch (e) {
+      print('Error checking user ban status: $e');
+    }
+    return false;
+  }
+
+  void _showBannedModal() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Account Banned'),
+          content:
+              Text('Your account has been banned. Please contact support.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _checkAndLogoutBannedUser() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final email = user.email;
+        final isBanned = await _checkUserBan(email!);
+        if (isBanned) {
+          // Log out the banned user
+          await FirebaseAuth.instance.signOut();
+          print("Logged out banned user: $email");
+        }
+      }
+    } catch (e) {
+      print('Error checking and logging out banned user: $e');
     }
   }
 }
