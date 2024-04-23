@@ -97,12 +97,14 @@ class _AdminHomeState extends State<AdminHome> {
                 itemBuilder: (context, index) {
                   return _buildPostCard(
                     name: 'John Doe',
-                    profileImage: 'assets/profile.jpg',
+                    profileImage:
+                        'https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png',
                     timePosted: '2 hours ago',
                     title: 'Blog Post Title',
                     description:
                         'This is a description of the blog post. It can be quite long if needed.',
-                    image: 'assets/blog_image.jpg', // Placeholder image
+                    image:
+                        'https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png', // Placeholder image
                   );
                 },
               ),
@@ -208,7 +210,7 @@ Widget _buildPostCard({
       children: [
         ListTile(
           leading: CircleAvatar(
-            backgroundImage: AssetImage(profileImage),
+            backgroundImage: NetworkImage(profileImage),
           ),
           title: Text(
             name,
@@ -232,11 +234,11 @@ Widget _buildPostCard({
                 style: TextStyle(fontSize: 16),
               ),
               SizedBox(height: 10),
-              Image.asset(
+              Image.network(
                 image,
                 height: 200,
                 width: double.infinity,
-                fit: BoxFit.cover,
+                fit: BoxFit.fill,
               ),
               SizedBox(height: 10),
               Row(
