@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mad/admin/admin_settings.dart';
+import 'package:mad/admin/adminhome.dart';
 import 'package:mad/admin/blogs_admin.dart';
 import 'pet_profile_form.dart';
 import 'animal_list.dart';
@@ -209,26 +210,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       case 'blogs_admin':
         return BlogsAdmin();
       default:
-        return Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Welcome to Pet Adoption App',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-              Flexible(
-                fit: FlexFit.loose,
-                child: Image.network(
-                  'https://img.freepik.com/free-vector/adopt-pet-from-shelter-landing-page-template_23-2148763333.jpg?size=626&ext=jpg&ga=GA1.1.1700460183.1708128000&semt=ais',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ],
-          ),
-        );
+        return AdminHome();
     }
   }
 
