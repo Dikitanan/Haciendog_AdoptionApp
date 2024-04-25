@@ -1,141 +1,107 @@
 import 'package:flutter/material.dart';
-import 'package:mad/screens/chat.dart';
-import 'package:mad/screens/home.dart';
-import 'package:mad/screens/settings.dart';
-import 'package:mad/theme/color.dart';
-import 'package:mad/utils/constant.dart';
-import 'package:mad/widgets/bottombar_item.dart';
+import 'package:mad/screens/screens.dart/petspage.dart';
 
 class RootApp extends StatefulWidget {
   const RootApp({Key? key}) : super(key: key);
 
   @override
-  _RootAppState createState() => _RootAppState();
+  State<RootApp> createState() => _RootAppState();
 }
 
-class _RootAppState extends State<RootApp> with TickerProviderStateMixin {
-  int _activeTab = 0;
-  final List barItems = [
-    {
-      "icon": "assets/icons/home-border.svg",
-      "active_icon": "assets/icons/home.svg",
-      "page": const HomePage(),
-    },
-    {
-      "icon": "assets/icons/pet-border.svg",
-      "active_icon": "assets/icons/pet.svg",
-      "page": Container(
-        child: Center(
-          child: Text("Pet Page"),
-        ),
-      ),
-    },
-    {
-      "icon": "assets/icons/chat-border.svg",
-      "active_icon": "assets/icons/chat.svg",
-      "page": ChatPage(),
-    },
-    {
-      "icon": "assets/icons/setting-border.svg",
-      "active_icon": "assets/icons/setting.svg",
-      "page": Container(
-        child: Center(
-          child: Settings(),
-        ),
-      ),
-    },
-  ];
-
-//====== set animation=====
-  late final AnimationController _controller = AnimationController(
-    duration: const Duration(milliseconds: ANIMATED_BODY_MS),
-    vsync: this,
-  );
-  late final Animation<double> _animation = CurvedAnimation(
-    parent: _controller,
-    curve: Curves.fastOutSlowIn,
-  );
+class _RootAppState extends State<RootApp> {
+  late PageController _pageController;
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
-    _controller.forward();
+    _pageController = PageController(initialPage: _currentPage);
   }
-
-  @override
-  void dispose() {
-    _controller.stop();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  _buildAnimatedPage(page) {
-    return FadeTransition(child: page, opacity: _animation);
-  }
-
-  void onPageChanged(int index) {
-    _controller.reset();
-    setState(() {
-      _activeTab = index;
-    });
-    _controller.forward();
-  }
-
-//====== end set animation=====
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColor.appBgColor,
-      body: _buildPage(),
-      floatingActionButton: _buildBottomBar(),
-      floatingActionButtonLocation:
-          FloatingActionButtonLocation.miniCenterDocked,
-    );
-  }
-
-  Widget _buildPage() {
-    return IndexedStack(
-      index: _activeTab,
-      children: List.generate(
-        barItems.length,
-        (index) => _buildAnimatedPage(barItems[index]["page"]),
-      ),
-    );
-  }
-
-  Widget _buildBottomBar() {
-    return Container(
-      height: 55,
-      width: double.infinity,
-      margin: EdgeInsets.symmetric(horizontal: 25, vertical: 0),
-      decoration: BoxDecoration(
-        color: AppColor.bottomBarColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColor.shadowColor.withOpacity(0.1),
-            blurRadius: 1,
-            spreadRadius: 1,
-            offset: Offset(0, 1),
-          )
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: List.generate(
-          barItems.length,
-          (index) => BottomBarItem(
-            _activeTab == index
-                ? barItems[index]["active_icon"]
-                : barItems[index]["icon"],
-            isActive: _activeTab == index,
-            activeColor: AppColor.primary,
-            onTap: () => onPageChanged(index),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: Container(
+          height: 30,
+          child: AppBar(
+            backgroundColor: Colors.blue,
           ),
         ),
       ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _currentPage = index;
+          });
+        },
+        children: [
+          // Replace these with your actual body content widgets
+          Center(child: Text('Home Page')),
+          Center(child: Text('Search Page')),
+          Center(child: PetsPage()),
+          Center(child: Text('Favorites Page')),
+          Center(child: Text('Profile Page')),
+        ],
+      ),
+      bottomNavigationBar: BottomAppBar(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            IconButton(
+              icon: Icon(Icons.home),
+              onPressed: () {
+                _pageController.animateToPage(0,
+                    duration: Duration(milliseconds: 300), curve: Curves.ease);
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.search),
+              onPressed: () {
+                _pageController.animateToPage(1,
+                    duration: Duration(milliseconds: 300), curve: Curves.ease);
+              },
+            ),
+            InkWell(
+              onTap: () {
+                _pageController.animateToPage(2,
+                    duration: Duration(milliseconds: 300), curve: Curves.ease);
+              },
+              child: Container(
+                width: 56.0,
+                height: 56.0,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.blue,
+                ),
+                child: Icon(Icons.pets, color: Colors.white),
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.favorite),
+              onPressed: () {
+                _pageController.animateToPage(3,
+                    duration: Duration(milliseconds: 300), curve: Curves.ease);
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.person),
+              onPressed: () {
+                _pageController.animateToPage(4,
+                    duration: Duration(milliseconds: 300), curve: Curves.ease);
+              },
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 }

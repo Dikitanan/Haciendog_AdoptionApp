@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mad/features/app/splash_screen/splash_screen.dart';
 import 'package:mad/features/user_auth/presentation/pages/Login_Page.dart';
 import 'package:mad/screens/root_app.dart';
@@ -17,11 +16,11 @@ void main() async {
   await Firebase.initializeApp(
     options: kIsWeb || Platform.isAndroid
         ? const FirebaseOptions(
-            apiKey: "AIzaSyA61Nue5JodtUAQojy5mhtadERBdaqmSPM",
+            apiKey: 'AIzaSyA61Nue5JodtUAQojy5mhtadERBdaqmSPM',
             appId: '622475624344:android:c5a581e2bd847ce69635ed',
             messagingSenderId: '622475624344',
             projectId: 'mads-df824',
-            storageBucket: "mads-df824.appspot.com",
+            storageBucket: 'mads-df824.appspot.com',
           )
         : null,
   );
