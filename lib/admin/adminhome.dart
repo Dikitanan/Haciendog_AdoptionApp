@@ -1,15 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-void main() => runApp(MyApp());
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: AdminHome(),
-    );
-  }
-}
+import 'package:mad/admin/admin_home_widgets/blogsPart.dart';
+import 'package:mad/admin/admin_home_widgets/leftsidebar.dart';
+import 'package:mad/admin/post_provider.dart';
 
 class AdminHome extends StatefulWidget {
   const AdminHome({Key? key}) : super(key: key);
@@ -46,223 +40,127 @@ class _AdminHomeState extends State<AdminHome> {
 
   // Variables to track which section to display
   bool showingDonations = false;
+  late String? userEmail;
+  late String? userName;
+  late String? userProfilePicture;
+  bool isLoading = true; // New variable to track loading state
+
+  @override
+  void initState() {
+    super.initState();
+    getUserData();
+  }
+
+  Future<void> getUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      userEmail = user.email;
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('Profiles')
+          .where('email', isEqualTo: userEmail)
+          .limit(1)
+          .get();
+      if (querySnapshot.docs.isNotEmpty) {
+        final userData = querySnapshot.docs.first.data();
+        setState(() {
+          userName = userData['username'];
+          userProfilePicture = userData['profilePicture'];
+          isLoading = false; // Data fetching complete, set isLoading to false
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    LikeState likeState = LikeState();
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.grey[200],
         title: Text('Admin Dashboard'),
+        bottomOpacity: 100,
       ),
-      body: Row(
-        children: [
-          // Left Sidebar for Adoption Requests
-          Container(
-            width: 250,
-            color: Colors.grey[200],
-            child: ListView(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              children: <Widget>[
-                ListTile(
-                  title: Text(
-                    'Admin Name',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  leading: CircleAvatar(
-                    backgroundImage:
-                        AssetImage('assets/profile.jpg'), // Placeholder image
-                  ),
+      body: isLoading // Check if data is still loading
+          ? Center(child: CircularProgressIndicator()) // Show loading indicator
+          : Row(
+              children: [
+                // Left Sidebar for Adoption Requests
+                LeftSideBar(
+                  userName: userName,
+                  userProfilePicture: userProfilePicture,
+                  requests: requests,
                 ),
-                ListTile(
-                  title: Text('Adoption Requests',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  onTap: () {
-                    // Placeholder action for Adoption Requests
-                  },
+                SizedBox(
+                  height: 300,
                 ),
-                for (var request in requests)
-                  ListTile(
-                    title: Text(request),
-                    leading: Icon(Icons.article),
-                  ),
-              ],
-            ),
-          ),
-          // Middle Content Area for Blogs/Messages
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.all(20),
-              color: Colors.white,
-              child: ListView.builder(
-                itemCount: blogsPosted.length,
-                itemBuilder: (context, index) {
-                  return _buildPostCard(
-                    name: 'John Doe',
-                    profileImage:
-                        'https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png',
-                    timePosted: '2 hours ago',
-                    title: 'Blog Post Title',
-                    description:
-                        'This is a description of the blog post. It can be quite long if needed.',
-                    image:
-                        'https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png', // Placeholder image
-                  );
-                },
-              ),
-            ),
-          ),
-          // Right Sidebar for Donations/Messages
-          Container(
-            width: 250,
-            color: Colors.grey[200],
-            child: Column(
-              children: <Widget>[
-                ListTile(
-                  title: Text(
-                    showingDonations ? 'Donations' : 'Messages',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
+                // Middle Content Area for Blogs/Messages
                 Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.symmetric(vertical: 20),
+                  child: MiddlePart(
+                      likeState: likeState), // Pass LikeState to MiddlePart
+                ),
+
+                // Right Sidebar for Donations/Messages
+                Container(
+                  width: 250,
+                  color: Colors.grey[200],
+                  child: Column(
                     children: <Widget>[
-                      if (showingDonations)
-                        for (var donation in donations)
-                          ListTile(
-                            title: Text(donation),
-                            leading: Icon(Icons.attach_money),
+                      ListTile(
+                        title: Text(
+                          showingDonations ? 'Donations' : 'Messages',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          children: <Widget>[
+                            if (showingDonations)
+                              for (var donation in donations)
+                                ListTile(
+                                  title: Text(donation),
+                                  leading: Icon(Icons.attach_money),
+                                ),
+                            if (!showingDonations)
+                              for (var message in messages)
+                                ListTile(
+                                  title: Text(message),
+                                  leading: Icon(Icons.mail),
+                                ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  showingDonations = true;
+                                });
+                              },
+                              child: Text('Donations'),
+                            ),
                           ),
-                      if (!showingDonations)
-                        for (var message in messages)
-                          ListTile(
-                            title: Text(message),
-                            leading: Icon(Icons.mail),
+                          SizedBox(width: 1),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  showingDonations = false;
+                                });
+                              },
+                              child: Text('Messages'),
+                            ),
                           ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            showingDonations = true;
-                          });
-                        },
-                        style: ButtonStyle(
-                          shape: MaterialStateProperty.all<OutlinedBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                        child: Text('Donations'),
-                      ),
-                    ),
-                    SizedBox(width: 1),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            showingDonations = false;
-                          });
-                        },
-                        style: ButtonStyle(
-                          shape: MaterialStateProperty.all<OutlinedBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.only(
-                                bottomRight: Radius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                        child: Text('Messages'),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
-}
-
-Widget _buildPostCard({
-  required String name,
-  required String profileImage,
-  required String timePosted,
-  required String title,
-  required String description,
-  required String image,
-}) {
-  return Card(
-    elevation: 3,
-    margin: EdgeInsets.only(bottom: 20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ListTile(
-          leading: CircleAvatar(
-            backgroundImage: NetworkImage(profileImage),
-          ),
-          title: Text(
-            name,
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Text(timePosted),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 10),
-              Text(
-                title,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              SizedBox(height: 10),
-              Text(
-                description,
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 10),
-              Image.network(
-                image,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.fill,
-              ),
-              SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      // Placeholder for like functionality
-                    },
-                    icon: Icon(Icons.favorite_border),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      // Placeholder for comment functionality
-                    },
-                    icon: Icon(Icons.comment),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
 }

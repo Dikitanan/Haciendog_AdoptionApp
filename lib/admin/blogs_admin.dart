@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mad/admin/post_provider.dart';
 
 class BlogsAdmin extends StatefulWidget {
   const BlogsAdmin({super.key});
@@ -18,44 +19,6 @@ class BlogsAdmin extends StatefulWidget {
 }
 
 class _BlogsAdminState extends State<BlogsAdmin> {
-  void toggleHeartReact(String blogPostId) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      // Handle unauthenticated user
-      print('User not logged in.');
-      return;
-    }
-
-    final userId = user.uid;
-    final postRef =
-        FirebaseFirestore.instance.collection('AdminBlogs').doc(blogPostId);
-    final likesRef = postRef.collection('likes').doc(userId);
-
-    final userLikeSnapshot = await likesRef.get();
-
-    FirebaseFirestore.instance.runTransaction((transaction) async {
-      if (userLikeSnapshot.exists) {
-        // User has liked this post, so we "unlike" it
-        transaction.update(postRef, {
-          'heartCount': FieldValue.increment(-1),
-        });
-        transaction.delete(likesRef);
-      } else {
-        // User has not liked this post yet, so we "like" it
-        transaction.update(postRef, {
-          'heartCount': FieldValue.increment(1),
-        });
-        transaction.set(likesRef, {
-          'likedAt': FieldValue.serverTimestamp(),
-        });
-      }
-    }).then((result) {
-      print("Toggle heart react successfully.");
-    }).catchError((error) {
-      print("Failed to toggle heart react: $error");
-    });
-  }
-
   void _showAddBlogPostModal() async {
     TextEditingController titleController = TextEditingController();
     TextEditingController descriptionController = TextEditingController();
@@ -243,6 +206,37 @@ class _BlogsAdminState extends State<BlogsAdmin> {
                             );
                             return;
                           }
+
+                          // Fetch user profile details
+                          DocumentSnapshot userProfile;
+                          try {
+                            userProfile = await FirebaseFirestore.instance
+                                .collection('Profiles')
+                                .doc(
+                                    userEmail) // Assuming userEmail is the document ID
+                                .get();
+
+                            if (!userProfile.exists) {
+                              Fluttertoast.showToast(
+                                msg: 'User profile not found!',
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.BOTTOM,
+                                backgroundColor: Colors.red,
+                                textColor: Colors.white,
+                              );
+                              return;
+                            }
+                          } catch (e) {
+                            Fluttertoast.showToast(
+                              msg: 'Error fetching user profile: $e',
+                              toastLength: Toast.LENGTH_LONG,
+                              gravity: ToastGravity.BOTTOM,
+                              backgroundColor: Colors.red,
+                              textColor: Colors.white,
+                            );
+                            return;
+                          }
+
                           int heartCount = 0;
                           int commentCount = 0;
                           await FirebaseFirestore.instance
@@ -255,6 +249,8 @@ class _BlogsAdminState extends State<BlogsAdmin> {
                             'heartCount': heartCount,
                             'commentCount': commentCount,
                             'userEmail': userEmail,
+                            'profilePicture': userProfile['profilePicture'],
+                            'username': userProfile['username'],
                           });
 
                           Fluttertoast.showToast(
@@ -302,8 +298,11 @@ class _BlogsAdminState extends State<BlogsAdmin> {
     TextEditingController _commentController = TextEditingController();
     bool _isCommentUploading = false;
 
+    // Create an instance of LikeState to use its methods
+    LikeState likeState = LikeState();
+
     // Fetch the user's like status
-    bool userHasLiked = await checkUserLiked(blogPostId);
+    bool userHasLiked = await likeState.checkUserLiked(blogPostId);
 
     // Fetch user's profile data from Firestore
     // Retrieve the user email associated with the blog post
@@ -413,8 +412,9 @@ class _BlogsAdminState extends State<BlogsAdmin> {
                           Expanded(
                             // Occupy half the space for heart react button and count
                             child: InkWell(
-                              onTap: () {
-                                toggleHeartReact(blogPostId);
+                              onTap: () async {
+                                await likeState.toggleHeartReact(
+                                    blogPostId, userHasLiked);
                                 setState(() {
                                   if (userHasLiked) {
                                     heartCount--;
@@ -943,6 +943,8 @@ class _BlogsAdminState extends State<BlogsAdmin> {
 
     String? imageUrl = blogData['imageURL'];
     String? title = blogData['title'];
+    int? heartCount = blogData['heartCount'];
+    int? commentCount = blogData['commentCount'];
 
     if (imageUrl == null || title == null) {
       // Return a placeholder widget if image URL or title is missing
@@ -957,52 +959,59 @@ class _BlogsAdminState extends State<BlogsAdmin> {
       );
     }
 
-    return FutureBuilder(
-      future: Future.delayed(Duration(seconds: 1)), // Simulate a delay
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          // Show a loading indicator while waiting for data
-          return Container(
-            color: Colors.grey.withOpacity(0.3),
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-
-        return Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: NetworkImage(imageUrl),
-              fit: BoxFit.fill,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(8),
-                      bottomRight: Radius.circular(8),
-                    ),
-                  ),
-                  child: Text(
+    return Container(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: NetworkImage(imageUrl),
+          fit: BoxFit.fill,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.5),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(8),
+                  bottomRight: Radius.circular(8),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
                     title,
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
-                ),
+                  Row(
+                    children: [
+                      Icon(Icons.favorite, color: Colors.white),
+                      SizedBox(width: 5),
+                      Text(
+                        '$heartCount',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      SizedBox(width: 10),
+                      Icon(Icons.comment, color: Colors.white),
+                      SizedBox(width: 5),
+                      Text(
+                        '$commentCount',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
