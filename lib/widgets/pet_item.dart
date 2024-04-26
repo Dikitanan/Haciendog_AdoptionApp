@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import 'package:mad/theme/color.dart';
 import 'package:mad/widgets/favorite_box.dart';
@@ -8,14 +9,15 @@ import 'custom_image.dart';
 class PetItem extends StatelessWidget {
   const PetItem(
       {Key? key,
-      required this.data,
+      required this.docId,
       this.width = 350,
       this.height = 400,
       this.radius = 40,
       this.onTap,
-      this.onFavoriteTap})
+      this.onFavoriteTap,
+      required Map<String, dynamic> data})
       : super(key: key);
-  final data;
+  final String docId; // Document ID of the pet in Firestore
   final double width;
   final double height;
   final double radius;
@@ -24,29 +26,45 @@ class PetItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: width,
-        height: height,
-        margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(radius),
-        ),
-        child: Stack(
-          children: [
-            _buildImage(),
-            Positioned(
-              bottom: 0,
-              child: _buildInfoGlass(),
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('Animal').doc(docId).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator(); // Show loading indicator while fetching data
+        }
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return Text('Document does not exist');
+        }
+        // Document exists, extract data
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: width,
+            height: height,
+            margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(radius),
             ),
-          ],
-        ),
-      ),
+            child: Stack(
+              children: [
+                _buildImage(data['Image']),
+                Positioned(
+                  bottom: 0,
+                  child: _buildInfoGlass(data),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildInfoGlass() {
+  Widget _buildInfoGlass(Map<String, dynamic> data) {
     return GlassContainer(
       borderRadius: BorderRadius.circular(25),
       blur: 10,
@@ -70,24 +88,24 @@ class PetItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfo(),
+            _buildInfo(data),
             SizedBox(
               height: 5,
             ),
-            _buildLocation(),
+            _buildLocation(data),
             SizedBox(
               height: 15,
             ),
-            _buildAttributes(),
+            _buildAttributes(data),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLocation() {
+  Widget _buildLocation(Map<String, dynamic> data) {
     return Text(
-      data["location"],
+      data["PWD"] ?? "", // Using "PWD" field for location
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
@@ -97,12 +115,12 @@ class PetItem extends StatelessWidget {
     );
   }
 
-  Widget _buildInfo() {
+  Widget _buildInfo(Map<String, dynamic> data) {
     return Row(
       children: [
         Expanded(
           child: Text(
-            data["name"],
+            data["Name"] ?? "", // Using "Name" field for pet name
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
@@ -113,16 +131,17 @@ class PetItem extends StatelessWidget {
           ),
         ),
         FavoriteBox(
-          isFavorited: data["is_favorited"],
+          isFavorited:
+              data["is_favorited"] ?? false, // Keep is_favorited static
           onTap: onFavoriteTap,
         )
       ],
     );
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(String? imageUrl) {
     return CustomImage(
-      data["image"],
+      imageUrl ?? "", // Using "Image" field for image URL
       borderRadius: BorderRadius.vertical(
         top: Radius.circular(radius),
         bottom: Radius.zero,
@@ -133,21 +152,21 @@ class PetItem extends StatelessWidget {
     );
   }
 
-  Widget _buildAttributes() {
+  Widget _buildAttributes(Map<String, dynamic> data) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         _getAttribute(
-          Icons.transgender,
-          data["sex"],
+          Icons.assignment_ind,
+          data["Personality"] ?? "", // Using "AgeInShelter" field for age
         ),
         _getAttribute(
-          Icons.color_lens_outlined,
-          data["color"],
+          Icons.transgender,
+          data["Gender"] ?? "", // Using "Personality" field for color
         ),
         _getAttribute(
           Icons.query_builder,
-          data["age"],
+          data["AgeInShelter"] ?? "", // Using "AgeInShelter" field for age
         ),
       ],
     );

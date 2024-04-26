@@ -1,4 +1,5 @@
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mad/theme/color.dart';
 import 'package:mad/utils/data.dart';
@@ -131,35 +132,52 @@ class _HomePageState extends State<HomePage> {
         },
       ),
     );
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.only(bottom: 5, left: 15),
-      child: Row(children: lists),
+    return Center(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.only(bottom: 5, left: 15),
+        child: Row(children: lists),
+      ),
     );
   }
 
   _buildPets() {
     double width = MediaQuery.of(context).size.width * .8;
-    return CarouselSlider(
-      options: CarouselOptions(
-        height: 400,
-        enlargeCenterPage: true,
-        disableCenter: true,
-        viewportFraction: .8,
-      ),
-      items: List.generate(
-        pets.length,
-        (index) => PetItem(
-          data: pets[index],
-          width: width,
-          onTap: null,
-          onFavoriteTap: () {
-            setState(() {
-              pets[index]["is_favorited"] = !pets[index]["is_favorited"];
-            });
-          },
-        ),
-      ),
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('Animal').snapshots(),
+      builder: (context,
+          AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator(); // Show loading indicator while fetching data
+        }
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Text('No pets available');
+        }
+        return CarouselSlider(
+          options: CarouselOptions(
+            height: 400,
+            enlargeCenterPage: true,
+            disableCenter: true,
+            viewportFraction: .8,
+          ),
+          items: snapshot.data!.docs.map((doc) {
+            final petData = doc.data();
+            return PetItem(
+              docId: doc.id,
+              data: petData,
+              width: width,
+              onTap: null,
+              onFavoriteTap: () {
+                // Update Firestore document when favorite status changes
+              },
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }
