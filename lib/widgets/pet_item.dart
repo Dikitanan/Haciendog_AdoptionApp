@@ -6,40 +6,58 @@ import 'package:mad/widgets/favorite_box.dart';
 
 import 'custom_image.dart';
 
+import 'dart:math'; // Import dart math library for randomization
+
 class PetItem extends StatelessWidget {
-  const PetItem(
-      {Key? key,
-      required this.docId,
-      this.width = 350,
-      this.height = 400,
-      this.radius = 40,
-      this.onTap,
-      this.onFavoriteTap,
-      required Map<String, dynamic> data})
-      : super(key: key);
-  final String docId; // Document ID of the pet in Firestore
+  const PetItem({
+    Key? key,
+    required this.docId,
+    this.width = 350,
+    this.height = 400,
+    this.radius = 40,
+    this.onTap,
+    this.onFavoriteTap,
+    required Map<String, dynamic> data,
+  }) : super(key: key);
+
+  final String docId;
   final double width;
   final double height;
   final double radius;
   final GestureTapCallback? onTap;
   final GestureTapCallback? onFavoriteTap;
 
+  // Keep track of the previously displayed pet's ID
+  static String? previousPetId;
+
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('Animal').doc(docId).get(),
+    return FutureBuilder<List<DocumentSnapshot>>(
+      future: _fetchRandomPets(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator(); // Show loading indicator while fetching data
+          return CircularProgressIndicator();
         }
         if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         }
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          return Text('Document does not exist');
+        final petList = snapshot.data ?? [];
+        if (petList.isEmpty) {
+          return Text('No pets found');
         }
-        // Document exists, extract data
-        final data = snapshot.data!.data() as Map<String, dynamic>;
+
+        // Shuffle the list excluding the previous pet
+        petList.removeWhere((pet) => pet.id == previousPetId);
+        petList.shuffle();
+
+        if (petList.isEmpty) {
+          return Text('No other pets found');
+        }
+
+        final randomPetData = petList.first.data() as Map<String, dynamic>;
+        previousPetId =
+            petList.first.id; // Update previousPetId with the current pet's ID
+
         return GestureDetector(
           onTap: onTap,
           child: Container(
@@ -51,10 +69,10 @@ class PetItem extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                _buildImage(data['Image']),
+                _buildImage(randomPetData['Image']),
                 Positioned(
                   bottom: 0,
-                  child: _buildInfoGlass(data),
+                  child: _buildInfoGlass(randomPetData),
                 ),
               ],
             ),
@@ -62,6 +80,13 @@ class PetItem extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<List<DocumentSnapshot>> _fetchRandomPets() async {
+    final QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('Animal').get();
+    final List<DocumentSnapshot> pets = snapshot.docs.toList();
+    return pets;
   }
 
   Widget _buildInfoGlass(Map<String, dynamic> data) {
@@ -105,7 +130,7 @@ class PetItem extends StatelessWidget {
 
   Widget _buildLocation(Map<String, dynamic> data) {
     return Text(
-      data["PWD"] ?? "", // Using "PWD" field for location
+      "Disability: ${data["PWD"] ?? ""}", // Using "PWD" field for location
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
