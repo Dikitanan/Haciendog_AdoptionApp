@@ -184,12 +184,6 @@ class _AnimalListState extends State<AnimalList> {
                                         numeric: false,
                                       ),
                                       DataColumn(
-                                        label:
-                                            Center(child: Text('Description')),
-                                        tooltip: 'Description',
-                                        numeric: false,
-                                      ),
-                                      DataColumn(
                                         label: Center(child: Text('Action')),
                                         tooltip: 'Action',
                                         numeric: false,
@@ -255,11 +249,6 @@ class _AnimalListState extends State<AnimalList> {
                                         DataCell(
                                           Center(
                                             child: Text(animal['Status']),
-                                          ),
-                                        ),
-                                        DataCell(
-                                          Center(
-                                            child: Text(animal['Description']),
                                           ),
                                         ),
                                         DataCell(

@@ -16,11 +16,13 @@ class PetItem extends StatelessWidget {
     this.height = 400,
     this.radius = 40,
     this.onTap,
+    required this.category,
     this.onFavoriteTap,
     required Map<String, dynamic> data,
   }) : super(key: key);
 
   final String docId;
+  final String category;
   final double width;
   final double height;
   final double radius;
@@ -33,7 +35,7 @@ class PetItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<DocumentSnapshot>>(
-      future: _fetchRandomPets(),
+      future: _fetchRandomPets(category, previousPetId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return CircularProgressIndicator();
@@ -82,10 +84,31 @@ class PetItem extends StatelessWidget {
     );
   }
 
-  Future<List<DocumentSnapshot>> _fetchRandomPets() async {
-    final QuerySnapshot snapshot =
-        await FirebaseFirestore.instance.collection('Animal').get();
-    final List<DocumentSnapshot> pets = snapshot.docs.toList();
+  Future<List<DocumentSnapshot>> _fetchRandomPets(
+      String category, String? previousPetId) async {
+    QuerySnapshot snapshot;
+    if (category == 'All') {
+      snapshot = await FirebaseFirestore.instance.collection('Animal').get();
+    } else {
+      snapshot = await FirebaseFirestore.instance
+          .collection('Animal')
+          .where('CatOrDog', isEqualTo: category)
+          .get();
+    }
+
+    List<DocumentSnapshot> pets = snapshot.docs.toList();
+
+    // Remove the previousPetId from the list of pets
+    pets.removeWhere((pet) => pet.id == previousPetId);
+
+    // Shuffle the list initially
+    pets.shuffle();
+
+    // Keep fetching and shuffling until a different pet is found
+    while (pets.isNotEmpty && pets.first.id == previousPetId) {
+      pets.shuffle();
+    }
+
     return pets;
   }
 

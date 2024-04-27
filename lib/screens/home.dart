@@ -15,6 +15,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int _selectedCategory = 0;
+  String _category = 'All'; // Add this field
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,7 +120,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  int _selectedCategory = 0;
   _buildCategories() {
     List<Widget> lists = List.generate(
       categories.length,
@@ -128,6 +129,7 @@ class _HomePageState extends State<HomePage> {
         onTap: () {
           setState(() {
             _selectedCategory = index;
+            _category = categories[index]['name']; // Update the category
           });
         },
       ),
@@ -145,7 +147,12 @@ class _HomePageState extends State<HomePage> {
     double width = MediaQuery.of(context).size.width * .8;
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('Animal').snapshots(),
+      stream: _category == 'All'
+          ? FirebaseFirestore.instance.collection('Animal').snapshots()
+          : FirebaseFirestore.instance
+              .collection('Animal')
+              .where('CatOrDog', isEqualTo: _category)
+              .snapshots(),
       builder: (context,
           AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -170,6 +177,7 @@ class _HomePageState extends State<HomePage> {
               docId: doc.id,
               data: petData,
               width: width,
+              category: _category,
               onTap: null,
               onFavoriteTap: () {
                 // Update Firestore document when favorite status changes

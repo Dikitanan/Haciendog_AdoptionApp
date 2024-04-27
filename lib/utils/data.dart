@@ -1,10 +1,10 @@
 var profile = "https://avatars.githubusercontent.com/u/86506519?v=4";
 
-List categories = [
+List<Map<String, dynamic>> categories = [
   {"name": "All", "icon": "assets/icons/pet-border.svg"},
   {"name": "Dog", "icon": "assets/icons/dog.svg"},
   {"name": "Cat", "icon": "assets/icons/cat.svg"},
-];
+] as List<Map<String, dynamic>>;
 
 List pets = [
   {
