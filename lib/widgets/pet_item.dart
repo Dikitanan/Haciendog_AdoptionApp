@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import 'package:mad/theme/color.dart';
-import 'package:mad/widgets/favorite_box.dart';
+import 'package:mad/widgets/custom_image.dart';
+import 'package:mad/widgets/favorite_box.dart'; // Import FavoriteBox widget
 
-import 'custom_image.dart';
-
-import 'dart:math'; // Import dart math library for randomization
-
-class PetItem extends StatelessWidget {
+class PetItem extends StatefulWidget {
   const PetItem({
     Key? key,
     required this.docId,
@@ -29,13 +27,18 @@ class PetItem extends StatelessWidget {
   final GestureTapCallback? onTap;
   final GestureTapCallback? onFavoriteTap;
 
+  @override
+  _PetItemState createState() => _PetItemState();
+}
+
+class _PetItemState extends State<PetItem> {
   // Keep track of the previously displayed pet's ID
   static String? previousPetId;
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<DocumentSnapshot>>(
-      future: _fetchRandomPets(category, previousPetId),
+      future: _fetchRandomPets(widget.category, previousPetId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return CircularProgressIndicator();
@@ -51,30 +54,32 @@ class PetItem extends StatelessWidget {
         // Shuffle the list excluding the previous pet
         petList.removeWhere((pet) => pet.id == previousPetId);
         petList.shuffle();
-
         if (petList.isEmpty) {
           return Text('No other pets found');
         }
 
         final randomPetData = petList.first.data() as Map<String, dynamic>;
+        final currentPetId = petList.first.id; // Store the current pet's ID
+
         previousPetId =
-            petList.first.id; // Update previousPetId with the current pet's ID
+            currentPetId; // Update previousPetId with the current pet's ID
 
         return GestureDetector(
-          onTap: onTap,
+          onTap: widget.onTap, // Use the onTap callback passed from _buildPets
           child: Container(
-            width: width,
-            height: height,
+            width: widget.width,
+            height: widget.height,
             margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(radius),
+              borderRadius: BorderRadius.circular(widget.radius),
             ),
             child: Stack(
               children: [
                 _buildImage(randomPetData['Image']),
                 Positioned(
                   bottom: 0,
-                  child: _buildInfoGlass(randomPetData),
+                  child: _buildInfoGlass(randomPetData,
+                      currentPetId), // Pass currentPetId to _buildInfoGlass
                 ),
               ],
             ),
@@ -98,27 +103,26 @@ class PetItem extends StatelessWidget {
 
     List<DocumentSnapshot> pets = snapshot.docs.toList();
 
-    // Remove the previousPetId from the list of pets
-    pets.removeWhere((pet) => pet.id == previousPetId);
-
     // Shuffle the list initially
     pets.shuffle();
 
-    // Keep fetching and shuffling until a different pet is found
+    // Remove the previousPetId from the list of pets and shuffle again if necessary
     while (pets.isNotEmpty && pets.first.id == previousPetId) {
+      pets.removeAt(0);
       pets.shuffle();
     }
 
-    return pets;
+    // Return a maximum of 1 pet (or an empty list if no pets remain)
+    return pets.isNotEmpty ? [pets.first] : [];
   }
 
-  Widget _buildInfoGlass(Map<String, dynamic> data) {
+  Widget _buildInfoGlass(Map<String, dynamic> data, String currentPetId) {
     return GlassContainer(
       borderRadius: BorderRadius.circular(25),
       blur: 10,
       opacity: 0.15,
       child: Container(
-        width: width,
+        width: widget.width,
         height: 110,
         padding: EdgeInsets.fromLTRB(15, 10, 15, 10),
         decoration: BoxDecoration(
@@ -136,7 +140,7 @@ class PetItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfo(data),
+            _buildInfo(data, currentPetId),
             SizedBox(
               height: 5,
             ),
@@ -163,7 +167,28 @@ class PetItem extends StatelessWidget {
     );
   }
 
-  Widget _buildInfo(Map<String, dynamic> data) {
+  Future<bool> _checkIsFavorited(String currentPetId) async {
+    // Fetch the current user's email using Firebase Authentication
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      String currentUserEmail = user.email!;
+      String collectionName = "AnimalHearted";
+
+      // Check if there's a match for the current user's email and currentPetId
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection(collectionName)
+          .where("email", isEqualTo: currentUserEmail)
+          .where("currentPetId", isEqualTo: currentPetId)
+          .get();
+
+      return snapshot.docs.isNotEmpty
+          ? snapshot.docs[0]["is_favorited"]
+          : false;
+    }
+    return false; // Return false if user is not signed in
+  }
+
+  Widget _buildInfo(Map<String, dynamic> data, String currentPetId) {
     return Row(
       children: [
         Expanded(
@@ -178,11 +203,9 @@ class PetItem extends StatelessWidget {
             ),
           ),
         ),
-        FavoriteBox(
-          isFavorited:
-              data["is_favorited"] ?? false, // Keep is_favorited static
-          onTap: onFavoriteTap,
-        )
+        FavoriteBoxStatefulWidget(
+          currentPetId: currentPetId,
+        ),
       ],
     );
   }
@@ -191,11 +214,11 @@ class PetItem extends StatelessWidget {
     return CustomImage(
       imageUrl ?? "", // Using "Image" field for image URL
       borderRadius: BorderRadius.vertical(
-        top: Radius.circular(radius),
+        top: Radius.circular(widget.radius),
         bottom: Radius.zero,
       ),
       isShadow: false,
-      width: width,
+      width: widget.width,
       height: 350,
     );
   }
@@ -238,5 +261,105 @@ class PetItem extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class FavoriteBoxStatefulWidget extends StatefulWidget {
+  final String currentPetId;
+
+  const FavoriteBoxStatefulWidget({
+    Key? key,
+    required this.currentPetId,
+  }) : super(key: key);
+
+  @override
+  _FavoriteBoxStatefulWidgetState createState() =>
+      _FavoriteBoxStatefulWidgetState();
+}
+
+class _FavoriteBoxStatefulWidgetState extends State<FavoriteBoxStatefulWidget> {
+  late Future<bool> _isFavorited;
+
+  @override
+  void initState() {
+    super.initState();
+    _isFavorited = _checkIsFavorited(widget.currentPetId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _isFavorited,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container();
+        }
+        bool isFavorited = snapshot.data ?? false;
+        return FavoriteBox(
+          isFavorited: isFavorited,
+          onTap: () async {
+            // Fetch the current user's email using Firebase Authentication
+            User? user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              String currentUserEmail = user.email!;
+              String collectionName = "AnimalHearted";
+
+              // Check if there's a match for the current user's email and currentPetId
+              QuerySnapshot snapshot = await FirebaseFirestore.instance
+                  .collection(collectionName)
+                  .where("email", isEqualTo: currentUserEmail)
+                  .where("currentPetId", isEqualTo: widget.currentPetId)
+                  .get();
+
+              // Toggle favorite status and update Firestore
+              bool isFavorited = snapshot.docs.isNotEmpty
+                  ? snapshot.docs[0]["is_favorited"]
+                  : false;
+              if (snapshot.docs.isEmpty) {
+                await FirebaseFirestore.instance
+                    .collection(collectionName)
+                    .add({
+                  "email": currentUserEmail,
+                  "is_favorited": !isFavorited,
+                  "currentPetId": widget.currentPetId,
+                });
+              } else {
+                await snapshot.docs[0].reference.update({
+                  "is_favorited": !isFavorited,
+                });
+              }
+              // Update favorite status in the widget state
+              setState(() {
+                _isFavorited = Future.value(!isFavorited);
+              });
+            } else {
+              // Handle case where user is not signed in
+              // You can show a message or prompt the user to sign in
+            }
+          },
+        );
+      },
+    );
+  }
+
+  Future<bool> _checkIsFavorited(String currentPetId) async {
+    // Fetch the current user's email using Firebase Authentication
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      String currentUserEmail = user.email!;
+      String collectionName = "AnimalHearted";
+
+      // Check if there's a match for the current user's email and currentPetId
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection(collectionName)
+          .where("email", isEqualTo: currentUserEmail)
+          .where("currentPetId", isEqualTo: currentPetId)
+          .get();
+
+      return snapshot.docs.isNotEmpty
+          ? snapshot.docs[0]["is_favorited"]
+          : false;
+    }
+    return false; // Return false if user is not signed in
   }
 }

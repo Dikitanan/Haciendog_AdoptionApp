@@ -178,9 +178,11 @@ class _HomePageState extends State<HomePage> {
               data: petData,
               width: width,
               category: _category,
-              onTap: null,
+              onTap: () {
+                //
+              },
               onFavoriteTap: () {
-                // Update Firestore document when favorite status changes
+                //
               },
             );
           }).toList(),
