@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mad/screens/chat.dart';
 import 'package:mad/screens/home.dart';
+import 'package:mad/screens/screens.dart/petlistpage.dart';
 import 'package:mad/screens/settings.dart';
 import 'package:mad/theme/color.dart';
 import 'package:mad/utils/constant.dart';
@@ -24,11 +25,7 @@ class _RootAppState extends State<RootApp> with TickerProviderStateMixin {
     {
       "icon": "assets/icons/pet-border.svg",
       "active_icon": "assets/icons/pet.svg",
-      "page": Container(
-        child: Center(
-          child: Text("Pet Page"),
-        ),
-      ),
+      "page": AdoptionList(),
     },
     {
       "icon": "assets/icons/chat-border.svg",
