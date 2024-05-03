@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:glassmorphism_ui/glassmorphism_ui.dart';
 import 'package:mad/theme/color.dart';
 import 'package:mad/widgets/custom_image.dart';
@@ -315,6 +316,7 @@ class _FavoriteBoxStatefulWidgetState extends State<FavoriteBoxStatefulWidget> {
               bool isFavorited = snapshot.docs.isNotEmpty
                   ? snapshot.docs[0]["is_favorited"]
                   : false;
+              String toastMessage;
               if (snapshot.docs.isEmpty) {
                 await FirebaseFirestore.instance
                     .collection(collectionName)
@@ -323,18 +325,40 @@ class _FavoriteBoxStatefulWidgetState extends State<FavoriteBoxStatefulWidget> {
                   "is_favorited": !isFavorited,
                   "currentPetId": widget.currentPetId,
                 });
+                toastMessage = !isFavorited
+                    ? "Pet Added to Favorites"
+                    : "Pet Removed from Favorites";
               } else {
                 await snapshot.docs[0].reference.update({
                   "is_favorited": !isFavorited,
                 });
+                toastMessage = !isFavorited
+                    ? "Pet Added to Favorites"
+                    : "Pet Removed from Favorites";
               }
+              Fluttertoast.showToast(
+                  msg: toastMessage,
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.grey[800],
+                  textColor: Colors.white,
+                  fontSize: 16.0);
+
               // Update favorite status in the widget state
               setState(() {
                 _isFavorited = Future.value(!isFavorited);
               });
             } else {
               // Handle case where user is not signed in
-              // You can show a message or prompt the user to sign in
+              Fluttertoast.showToast(
+                  msg: "You need to sign in to use this feature!",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.CENTER,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                  fontSize: 16.0);
             }
           },
         );

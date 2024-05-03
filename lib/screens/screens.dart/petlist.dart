@@ -32,14 +32,26 @@ class PetItem extends StatefulWidget {
   _PetItemState createState() => _PetItemState();
 }
 
-class _PetItemState extends State<PetItem> {
+class _PetItemState extends State<PetItem>
+    with AutomaticKeepAliveClientMixin<PetItem>, TickerProviderStateMixin {
   // Keep track of the previously displayed pet's ID
   static String? previousPetId;
 
+  late Future<List<DocumentSnapshot>> _fetchPetsFuture; // Add this variable
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPetsFuture = _fetchRandomPets(
+        widget.category, previousPetId); // Fetch pets when initializing state
+  }
+
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Ensure build method is called
+
     return FutureBuilder<List<DocumentSnapshot>>(
-      future: _fetchRandomPets(widget.category, previousPetId),
+      future: _fetchPetsFuture, // Use the fetched future here
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return CircularProgressIndicator();
@@ -49,7 +61,13 @@ class _PetItemState extends State<PetItem> {
         }
         final petList = snapshot.data ?? [];
         if (petList.isEmpty) {
-          return Text('No pets found');
+          // Return a message if no favorites are found
+          return Center(
+            child: Text(
+              "There's no Favorites yet",
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          );
         }
 
         // Find the next pet index to display
@@ -70,11 +88,11 @@ class _PetItemState extends State<PetItem> {
 
         return GestureDetector(
           onTap: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return PetDetailsDialog(currentPetId: currentPetId);
-              },
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      PetDetailsDialog(currentPetId: currentPetId)),
             );
           },
           // Use the onTap callback passed from _buildPets
@@ -131,6 +149,10 @@ class _PetItemState extends State<PetItem> {
     List<String> favoritePetIds = favoriteSnapshot.docs
         .map((doc) => doc['currentPetId'] as String)
         .toList();
+
+    if (favoritePetIds.isEmpty) {
+      return []; // If there are no favorited pets, return an empty list to avoid error
+    }
 
     // Now fetch pets from Animal collection that are also favorited by the user
     QuerySnapshot animalSnapshot;
@@ -204,27 +226,6 @@ class _PetItemState extends State<PetItem> {
     );
   }
 
-  Future<bool> _checkIsFavorited(String currentPetId) async {
-    // Fetch the current user's email using Firebase Authentication
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      String currentUserEmail = user.email!;
-      String collectionName = "AnimalHearted";
-
-      // Check if there's a match for the current user's email and currentPetId
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection(collectionName)
-          .where("email", isEqualTo: currentUserEmail)
-          .where("currentPetId", isEqualTo: currentPetId)
-          .get();
-
-      return snapshot.docs.isNotEmpty
-          ? snapshot.docs[0]["is_favorited"]
-          : false;
-    }
-    return false; // Return false if user is not signed in
-  }
-
   Widget _buildInfo(Map<String, dynamic> data, String currentPetId) {
     return Row(
       children: [
@@ -242,6 +243,7 @@ class _PetItemState extends State<PetItem> {
         ),
         FavoriteBoxStatefulWidget(
           currentPetId: currentPetId,
+          onFavoriteChanged: refresh, // Pass the callback here
         ),
       ],
     );
@@ -299,14 +301,23 @@ class _PetItemState extends State<PetItem> {
       ],
     );
   }
+
+  void refresh() {
+    setState(() {});
+  }
+
+  @override
+  bool get wantKeepAlive => true; // Keep the state alive
 }
 
 class FavoriteBoxStatefulWidget extends StatefulWidget {
   final String currentPetId;
+  final VoidCallback onFavoriteChanged;
 
   const FavoriteBoxStatefulWidget({
     Key? key,
     required this.currentPetId,
+    required this.onFavoriteChanged,
   }) : super(key: key);
 
   @override
@@ -369,6 +380,8 @@ class _FavoriteBoxStatefulWidgetState extends State<FavoriteBoxStatefulWidget> {
               setState(() {
                 _isFavorited = Future.value(!isFavorited);
               });
+
+              widget.onFavoriteChanged(); // Call the callback here
             } else {
               // Handle case where user is not signed in
               // You can show a message or prompt the user to sign in

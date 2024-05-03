@@ -106,7 +106,7 @@ class _HomePageState extends State<HomePage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(15, 0, 15, 25),
             child: Text(
-              "Adopt Me",
+              "Haciendog",
               style: TextStyle(
                 color: AppColor.textColor,
                 fontWeight: FontWeight.w700,

@@ -106,7 +106,7 @@ class _AdoptionListState extends State<AdoptionList> {
           Padding(
             padding: const EdgeInsets.fromLTRB(15, 0, 15, 25),
             child: Text(
-              "My Pets",
+              "Favorites",
               style: TextStyle(
                 color: AppColor.textColor,
                 fontWeight: FontWeight.w700,
