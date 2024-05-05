@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import for accessing keyboard visibility
 import 'package:mad/screens/chat.dart';
 import 'package:mad/screens/home.dart';
 import 'package:mad/screens/screens.dart/petlistpage.dart';
@@ -14,7 +15,8 @@ class RootApp extends StatefulWidget {
   _RootAppState createState() => _RootAppState();
 }
 
-class _RootAppState extends State<RootApp> with TickerProviderStateMixin {
+class _RootAppState extends State<RootApp>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   int _activeTab = 0;
   final List barItems = [
     {
@@ -25,7 +27,7 @@ class _RootAppState extends State<RootApp> with TickerProviderStateMixin {
     {
       "icon": "assets/icons/pet-border.svg",
       "active_icon": "assets/icons/pet.svg",
-      "page": AdoptionList(),
+      "page": PetList(),
     },
     {
       "icon": "assets/icons/chat-border.svg",
@@ -43,7 +45,6 @@ class _RootAppState extends State<RootApp> with TickerProviderStateMixin {
     },
   ];
 
-//====== set animation=====
   late final AnimationController _controller = AnimationController(
     duration: const Duration(milliseconds: ANIMATED_BODY_MS),
     vsync: this,
@@ -57,13 +58,30 @@ class _RootAppState extends State<RootApp> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _controller.forward();
+    // Add observer for keyboard visibility
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
     _controller.stop();
     _controller.dispose();
+    // Remove observer for keyboard visibility
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    // Check if keyboard is visible and update UI accordingly
+    if (MediaQuery.of(context).viewInsets.bottom == 0.0) {
+      // Keyboard is not visible
+      setState(() {});
+    } else {
+      // Keyboard is visible
+      setState(() {});
+    }
   }
 
   _buildAnimatedPage(page) {
@@ -77,8 +95,6 @@ class _RootAppState extends State<RootApp> with TickerProviderStateMixin {
     });
     _controller.forward();
   }
-
-//====== end set animation=====
 
   @override
   Widget build(BuildContext context) {
@@ -102,37 +118,44 @@ class _RootAppState extends State<RootApp> with TickerProviderStateMixin {
   }
 
   Widget _buildBottomBar() {
-    return Container(
-      height: 55,
-      width: double.infinity,
-      margin: EdgeInsets.symmetric(horizontal: 25, vertical: 0),
-      decoration: BoxDecoration(
-        color: AppColor.bottomBarColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColor.shadowColor.withOpacity(0.1),
-            blurRadius: 1,
-            spreadRadius: 1,
-            offset: Offset(0, 1),
-          )
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: List.generate(
-          barItems.length,
-          (index) => BottomBarItem(
-            _activeTab == index
-                ? barItems[index]["active_icon"]
-                : barItems[index]["icon"],
-            isActive: _activeTab == index,
-            activeColor: AppColor.primary,
-            onTap: () => onPageChanged(index),
+    // Check if keyboard is visible and return appropriate widget
+    if (MediaQuery.of(context).viewInsets.bottom == 0.0) {
+      // Keyboard is not visible
+      return Container(
+        height: 55,
+        width: double.infinity,
+        margin: EdgeInsets.symmetric(horizontal: 25, vertical: 0),
+        decoration: BoxDecoration(
+          color: AppColor.bottomBarColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColor.shadowColor.withOpacity(0.1),
+              blurRadius: 1,
+              spreadRadius: 1,
+              offset: Offset(0, 1),
+            )
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: List.generate(
+            barItems.length,
+            (index) => BottomBarItem(
+              _activeTab == index
+                  ? barItems[index]["active_icon"]
+                  : barItems[index]["icon"],
+              isActive: _activeTab == index,
+              activeColor: AppColor.primary,
+              onTap: () => onPageChanged(index),
+            ),
           ),
         ),
-      ),
-    );
+      );
+    } else {
+      // Keyboard is visible
+      return Container(); // Return empty container
+    }
   }
 }

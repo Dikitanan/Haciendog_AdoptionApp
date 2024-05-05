@@ -187,7 +187,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                     ),
                     SizedBox(height: 35),
                     Text(
-                      'PWD (Pet With Disability) or not:',
+                      'Health Status:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     TextField(

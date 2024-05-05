@@ -24,6 +24,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   TextEditingController currentPasswordController = TextEditingController();
   TextEditingController newPasswordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
+  TextEditingController ageController = TextEditingController();
 
   @override
   void initState() {
@@ -45,6 +46,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           lastNameController.text = data['lastName'] ?? '';
           addressController.text = data['address'] ?? '';
           profilePictureUrl = data['profilePicture'];
+          ageController.text = data['age'] ?? '';
         });
       }
       // Fetch profile picture URL from Firebase Storage if it's not already in the document
@@ -96,6 +98,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           firstName: firstNameController.text,
           lastName: lastNameController.text,
           address: addressController.text,
+          age: ageController.text,
           email: userEmail!,
         );
         setState(() {
@@ -132,8 +135,25 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     required String lastName,
     required String address,
     required String email,
+    required String age,
   }) async {
     try {
+      // Validate required fields
+      if (profilePicture.isEmpty ||
+          username.isEmpty ||
+          firstName.isEmpty ||
+          lastName.isEmpty ||
+          address.isEmpty ||
+          email.isEmpty ||
+          age.isEmpty) {
+        throw 'All fields are required';
+      }
+
+      // Check if age is a proper number
+      if (int.tryParse(age) == null) {
+        throw 'Age must be a valid number';
+      }
+
       final existingProfile = await FirebaseFirestore.instance
           .collection('Profiles')
           .doc(email)
@@ -146,6 +166,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           'lastName': lastName,
           'address': address,
           'email': email,
+          'age': age,
         });
       } else {
         await FirebaseFirestore.instance.collection('Profiles').doc(email).set({
@@ -155,26 +176,43 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           'lastName': lastName,
           'address': address,
           'email': email,
+          'age': age,
         });
       }
-      Fluttertoast.showToast(
-        msg: 'Profile updated successfully!',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 16.0,
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Success'),
+            content: Text('Profile updated successfully!'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
       );
     } catch (e) {
-      Fluttertoast.showToast(
-        msg: 'Error updating profile: $e',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Error'),
+            content: Text('Error updating profile: $e'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
       );
     }
   }
@@ -306,6 +344,15 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                         ),
                         SizedBox(height: 10),
                         TextFormField(
+                          controller: ageController,
+                          decoration: InputDecoration(
+                            labelText: "Age",
+                            hintText: "Enter your Age",
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        TextFormField(
                           controller: addressController,
                           decoration: InputDecoration(
                             labelText: "Address",
@@ -333,6 +380,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                                 firstName: firstNameController.text,
                                 lastName: lastNameController.text,
                                 address: addressController.text,
+                                age: ageController.text,
                                 email: userEmail!,
                               );
                             },
