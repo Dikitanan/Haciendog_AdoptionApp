@@ -7,6 +7,7 @@ import 'package:mad/screens/settings.dart';
 import 'package:mad/theme/color.dart';
 import 'package:mad/utils/constant.dart';
 import 'package:mad/widgets/bottombar_item.dart';
+import 'package:mad/widgets/chat_with_admin.dart';
 
 class RootApp extends StatefulWidget {
   const RootApp({Key? key}) : super(key: key);
@@ -32,7 +33,7 @@ class _RootAppState extends State<RootApp>
     {
       "icon": "assets/icons/chat-border.svg",
       "active_icon": "assets/icons/chat.svg",
-      "page": ChatPage(),
+      "page": ChatWithAdmin(),
     },
     {
       "icon": "assets/icons/setting-border.svg",

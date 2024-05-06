@@ -959,6 +959,9 @@ class _BlogsAdminState extends State<BlogsAdmin> {
       );
     }
 
+    // Truncate title if it exceeds six words
+    title = truncateTitle(title, 6);
+
     return Container(
       decoration: BoxDecoration(
         image: DecorationImage(
@@ -1013,5 +1016,13 @@ class _BlogsAdminState extends State<BlogsAdmin> {
         ],
       ),
     );
+  }
+
+  String truncateTitle(String title, int maxWords) {
+    List<String> words = title.split(' ');
+    if (words.length <= maxWords) {
+      return title;
+    }
+    return words.take(maxWords).join(' ') + '...';
   }
 }

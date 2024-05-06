@@ -4,6 +4,8 @@ import 'package:mad/features/user_auth/presentation/pages/login_page.dart';
 import 'package:mad/screens/user_settings_page/personalDetails.dart';
 import 'package:mad/screens/user_settings_page/securityPassword.dart';
 
+import 'user_settings_page/userDonation.dart';
+
 class Settings extends StatefulWidget {
   const Settings({Key? key}) : super(key: key);
 
@@ -126,17 +128,6 @@ class _SettingsState extends State<Settings> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class DonatePage extends StatelessWidget {
-  const DonatePage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Donate Page'),
     );
   }
 }

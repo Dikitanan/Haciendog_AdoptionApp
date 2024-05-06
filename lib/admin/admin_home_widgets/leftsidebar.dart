@@ -1,16 +1,31 @@
 import 'package:flutter/material.dart';
 
-class LeftSideBar extends StatelessWidget {
+class LeftSideBar extends StatefulWidget {
   final String? userName;
   final String? userProfilePicture;
-  final List<String> requests;
+  final List<String> menus;
+  final Function(String) onMenuSelected;
 
   const LeftSideBar({
     Key? key,
     required this.userName,
     required this.userProfilePicture,
-    required this.requests,
+    required this.menus,
+    required this.onMenuSelected,
   }) : super(key: key);
+
+  @override
+  _LeftSideBarState createState() => _LeftSideBarState();
+}
+
+class _LeftSideBarState extends State<LeftSideBar> {
+  late String _selectedMenu;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedMenu = 'Blogs'; // Initially select "Blogs"
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,29 +37,66 @@ class LeftSideBar extends StatelessWidget {
         children: <Widget>[
           ListTile(
             title: Text(
-              userName ?? 'User Name not available',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              widget.userName ?? 'User Name not available',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             leading: CircleAvatar(
-              backgroundImage: userProfilePicture != null
-                  ? NetworkImage(userProfilePicture!)
+              backgroundImage: widget.userProfilePicture != null
+                  ? NetworkImage(widget.userProfilePicture!)
                   : AssetImage('assets/profile.jpg') as ImageProvider<Object>,
             ),
           ),
-          ListTile(
-            title: Text('Adoption Requests',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            onTap: () {
-              // Placeholder action for Adoption Requests
-            },
-          ),
-          for (var request in requests)
-            ListTile(
-              title: Text(request),
-              leading: Icon(Icons.article),
+          Divider(),
+          for (var menu in _sortedMenus())
+            Container(
+              color: menu == _selectedMenu
+                  ? Colors.blue.withOpacity(0.3) // Color when selected
+                  : null,
+              child: ListTile(
+                title: Text(
+                  menu,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: menu == _selectedMenu
+                        ? Colors.blue // Text color when selected
+                        : null, // Default text color
+                  ),
+                ),
+                leading: _getMenuIcon(menu),
+                onTap: () {
+                  setState(() {
+                    _selectedMenu = menu; // Update selected menu
+                  });
+                  widget.onMenuSelected(menu);
+                },
+              ),
             ),
         ],
       ),
     );
+  }
+
+  List<String> _sortedMenus() {
+    List<String> sortedMenus = [...widget.menus];
+    sortedMenus.remove('Blogs');
+    sortedMenus.insert(0, 'Blogs');
+    return sortedMenus;
+  }
+
+  Widget? _getMenuIcon(String menu) {
+    switch (menu.toLowerCase()) {
+      case 'statistics':
+        return Icon(Icons.analytics);
+      case 'blogs':
+        return Icon(Icons.article);
+      case 'donations':
+        return Icon(Icons.attach_money);
+      case 'adoption requests':
+        return Icon(Icons.pets);
+      case 'messages':
+        return Icon(Icons.message);
+      default:
+        return null;
+    }
   }
 }

@@ -370,6 +370,7 @@ Widget _buildAdoptionFormDialog(BuildContext context, String currentPetId) {
               'email': userEmail,
               'petId': currentPetId,
               'proofOfCapabilityURL': await _uploadProofOfCapability(),
+              'status': 'Pending',
             });
 
             // Display success message as dialog

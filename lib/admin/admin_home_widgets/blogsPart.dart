@@ -31,55 +31,59 @@ class _MiddlePartState extends State<MiddlePart>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 100),
-      height: 1000,
-      color: Colors.white,
-      child: StreamBuilder(
-        stream: _stream,
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return Text('Error: ${snapshot.error}');
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No Blogs Yet'));
-          }
-          // Check if there's at least one document in the snapshot
-          if (!snapshot.data!.docs.any((doc) => true)) {
-            return Center(child: Text('No Blogs Yet'));
-          }
-          return ListView.builder(
-            itemCount: snapshot.data!.docs.length,
-            itemBuilder: (context, index) {
-              var doc =
-                  snapshot.data!.docs[index].data() as Map<String, dynamic>;
-              DateTime createdAt = (doc['createdAt'] as Timestamp).toDate();
-              String timeAgo = timeAgoSinceDate(createdAt);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 130),
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 100),
+        height: 1000,
+        color: Colors.white,
+        child: StreamBuilder(
+          stream: _stream,
+          builder:
+              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            }
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.data!.docs.isEmpty) {
+              return Center(child: Text('No Blogs Yet'));
+            }
+            // Check if there's at least one document in the snapshot
+            if (!snapshot.data!.docs.any((doc) => true)) {
+              return Center(child: Text('No Blogs Yet'));
+            }
+            return ListView.builder(
+              itemCount: snapshot.data!.docs.length,
+              itemBuilder: (context, index) {
+                var doc =
+                    snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                DateTime createdAt = (doc['createdAt'] as Timestamp).toDate();
+                String timeAgo = timeAgoSinceDate(createdAt);
 
-              String blogId = snapshot.data!.docs[index].id;
-              int commentCount = doc['commentCount'] ?? 0;
-              int heartCount = doc['heartCount'] ?? 0;
+                String blogId = snapshot.data!.docs[index].id;
+                int commentCount = doc['commentCount'] ?? 0;
+                int heartCount = doc['heartCount'] ?? 0;
 
-              return _buildPostCard(
-                name: doc['username'] ?? 'Anonymous',
-                profileImage: doc['profilePicture'] ??
-                    'https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png',
-                timePosted: timeAgo,
-                title: doc['title'] ?? 'No Title',
-                description: doc['description'] ?? 'No Description',
-                image: doc['imageURL'] ??
-                    'https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png',
-                blogId: blogId,
-                commentCount: commentCount,
-                heartCount: heartCount,
-                key: ValueKey<String>(blogId),
-              );
-            },
-          );
-        },
+                return _buildPostCard(
+                  name: doc['username'] ?? 'Anonymous',
+                  profileImage: doc['profilePicture'] ??
+                      'https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png',
+                  timePosted: timeAgo,
+                  title: doc['title'] ?? 'No Title',
+                  description: doc['description'] ?? 'No Description',
+                  image: doc['imageURL'] ??
+                      'https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png',
+                  blogId: blogId,
+                  commentCount: commentCount,
+                  heartCount: heartCount,
+                  key: ValueKey<String>(blogId),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

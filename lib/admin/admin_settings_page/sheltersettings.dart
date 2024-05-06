@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -6,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 
 class ShelterSettingsForm extends StatefulWidget {
   @override
@@ -13,7 +13,13 @@ class ShelterSettingsForm extends StatefulWidget {
 }
 
 class _ShelterSettingsFormState extends State<ShelterSettingsForm> {
+  final _formKey = GlobalKey<FormState>(); // Add form key
+
   TextEditingController _descriptionController = TextEditingController();
+  TextEditingController _locationController = TextEditingController();
+  TextEditingController _phoneNumberController = TextEditingController();
+  TextEditingController _facebookController = TextEditingController();
+
   List<String?> _imageUrls = List.filled(3, null); // Initialize with 3 nulls
   String? _shelterDocumentId;
 
@@ -36,6 +42,9 @@ class _ShelterSettingsFormState extends State<ShelterSettingsForm> {
       var data = snapshot.docs.first.data() as Map<String, dynamic>;
       setState(() {
         _descriptionController.text = data['ShelterDetails'];
+        _locationController.text = data['ShelterLocation'];
+        _phoneNumberController.text = data['PhoneNumber'];
+        _facebookController.text = data['FacebookAccount'];
         _imageUrls[0] = data['Image1'];
         _imageUrls[1] = data['Image2'];
         _imageUrls[2] = data['Image3'];
@@ -67,6 +76,9 @@ class _ShelterSettingsFormState extends State<ShelterSettingsForm> {
           FirebaseFirestore.instance.collection('ShelterSettings');
 
       Map<String, dynamic> data = {
+        'FacebookAccount': _facebookController.text,
+        'PhoneNumber': _phoneNumberController.text,
+        'ShelterLocation': _locationController.text,
         'ShelterDetails': _descriptionController.text,
         'Image1': _imageUrls.length > 0 ? _imageUrls[0] : null,
         'Image2': _imageUrls.length > 1 ? _imageUrls[1] : null,
@@ -140,63 +152,118 @@ class _ShelterSettingsFormState extends State<ShelterSettingsForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Upload Images",
-            style: Theme.of(context).textTheme.headline5,
-          ),
-          SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return SingleChildScrollView(
+      child: Form(
+        key: _formKey, // Assign the form key
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (int i = 0; i < 3; i++)
-                Tooltip(
-                  message: 'UPLOAD IMAGE',
-                  child: InkWell(
-                    onTap: () => _pickImage(i),
-                    child: Container(
-                      width: 150,
-                      height: 150,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200], // Placeholder color
-                        borderRadius: BorderRadius.circular(10),
+              Text(
+                "Donations",
+                style: Theme.of(context).textTheme.headline4,
+              ),
+              SizedBox(
+                height: 25,
+              ),
+              Text(
+                "Upload G-Cash QR Code",
+                style: Theme.of(context).textTheme.headline6,
+              ),
+              SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  for (int i = 0; i < 3; i++)
+                    Tooltip(
+                      message: 'UPLOAD IMAGE',
+                      child: InkWell(
+                        onTap: () => _pickImage(i),
+                        child: Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200], // Placeholder color
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: _imageUrls[i] != null
+                              ? Image.network(
+                                  _imageUrls[i]!, // Use the URL from _imageUrls
+                                  width: 150,
+                                  height: 150,
+                                  fit: BoxFit.fill,
+                                )
+                              : Icon(Icons.add_photo_alternate, size: 50),
+                        ),
                       ),
-                      child: _imageUrls[i] != null
-                          ? Image.network(
-                              _imageUrls[i]!, // Use the URL from _imageUrls
-                              width: 150,
-                              height: 150,
-                              fit: BoxFit.fill,
-                            )
-                          : Icon(Icons.add_photo_alternate, size: 50),
                     ),
-                  ),
+                ],
+              ),
+              SizedBox(height: 30),
+              Text(
+                "Shelter Description",
+                style: Theme.of(context).textTheme.headline5,
+              ),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: "Enter Description",
+                  hintText: "Write a brief description about the shelter",
                 ),
+              ),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: _locationController,
+                decoration: InputDecoration(
+                  labelText: "Enter Location",
+                  hintText: "Write the Shelter's Location",
+                ),
+              ),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: _phoneNumberController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(11),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a phone number.';
+                  }
+                  if (value.length != 11) {
+                    return 'Phone number must have 11 digits.';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  labelText: "Enter Phone Number",
+                  hintText: "Write your Phone Number",
+                ),
+              ),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: _facebookController,
+                decoration: InputDecoration(
+                  labelText: "Enter Facebook Account",
+                  hintText: "Write your Facebook Account",
+                ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    // Validate form
+                    _uploadDataToFirestore(); // Submit form if validation succeeds
+                  }
+                },
+                child: Text("Update Shelter Settings"),
+              ),
             ],
           ),
-          SizedBox(height: 20),
-          Text(
-            "Shelter Description",
-            style: Theme.of(context).textTheme.headline5,
-          ),
-          SizedBox(height: 10),
-          TextFormField(
-            controller: _descriptionController,
-            decoration: InputDecoration(
-              labelText: "Enter Description",
-              hintText: "Write a brief description about the shelter",
-            ),
-          ),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _uploadDataToFirestore,
-            child: Text("Update Shelter Settings"),
-          ),
-        ],
+        ),
       ),
     );
   }

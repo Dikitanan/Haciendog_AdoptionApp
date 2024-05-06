@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -158,7 +160,7 @@ class _PetItemState extends State<PetItem> {
 
   Widget _buildLocation(Map<String, dynamic> data) {
     return Text(
-      "Disability: ${data["PWD"] ?? ""}", // Using "PWD" field for location
+      "Health Status: ${data["PWD"] ?? ""}", // Using "PWD" field for location
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
@@ -279,23 +281,23 @@ class FavoriteBoxStatefulWidget extends StatefulWidget {
 }
 
 class _FavoriteBoxStatefulWidgetState extends State<FavoriteBoxStatefulWidget> {
-  late Future<bool> _isFavorited;
+  late Stream<bool> _isFavoritedStream;
 
   @override
   void initState() {
     super.initState();
-    _isFavorited = _checkIsFavorited(widget.currentPetId);
+    _isFavoritedStream = _checkIsFavorited(widget.currentPetId);
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: _isFavorited,
+    return StreamBuilder<bool>(
+      stream: _isFavoritedStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (!snapshot.hasData) {
           return Container();
         }
-        bool isFavorited = snapshot.data ?? false;
+        bool isFavorited = snapshot.data!;
         return FavoriteBox(
           isFavorited: isFavorited,
           onTap: () async {
@@ -344,11 +346,6 @@ class _FavoriteBoxStatefulWidgetState extends State<FavoriteBoxStatefulWidget> {
                   backgroundColor: Colors.grey[800],
                   textColor: Colors.white,
                   fontSize: 16.0);
-
-              // Update favorite status in the widget state
-              setState(() {
-                _isFavorited = Future.value(!isFavorited);
-              });
             } else {
               // Handle case where user is not signed in
               Fluttertoast.showToast(
@@ -366,24 +363,33 @@ class _FavoriteBoxStatefulWidgetState extends State<FavoriteBoxStatefulWidget> {
     );
   }
 
-  Future<bool> _checkIsFavorited(String currentPetId) async {
+  Stream<bool> _checkIsFavorited(String currentPetId) {
     // Fetch the current user's email using Firebase Authentication
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       String currentUserEmail = user.email!;
       String collectionName = "AnimalHearted";
 
-      // Check if there's a match for the current user's email and currentPetId
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
+      // Create a stream controller to handle the updates
+      StreamController<bool> controller = StreamController<bool>();
+
+      // Listen for changes in Firestore and add them to the stream
+      FirebaseFirestore.instance
           .collection(collectionName)
           .where("email", isEqualTo: currentUserEmail)
           .where("currentPetId", isEqualTo: currentPetId)
-          .get();
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.docs.isNotEmpty) {
+          controller.add(snapshot.docs[0]["is_favorited"]);
+        } else {
+          controller.add(false);
+        }
+      });
 
-      return snapshot.docs.isNotEmpty
-          ? snapshot.docs[0]["is_favorited"]
-          : false;
+      return controller.stream;
     }
-    return false; // Return false if user is not signed in
+    // Return an empty stream if user is not signed in
+    return Stream<bool>.empty();
   }
 }

@@ -16,7 +16,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedCategory = 0;
-  String _category = 'All'; // Add this field
+  String _category = 'All';
+  String _selectedScreen = 'Pets';
+  bool _showPets = true; // Define _showPets variable
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,51 +45,143 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildAppBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('ShelterSettings')
+              .get()
+              .then((querySnapshot) => querySnapshot.docs.first),
+          builder:
+              (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    Icons.place_outlined,
-                    color: AppColor.labelColor,
-                    size: 20,
-                  ),
-                  const SizedBox(
-                    width: 5,
-                  ),
-                  Text(
-                    "Location",
-                    style: TextStyle(
-                      color: AppColor.labelColor,
-                      fontSize: 13,
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.place_outlined,
+                              color: AppColor.labelColor,
+                              size: 20,
+                            ),
+                            const SizedBox(
+                              width: 5,
+                            ),
+                            Text(
+                              'Location',
+                              style: TextStyle(
+                                color: AppColor.labelColor,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 3,
+                        ),
+                        Text(
+                          'Loading Location...',
+                          style: TextStyle(
+                            color: AppColor.textColor,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  NotificationBox(
+                    notifiedNumber: 1,
+                    onTap: null,
+                  )
                 ],
-              ),
-              const SizedBox(
-                height: 3,
-              ),
-              Text(
-                "Phnom Penh, Cambodia",
-                style: TextStyle(
-                  color: AppColor.textColor,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
+              );
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else if (!snapshot.hasData || snapshot.data == null) {
+              return Text('No data available');
+            } else {
+              final data = snapshot.data!.data();
+              final location =
+                  (data as Map<String, dynamic>)['ShelterLocation'] ??
+                      'Location not available';
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.place_outlined,
+                              color: AppColor.labelColor,
+                              size: 20,
+                            ),
+                            const SizedBox(
+                              width: 5,
+                            ),
+                            Text(
+                              "Location",
+                              style: TextStyle(
+                                color: AppColor.labelColor,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 3,
+                        ),
+                        Text(
+                          location,
+                          style: TextStyle(
+                            color: AppColor.textColor,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  DropdownButton<String>(
+                    value: _selectedScreen,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedScreen = newValue!;
+                        _showPets = newValue ==
+                            'Pets'; // Update _showPets based on selected screen
+                      });
+                    },
+                    items: <String>['Pets', 'Blogs'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(
+                    width: 15,
+                  ),
+                  NotificationBox(
+                    notifiedNumber: 1,
+                    onTap: null,
+                  )
+                ],
+              );
+            }
+          },
         ),
-        NotificationBox(
-          notifiedNumber: 1,
-          onTap: null,
-        )
       ],
     );
   }
@@ -95,52 +190,72 @@ class _HomePageState extends State<HomePage> {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.only(top: 0, bottom: 10),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const SizedBox(
-            height: 25,
-          ),
-          _buildCategories(),
-          const SizedBox(
-            height: 25,
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(15, 0, 15, 25),
-            child: Text(
-              "Haciendog",
-              style: TextStyle(
-                color: AppColor.textColor,
-                fontWeight: FontWeight.w700,
-                fontSize: 24,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 25),
+            _buildCategories(),
+            SizedBox(height: 25),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 0, 15, 25),
+              child: Text(
+                "Haciendog",
+                style: TextStyle(
+                  color: AppColor.textColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 24,
+                ),
               ),
             ),
-          ),
-          _buildPets(),
-        ]),
+            // Conditional rendering based on _showPets
+            _showPets ? _buildPets() : _buildBlogs(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  _buildBlogs() {
+    return Container(
+      alignment: Alignment.center,
+      padding: EdgeInsets.symmetric(vertical: 20),
+      child: Text(
+        'No blogs available',
+        style: TextStyle(
+          color: Colors.grey,
+          fontSize: 16,
+        ),
       ),
     );
   }
 
   _buildCategories() {
-    List<Widget> lists = List.generate(
-      categories.length,
-      (index) => CategoryItem(
-        data: categories[index],
-        selected: index == _selectedCategory,
-        onTap: () {
-          setState(() {
-            _selectedCategory = index;
-            _category = categories[index]['name']; // Update the category
-          });
-        },
-      ),
-    );
-    return Center(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.only(bottom: 5, left: 15),
-        child: Row(children: lists),
-      ),
-    );
+    // Conditionally render categories only if _selectedScreen is "Pets"
+    if (_selectedScreen == 'Pets') {
+      List<Widget> lists = List.generate(
+        categories.length,
+        (index) => CategoryItem(
+          data: categories[index],
+          selected: index == _selectedCategory,
+          onTap: () {
+            setState(() {
+              _selectedCategory = index;
+              _category = categories[index]['name']; // Update the category
+            });
+          },
+        ),
+      );
+      return Center(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.only(bottom: 5, left: 15),
+          child: Row(children: lists),
+        ),
+      );
+    } else {
+      // If _selectedScreen is not "Pets", return an empty container
+      return Container();
+    }
   }
 
   _buildPets() {

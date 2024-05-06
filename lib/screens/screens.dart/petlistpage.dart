@@ -135,7 +135,7 @@ class _PetListState extends State<PetList> {
                       );
                       return Padding(
                         padding: EdgeInsets.only(bottom: 8),
-                        child: buildPetTile(pet, animalHeartedDoc!, userEmail),
+                        child: buildPetTile(pet, animalHeartedDoc, userEmail),
                       );
                     },
                   ),
@@ -195,6 +195,23 @@ class _PetListState extends State<PetList> {
         // Check if there's a match in AdoptionForms
         bool isFormSubmitted =
             snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+        // Get the status from the first document in the snapshot if available
+        String status = 'Pending'; // Default status
+        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+          status = snapshot.data!.docs.first['status'];
+        }
+
+        // Determine the text and color based on the status
+        String formStatusText = isFormSubmitted ? 'Form Submitted' : '';
+        Color formStatusColor = Colors.blue; // Default color for pending
+        if (status == 'Accepted') {
+          formStatusText = 'Form Accepted';
+          formStatusColor = Colors.green;
+        } else if (status == 'Rejected') {
+          formStatusText = 'Form Rejected';
+          formStatusColor = Colors.red;
+        }
 
         return GestureDetector(
           onTap: () {
@@ -276,11 +293,11 @@ class _PetListState extends State<PetList> {
                             padding: EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.green,
+                              color: formStatusColor,
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: Text(
-                              'Form Submitted',
+                              formStatusText,
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
@@ -294,7 +311,8 @@ class _PetListState extends State<PetList> {
                 right: 4,
                 child: IconButton(
                   icon: Icon(Icons.close, color: Colors.red),
-                  onPressed: () => toggleFavoriteStatus(animalHeartedDoc),
+                  onPressed: () =>
+                      toggleFavoriteStatus(animalHeartedDoc, pet.id, userEmail),
                 ),
               ),
             ],
@@ -304,10 +322,36 @@ class _PetListState extends State<PetList> {
     );
   }
 
-  void toggleFavoriteStatus(DocumentSnapshot animalHeartedDoc) async {
+  void toggleFavoriteStatus(
+      DocumentSnapshot animalHeartedDoc, String petId, String userEmail) async {
+    // Delete the corresponding document from the AdoptionForms collection
+    await FirebaseFirestore.instance
+        .collection('AdoptionForms')
+        .where('petId', isEqualTo: petId)
+        .where('email', isEqualTo: userEmail)
+        .get()
+        .then((querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        doc.reference.delete();
+      });
+    }).catchError((error) {
+      print("Error deleting document: $error");
+    });
+
+    // Update the is_favorited field in the AnimalHearted collection
     await FirebaseFirestore.instance
         .collection('AnimalHearted')
-        .doc(animalHeartedDoc.id)
-        .update({'is_favorited': !animalHeartedDoc['is_favorited']});
+        .where('currentPetId', isEqualTo: petId)
+        .where('email', isEqualTo: userEmail)
+        .get()
+        .then((querySnapshot) {
+      querySnapshot.docs.forEach((doc) async {
+        // Toggle the is_favorited field
+        bool currentStatus = doc['is_favorited'];
+        await doc.reference.update({'is_favorited': !currentStatus});
+      });
+    }).catchError((error) {
+      print("Error updating favorite status: $error");
+    });
   }
 }
