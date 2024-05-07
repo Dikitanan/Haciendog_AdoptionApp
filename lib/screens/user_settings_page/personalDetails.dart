@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:typed_data';
 
 import 'package:image_picker/image_picker.dart';
@@ -19,6 +20,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
+  String? userEmail = FirebaseAuth.instance.currentUser!.email;
 
   String? profilePictureUrl;
   bool uploading = false; // Track upload status
@@ -31,14 +33,10 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
 
   Future<void> fetchUserProfileData() async {
     try {
-      final User? user = FirebaseAuth.instance.currentUser;
-      final String userEmail = user!.email!;
-
       final profileDoc = await FirebaseFirestore.instance
           .collection('Profiles')
           .doc(userEmail)
           .get();
-
       if (profileDoc.exists) {
         final data = profileDoc.data() as Map<String, dynamic>;
         setState(() {
@@ -50,6 +48,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
           ageController.text = data['age'] ?? '';
         });
       }
+      // Fetch profile picture URL from Firebase Storage if it's not already in the document
       if (profilePictureUrl == null) {
         final ref = firebase_storage.FirebaseStorage.instance
             .ref()
@@ -59,6 +58,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
         setState(() {
           profilePictureUrl = downloadURL;
         });
+        // Update the profile document with the profile picture URL
         await profileDoc.reference.update({'profilePicture': downloadURL});
       }
     } catch (e) {
@@ -89,53 +89,16 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
       final fileBytes = await pickedFile.readAsBytes();
       try {
         final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-        setState(() {
-          uploading = true; // Set uploading to true when starting upload
-        });
         final downloadUrl = await uploadImageToFirebase(fileBytes, fileName);
+
+        // Update profile picture URL only
+        updateProfilePicture(downloadUrl);
+
         setState(() {
-          profilePictureUrl = downloadUrl;
-          uploading = false; // Set uploading to false when upload finished
+          profilePictureUrl =
+              downloadUrl; // Set the profilePictureUrl here if needed
         });
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Success'),
-              content: Text('Profile picture uploaded successfully!'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-      } catch (e) {
-        setState(() {
-          uploading = false; // Set uploading to false in case of error
-        });
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Error'),
-              content: Text('Error uploading profile picture: $e'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-      }
+      } catch (e) {}
     }
   }
 
@@ -188,39 +151,56 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
   }
 
   Future<void> updateProfile({
+    required String profilePicture,
     required String username,
     required String firstName,
     required String lastName,
     required String address,
+    required String email,
     required String age,
   }) async {
     try {
-      final User? user = FirebaseAuth.instance.currentUser;
-      final String userEmail = user!.email!;
-
-      if (username.isEmpty ||
+      // Validate required fields
+      if (profilePicture.isEmpty ||
+          username.isEmpty ||
           firstName.isEmpty ||
           lastName.isEmpty ||
           address.isEmpty ||
+          email.isEmpty ||
           age.isEmpty) {
         throw 'All fields are required';
       }
 
+      // Check if age is a proper number
       if (int.tryParse(age) == null) {
         throw 'Age must be a valid number';
       }
 
-      await FirebaseFirestore.instance
+      final existingProfile = await FirebaseFirestore.instance
           .collection('Profiles')
-          .doc(userEmail)
-          .update({
-        'username': username,
-        'firstName': firstName,
-        'lastName': lastName,
-        'address': address,
-        'age': age,
-      });
-
+          .doc(email)
+          .get();
+      if (existingProfile.exists) {
+        await existingProfile.reference.update({
+          'profilePicture': profilePicture,
+          'username': username,
+          'firstName': firstName,
+          'lastName': lastName,
+          'address': address,
+          'email': email,
+          'age': age,
+        });
+      } else {
+        await FirebaseFirestore.instance.collection('Profiles').doc(email).set({
+          'profilePicture': profilePicture,
+          'username': username,
+          'firstName': firstName,
+          'lastName': lastName,
+          'address': address,
+          'email': email,
+          'age': age,
+        });
+      }
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -386,10 +366,13 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
               child: ElevatedButton(
                 onPressed: () {
                   updateProfile(
+                    profilePicture: profilePictureUrl ??
+                        '', // You can pass an empty string if it's null
                     username: usernameController.text,
                     firstName: firstNameController.text,
                     lastName: lastNameController.text,
                     address: addressController.text,
+                    email: userEmail!,
                     age: ageController.text,
                   );
                 },
