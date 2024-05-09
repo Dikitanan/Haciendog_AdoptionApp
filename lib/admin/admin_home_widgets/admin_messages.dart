@@ -232,7 +232,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                 Expanded(
                   child: isLoadingMessages
                       ? Center(
-                          child: CircularProgressIndicator(),
+                          child: Container(),
                         )
                       : StreamBuilder<List<Map<String, dynamic>>>(
                           stream: messagesStream(),

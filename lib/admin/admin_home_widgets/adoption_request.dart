@@ -166,8 +166,25 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                               children: [
                                 Icon(Icons.location_on, color: Colors.grey),
                                 SizedBox(width: 5),
-                                Text('Address: ${document['address']}',
-                                    style: TextStyle(fontSize: 16)),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (document['address'] != null)
+                                        Text(
+                                          'Address:',
+                                          style: TextStyle(fontSize: 16),
+                                        ),
+                                      SizedBox(height: 2),
+                                      if (document['address'] != null)
+                                        Text(
+                                          _formatAddress(document['address']),
+                                          style: TextStyle(fontSize: 16),
+                                        ),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
                             SizedBox(height: 5),
@@ -434,5 +451,14 @@ class WebAdoptionRequestDialog extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+String _formatAddress(String address) {
+  List<String> words = address.split(' ');
+  if (words.length > 4) {
+    return '${words.take(4).join(' ')}\n${words.skip(4).join(' ')}';
+  } else {
+    return address;
   }
 }
