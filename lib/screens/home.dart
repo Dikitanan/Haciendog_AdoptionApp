@@ -1,6 +1,8 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:mad/admin/post_provider.dart';
+import 'package:mad/screens/screens.dart/userBlogs.dart';
 import 'package:mad/theme/color.dart';
 import 'package:mad/utils/data.dart';
 import 'package:mad/widgets/category_item.dart';
@@ -19,7 +21,7 @@ class _HomePageState extends State<HomePage> {
   String _category = 'All';
   String _selectedScreen = 'Pets';
   bool _showPets = true; // Define _showPets variable
-
+  LikeState likeState = LikeState();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -154,21 +156,44 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-                  DropdownButton<String>(
-                    value: _selectedScreen,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedScreen = newValue!;
-                        _showPets = newValue ==
-                            'Pets'; // Update _showPets based on selected screen
-                      });
-                    },
-                    items: <String>['Pets', 'Blogs'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
+                  Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Color(
+                          0xFFE96560), // Set the background color of the dropdown button
+                      borderRadius: BorderRadius.circular(
+                          8), // Optional: Add border radius for rounded corners
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: DropdownButton<String>(
+                        value: _selectedScreen,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            _selectedScreen = newValue!;
+                            _showPets = newValue == 'Pets';
+                          });
+                        },
+                        // Set the background color of the dropdown list
+                        dropdownColor: Color(0xFFE96560),
+                        items: <String>['Pets', 'Blogs'].map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              value,
+                              style: TextStyle(
+                                fontWeight: FontWeight
+                                    .bold, // Emphasize the dropdown item text
+                                fontSize:
+                                    16, // Increase the font size for visibility
+                                color: Colors
+                                    .white, // Change the text color to white
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
                   ),
                   SizedBox(
                     width: 15,
@@ -195,18 +220,22 @@ class _HomePageState extends State<HomePage> {
           children: [
             SizedBox(height: 25),
             _buildCategories(),
-            SizedBox(height: 25),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(15, 0, 15, 25),
-              child: Text(
-                "Haciendog",
-                style: TextStyle(
-                  color: AppColor.textColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 24,
+            SizedBox(height: 10),
+            // Check if _showPets is true
+            if (_showPets)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(15, 0, 15, 25),
+                child: Text(
+                  "Haciendog",
+                  style: TextStyle(
+                    color: AppColor.textColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
-            ),
+              )
+            else
+              Container(), // Empty container if _showPets is false
             // Conditional rendering based on _showPets
             _showPets ? _buildPets() : _buildBlogs(),
           ],
@@ -216,17 +245,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   _buildBlogs() {
-    return Container(
-      alignment: Alignment.center,
-      padding: EdgeInsets.symmetric(vertical: 20),
-      child: Text(
-        'No blogs available',
-        style: TextStyle(
-          color: Colors.grey,
-          fontSize: 16,
-        ),
-      ),
-    );
+    return MiddlePart(likeState: likeState);
   }
 
   _buildCategories() {

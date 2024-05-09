@@ -291,11 +291,16 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                       ),
                       SizedBox(width: 10),
                       IconButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (selectedUser != null &&
                               messageController.text.isNotEmpty) {
-                            sendMessage(messageController.text, userEmail!);
+                            await sendMessage(
+                                messageController.text, userEmail!);
+
                             messageController.clear();
+
+                            await resetMessageCount(
+                                userEmail!); // Reset message count
                           }
                         },
                         icon: Icon(Icons.send),
@@ -332,7 +337,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
   bool _shouldShowDivider(
       Timestamp currentTimestamp, Timestamp previousTimestamp) {
     final diff = currentTimestamp.seconds - previousTimestamp.seconds;
-    return diff >= 3600; // 1 hour in seconds
+    return diff >= 250; // 1 hour in seconds
   }
 
   Widget _buildDivider(Timestamp timestamp) {

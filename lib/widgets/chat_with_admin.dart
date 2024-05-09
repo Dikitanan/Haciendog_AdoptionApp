@@ -94,7 +94,7 @@ class _ChatWithAdminState extends State<ChatWithAdmin> {
 
   bool _shouldShowDivider(Timestamp currentTimestamp, Timestamp nextTimestamp) {
     final diff = currentTimestamp.seconds - nextTimestamp.seconds;
-    return diff >= 1500; // 1 hour in seconds
+    return diff >= 250; // 1 hour in seconds
   }
 
   Widget _buildDivider(Timestamp timestamp) {
