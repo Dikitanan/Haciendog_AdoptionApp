@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mad/admin/admin_home_widgets/admin_messages.dart';
 import 'package:mad/admin/admin_home_widgets/adoption_request.dart';
 import 'package:mad/admin/admin_home_widgets/blogsPart.dart';
 import 'package:mad/admin/admin_home_widgets/leftsidebar.dart';
@@ -92,9 +93,7 @@ class _AdminHomeState extends State<AdminHome> {
                         } else if (menu == 'Adoption Requests') {
                           middleContent = AdoptionLists();
                         } else if (menu == 'Messages') {
-                          middleContent = Center(
-                            child: Text('Messages Content'),
-                          );
+                          middleContent = AdminSideMessage();
                         }
                       });
                     },
