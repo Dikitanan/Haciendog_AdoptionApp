@@ -233,7 +233,11 @@ class _MiddlePartState extends State<MiddlePart>
                 }
                 switch (snapshot.connectionState) {
                   case ConnectionState.waiting:
-                    return Center();
+                    return Container(
+                        height: 100,
+                        width: 100,
+                        child:
+                            Center(child: const CircularProgressIndicator()));
                   default:
                     List<QueryDocumentSnapshot> comments =
                         snapshot.data!.docs.toList();
@@ -281,83 +285,62 @@ class _MiddlePartState extends State<MiddlePart>
                                 const Divider(),
                                 const SizedBox(height: 8),
                                 // Display existing comments or a loading indicator
-                                _isCommentUploading
-                                    ? Container(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.4,
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                                0.6,
-                                        padding: const EdgeInsets.all(16),
-                                        child: const Center(
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                      )
-                                    : Container(
-                                        constraints: BoxConstraints(
-                                          minWidth: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.4, // Example minimum width
-                                          maxWidth: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.4, // Example maximum width
-                                          minHeight: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.46, // Example minimum height
-                                          maxHeight: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.46, // Example maximum height
-                                        ),
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.4,
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                                0.46,
-                                        child: SingleChildScrollView(
+                                Container(
+                                  constraints: BoxConstraints(
+                                    minWidth:
+                                        MediaQuery.of(context).size.width *
+                                            0.4, // Example minimum width
+                                    maxWidth:
+                                        MediaQuery.of(context).size.width *
+                                            0.4, // Example maximum width
+                                    minHeight:
+                                        MediaQuery.of(context).size.height *
+                                            0.46, // Example minimum height
+                                    maxHeight:
+                                        MediaQuery.of(context).size.height *
+                                            0.46, // Example maximum height
+                                  ),
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.4,
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.46,
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: comments.map((commentDoc) {
+                                        var commentData = commentDoc.data()
+                                            as Map<String, dynamic>;
+                                        return Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 8),
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
-                                            children:
-                                                comments.map((commentDoc) {
-                                              var commentData =
-                                                  commentDoc.data()
-                                                      as Map<String, dynamic>;
-                                              return Padding(
-                                                padding: const EdgeInsets.only(
-                                                    bottom: 8),
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    // Display comment text
-                                                    Text(
-                                                      commentData['comment'],
-                                                      style: const TextStyle(
-                                                          fontSize: 16),
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    // Display comment author and time
-                                                    Text(
-                                                      '${timeAgoSinceDate((commentData['dateOfComment'] as Timestamp).toDate())} by ${commentData['username']}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                        color: Colors.grey,
-                                                      ),
-                                                    ),
-                                                    const Divider(),
-                                                  ],
+                                            children: [
+                                              // Display comment text
+                                              Text(
+                                                commentData['comment'],
+                                                style: const TextStyle(
+                                                    fontSize: 16),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              // Display comment author and time
+                                              Text(
+                                                '${timeAgoSinceDate((commentData['dateOfComment'] as Timestamp).toDate())} by ${commentData['username']}',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey,
                                                 ),
-                                              );
-                                            }).toList(),
+                                              ),
+                                              const Divider(),
+                                            ],
                                           ),
-                                        ),
-                                      ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
                                 const SizedBox(height: 8),
                                 // Text field for entering a new comment
                                 Padding(
@@ -369,45 +352,32 @@ class _MiddlePartState extends State<MiddlePart>
                                       hintText: 'Write a comment...',
                                       border: OutlineInputBorder(),
                                       suffixIcon: IconButton(
-                                        icon: _isCommentUploading
-                                            ? const CircularProgressIndicator()
-                                            : const Icon(Icons.send),
-                                        onPressed: _isCommentUploading
-                                            ? null
-                                            : () async {
-                                                // Add a new comment
-                                                if (_commentController.text
-                                                    .trim()
-                                                    .isEmpty) {
-                                                  return;
-                                                }
-                                                setState(() {
-                                                  _isCommentUploading = true;
-                                                });
-                                                try {
-                                                  String userEmail =
-                                                      await getCurrentUserEmail();
-                                                  bool commentAdded =
-                                                      await addCommentToFirestore(
-                                                    _commentController.text,
-                                                    userEmail,
-                                                    blogId,
-                                                    context,
-                                                  );
-                                                  if (commentAdded) {
-                                                    await updateCommentCount(
-                                                        blogId);
-                                                    _commentController.clear();
-                                                  }
-                                                } catch (e) {
-                                                  print(
-                                                      'Error sending comment: $e');
-                                                } finally {
-                                                  setState(() {
-                                                    _isCommentUploading = false;
-                                                  });
-                                                }
-                                              },
+                                        icon: const Icon(Icons.send),
+                                        onPressed: () async {
+                                          // Add a new comment
+                                          if (_commentController.text
+                                              .trim()
+                                              .isEmpty) {
+                                            return;
+                                          }
+                                          try {
+                                            String userEmail =
+                                                await getCurrentUserEmail();
+                                            bool commentAdded =
+                                                await addCommentToFirestore(
+                                              _commentController.text,
+                                              userEmail,
+                                              blogId,
+                                              context,
+                                            );
+                                            if (commentAdded) {
+                                              _commentController.clear();
+                                              await updateCommentCount(blogId);
+                                            }
+                                          } catch (e) {
+                                            print('Error sending comment: $e');
+                                          } finally {}
+                                        },
                                       ),
                                     ),
                                   ),

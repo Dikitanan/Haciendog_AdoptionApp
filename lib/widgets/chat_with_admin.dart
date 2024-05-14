@@ -180,7 +180,7 @@ class _ChatWithAdminState extends State<ChatWithAdmin> {
         margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isCurrentUserSent ? Colors.blue : Colors.grey[300],
+          color: isCurrentUserSent ? Color(0xFFE96560) : Colors.grey[300],
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -212,6 +212,7 @@ class _ChatWithAdminState extends State<ChatWithAdmin> {
           SizedBox(width: 8),
           IconButton(
             icon: Icon(Icons.send),
+            color: Color(0xFFE96560),
             onPressed: _sendMessage,
           ),
         ],

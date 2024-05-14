@@ -153,7 +153,17 @@ class _ChangePasswordFormState extends State<ChangePasswordForm> {
             ? Center(child: CircularProgressIndicator())
             : ElevatedButton(
                 onPressed: changePassword,
-                child: Text('Change Password'),
+                child: Text(
+                  'Change Password',
+                  style: TextStyle(color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.all(12),
+                  backgroundColor: Color(0xFFE96560),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
       ],
     );

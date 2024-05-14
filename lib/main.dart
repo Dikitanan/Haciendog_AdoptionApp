@@ -2,9 +2,10 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:mad/features/app/splash_screen/splash_screen.dart';
 import 'package:mad/features/user_auth/presentation/pages/Login_Page.dart';
 import 'package:mad/screens/root_app.dart';
@@ -25,13 +26,33 @@ void main() async {
         : null,
   );
 
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print('Received a foreground message: ${message.messageId}');
+    if (message.notification != null) {
+      print('Message also contained a notification: ${message.notification}');
+    }
+  });
+
   runApp(MyApp());
+}
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print('Handling a background message: ${message.messageId}');
+  // Add your custom logic to handle the background message
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -47,10 +68,9 @@ class MyApp extends StatelessWidget {
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Container(); // Show loading indicator while checking auth state
+            return Container();
           } else {
             if (snapshot.hasData) {
-              // Check if the user is banned
               return FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance
                     .collection('UserEmails')
@@ -59,30 +79,24 @@ class MyApp extends StatelessWidget {
                 builder: (BuildContext context,
                     AsyncSnapshot<DocumentSnapshot> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Container(); // Show loading indicator while fetching user data
+                    return Container();
                   } else {
                     if (snapshot.hasData && snapshot.data != null) {
-                      // Cast data to Map<String, dynamic>
                       Map<String, dynamic>? userData =
                           snapshot.data!.data() as Map<String, dynamic>?;
 
-                      // Check if the 'ban' field is true
                       if (userData?['ban'] == true) {
-                        // User is banned, show Account Banned dialog
                         return AccountBannedDialog();
                       } else {
-                        // User is not banned, proceed to dashboard
                         return kIsWeb ? AdminDashboard() : RootApp();
                       }
                     } else {
-                      // User data not found, proceed to login
                       return LoginPage();
                     }
                   }
                 },
               );
             } else {
-              // User is not logged in, show login page
               return LoginPage();
             }
           }
@@ -101,7 +115,6 @@ class AccountBannedDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () {
-            // Log out the user when "OK" is pressed
             FirebaseAuth.instance.signOut();
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => LoginPage()),

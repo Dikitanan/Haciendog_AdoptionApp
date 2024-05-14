@@ -78,9 +78,12 @@ class _SettingsState extends State<Settings> {
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            child: Text('Menu'),
+            child: Text(
+              'Menu',
+              style: TextStyle(color: Colors.white),
+            ),
             decoration: BoxDecoration(
-              color: Colors.blue,
+              color: Color(0xFFE96560),
             ),
           ),
           ListTile(

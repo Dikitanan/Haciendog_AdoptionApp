@@ -48,19 +48,6 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
           ageController.text = data['age'] ?? '';
         });
       }
-      // Fetch profile picture URL from Firebase Storage if it's not already in the document
-      if (profilePictureUrl == null) {
-        final ref = firebase_storage.FirebaseStorage.instance
-            .ref()
-            .child('profile_pictures')
-            .child('$userEmail.jpg');
-        final downloadURL = await ref.getDownloadURL();
-        setState(() {
-          profilePictureUrl = downloadURL;
-        });
-        // Update the profile document with the profile picture URL
-        await profileDoc.reference.update({'profilePicture': downloadURL});
-      }
     } catch (e) {
       print('Error fetching user profile data: $e');
     }
@@ -87,18 +74,23 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
     final pickedFile = await picker.getImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       final fileBytes = await pickedFile.readAsBytes();
+      setState(() {
+        uploading = true;
+      });
       try {
         final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
         final downloadUrl = await uploadImageToFirebase(fileBytes, fileName);
-
+        setState(() {
+          uploading = false;
+          profilePictureUrl = downloadUrl;
+        });
         // Update profile picture URL only
         updateProfilePicture(downloadUrl);
-
+      } catch (e) {
         setState(() {
-          profilePictureUrl =
-              downloadUrl; // Set the profilePictureUrl here if needed
+          uploading = false;
         });
-      } catch (e) {}
+      }
     }
   }
 
@@ -161,8 +153,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
   }) async {
     try {
       // Validate required fields
-      if (profilePicture.isEmpty ||
-          username.isEmpty ||
+      if (username.isEmpty ||
           firstName.isEmpty ||
           lastName.isEmpty ||
           address.isEmpty ||
@@ -277,13 +268,20 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
                           width: 40,
                           child:
                               CircularProgressIndicator())) // Show loading indicator when uploading
-                  : ElevatedButton(
-                      onPressed: uploadProfilePicture,
-                      child: Text('Upload Profile Picture'),
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.all(12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  : Padding(
+                      padding: const EdgeInsets.fromLTRB(50, 0, 50, 0),
+                      child: ElevatedButton(
+                        onPressed: uploadProfilePicture,
+                        child: Text(
+                          'Upload Profile Picture',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFFE96560),
+                          padding: EdgeInsets.all(12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ),
@@ -292,7 +290,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
               height: 10,
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
               child: TextFormField(
                 controller: usernameController,
                 decoration: InputDecoration(
@@ -306,7 +304,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
               height: 8,
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
               child: TextFormField(
                   controller: firstNameController,
                   decoration: InputDecoration(
@@ -319,7 +317,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
               height: 8,
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
               child: TextFormField(
                 controller: lastNameController,
                 decoration: InputDecoration(
@@ -333,7 +331,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
               height: 8,
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
               child: TextFormField(
                 controller: addressController,
                 decoration: InputDecoration(
@@ -347,7 +345,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
               height: 8,
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
               child: TextFormField(
                 controller: ageController,
                 decoration: InputDecoration(
@@ -362,12 +360,11 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
               height: 8,
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding: const EdgeInsets.fromLTRB(50, 0, 50, 0),
               child: ElevatedButton(
                 onPressed: () {
                   updateProfile(
-                    profilePicture: profilePictureUrl ??
-                        '', // You can pass an empty string if it's null
+                    profilePicture: profilePictureUrl ?? '',
                     username: usernameController.text,
                     firstName: firstNameController.text,
                     lastName: lastNameController.text,
@@ -376,12 +373,16 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
                     age: ageController.text,
                   );
                 },
-                child: Text('Update Profile'),
+                child: Text(
+                  'Update Profile',
+                  style: TextStyle(color: Colors.white),
+                ),
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.all(12),
+                  backgroundColor: Color(0xFFE96560),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
-                  ),
+                  ), // Set the background color here
                 ),
               ),
             ),
