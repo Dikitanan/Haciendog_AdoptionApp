@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mad/admin/admin_home_widgets/admin_donations.dart';
 import 'package:mad/admin/admin_home_widgets/admin_messages.dart';
 import 'package:mad/admin/admin_home_widgets/adoption_request.dart';
 import 'package:mad/admin/admin_home_widgets/blogsPart.dart';
@@ -87,9 +88,7 @@ class _AdminHomeState extends State<AdminHome> {
                             child: Text('Statistics Content'),
                           );
                         } else if (menu == 'Donations') {
-                          middleContent = Center(
-                            child: Text('Donations Content'),
-                          );
+                          middleContent = AdminDonations();
                         } else if (menu == 'Adoption Requests') {
                           middleContent = AdoptionLists();
                         } else if (menu == 'Messages') {

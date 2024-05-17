@@ -12,18 +12,19 @@ class AdminSideMessage extends StatefulWidget {
 }
 
 class _AdminSideMessageState extends State<AdminSideMessage> {
-  List<String> users = [];
+  List<Map<String, String>> userProfiles =
+      []; // List to store usernames and emails
   Map<String, int> userMessageCounts = {}; // Map to store message counts
   String? selectedUser;
-  String? userEmail;
+  String? selectedUserEmail;
   bool isLoadingMessages = false;
   TextEditingController messageController = TextEditingController();
-  late StreamSubscription<DocumentSnapshot> _messageCountSubscription;
+  late StreamSubscription<QuerySnapshot> _messageCountSubscription;
 
   @override
   void initState() {
     super.initState();
-    fetchUsernames();
+    fetchUserProfiles();
     // Start listening to UserNewMessage collection
     _listenToMessageCount();
   }
@@ -35,7 +36,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
     super.dispose();
   }
 
-  Future<void> fetchUsernames() async {
+  Future<void> fetchUserProfiles() async {
     setState(() {
       isLoadingMessages = true;
     });
@@ -52,15 +53,27 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
         .where((email) => email != "ivory@gmail.com")
         .toList();
 
-    // Set the user list using the filtered emails fetched from 'UserEmails'
-    users = userEmails;
+    // Fetch usernames from 'Profiles' collection using the emails
+    userProfiles = [];
+    for (String email in userEmails) {
+      QuerySnapshot profileSnapshot = await firestore
+          .collection('Profiles')
+          .where('email', isEqualTo: email)
+          .get();
+      if (profileSnapshot.docs.isNotEmpty) {
+        userProfiles.add({
+          'username': profileSnapshot.docs.first['username'] as String,
+          'email': email,
+        });
+      }
+    }
 
     // Fetch message counts for each user
     await fetchUserMessageCounts();
 
-    if (users.isNotEmpty) {
+    if (userProfiles.isNotEmpty) {
       setState(() {
-        selectedUser = users.first;
+        selectedUser = userProfiles.first['username'];
       });
       fetchUserEmail(selectedUser!);
     }
@@ -83,7 +96,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
     setState(() {});
   }
 
-  void _listenToMessageCount() async {
+  void _listenToMessageCount() {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     _messageCountSubscription =
         firestore.collection('UserNewMessage').snapshots().listen((snapshot) {
@@ -94,7 +107,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
       };
       // Update UI
       setState(() {});
-    }) as StreamSubscription<DocumentSnapshot<Object?>>;
+    });
   }
 
   Future<void> fetchUserEmail(String username) async {
@@ -106,22 +119,22 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     QuerySnapshot querySnapshot = await firestore
         .collection('Profiles')
-        .where('email', isEqualTo: username)
+        .where('username', isEqualTo: username)
         .get();
 
     if (querySnapshot.docs.isNotEmpty) {
-      // If there's a match in the Profiles collection, set the username as the label
+      // If there's a match in the Profiles collection, set the email and username as the label
       setState(() {
-        userEmail = username;
-        selectedUser = querySnapshot.docs.first['username'] as String?;
+        selectedUserEmail = querySnapshot.docs.first['email'] as String?;
+        selectedUser = username;
       });
 
       // Reset message count to 0 when user is clicked
-      await resetMessageCount(username);
+      await resetMessageCount(selectedUserEmail!);
     } else {
       // If no match is found in the Profiles collection, set the label as "User Profile Not Set Yet"
       setState(() {
-        userEmail = username;
+        selectedUserEmail = null;
         selectedUser = "User Profile Not Set Yet";
       });
     }
@@ -150,8 +163,8 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
           'senderEmail': doc['senderEmail'] as String,
           'receiverEmail': doc['receiverEmail'] as String,
         };
-        if (message['senderEmail'] == userEmail ||
-            message['receiverEmail'] == userEmail) {
+        if (message['senderEmail'] == selectedUserEmail ||
+            message['receiverEmail'] == selectedUserEmail) {
           messages.add(message);
         }
       }
@@ -186,15 +199,17 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
             child: Container(
               color: Colors.grey[200],
               child: ListView.builder(
-                itemCount: users.length,
+                itemCount: userProfiles.length,
                 itemBuilder: (BuildContext context, int index) {
-                  final user = users[index];
-                  final messageCount = userMessageCounts[user];
+                  final userProfile = userProfiles[index];
+                  final username = userProfile['username']!;
+                  final email = userProfile['email']!;
+                  final messageCount = userMessageCounts[email];
 
-                  // If message count is zero or null, display the user email without the count
+                  // If message count is zero or null, display the username without the count
                   final title = messageCount == null || messageCount == 0
-                      ? user
-                      : '$user ($messageCount)';
+                      ? username
+                      : '$username ($messageCount)';
 
                   return ListTile(
                     title: Text(
@@ -205,7 +220,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                     ),
                     onTap: () {
                       setState(() {
-                        selectedUser = user;
+                        selectedUser = username;
                       });
                       fetchUserEmail(selectedUser!);
                     },
@@ -295,12 +310,12 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                           if (selectedUser != null &&
                               messageController.text.isNotEmpty) {
                             await sendMessage(
-                                messageController.text, userEmail!);
+                                messageController.text, selectedUserEmail!);
 
                             messageController.clear();
 
                             await resetMessageCount(
-                                userEmail!); // Reset message count
+                                selectedUserEmail!); // Reset message count
                           }
                         },
                         icon: Icon(Icons.send),
@@ -359,8 +374,8 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
   }
 
   Widget _buildMessage(Map<String, dynamic> message) {
-    bool isSentMessage =
-        message['senderEmail'] == userEmail; // Check if the message is sent
+    bool isSentMessage = message['senderEmail'] ==
+        selectedUserEmail; // Check if the message is sent
 
     return Align(
       alignment: isSentMessage ? Alignment.topLeft : Alignment.topRight,

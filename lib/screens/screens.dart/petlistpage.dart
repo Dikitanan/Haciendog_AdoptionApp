@@ -203,14 +203,23 @@ class _PetListState extends State<PetList> {
         }
 
         // Determine the text and color based on the status
-        String formStatusText = isFormSubmitted ? 'Form Submitted' : '';
+        String formStatusText = '';
         Color formStatusColor = Colors.blue; // Default color for pending
+
         if (status == 'Accepted') {
           formStatusText = 'Form Accepted';
           formStatusColor = Colors.green;
         } else if (status == 'Rejected') {
           formStatusText = 'Form Rejected';
           formStatusColor = Colors.red;
+        } else if (status == 'Cancelled') {
+          formStatusText = 'Cancelled';
+          formStatusColor = Colors.red;
+        } else if (status == 'Archived') {
+          // If the status is "Archived", we don't want to display any tag
+          formStatusText = '';
+        } else {
+          formStatusText = isFormSubmitted ? 'Form Submitted' : '';
         }
 
         return GestureDetector(
@@ -285,7 +294,8 @@ class _PetListState extends State<PetList> {
                           ],
                         ),
                       ),
-                      if (isFormSubmitted) // Show label if form is submitted
+                      if (formStatusText
+                          .isNotEmpty) // Show label if form status is not empty
                         Positioned(
                           top: 8,
                           left: 8,
@@ -324,7 +334,7 @@ class _PetListState extends State<PetList> {
 
   void toggleFavoriteStatus(
       DocumentSnapshot animalHeartedDoc, String petId, String userEmail) async {
-    // Delete the corresponding document from the AdoptionForms collection
+    // Update the status of the document in the AdoptionForms collection to "Archived"
     await FirebaseFirestore.instance
         .collection('AdoptionForms')
         .where('petId', isEqualTo: petId)
@@ -332,10 +342,10 @@ class _PetListState extends State<PetList> {
         .get()
         .then((querySnapshot) {
       querySnapshot.docs.forEach((doc) {
-        doc.reference.delete();
+        doc.reference.update({'status': 'Archived'});
       });
     }).catchError((error) {
-      print("Error deleting document: $error");
+      print("Error updating document status: $error");
     });
 
     // Update the is_favorited field in the AnimalHearted collection

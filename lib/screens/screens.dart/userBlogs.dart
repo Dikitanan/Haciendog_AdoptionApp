@@ -141,9 +141,9 @@ class _MiddlePartState extends State<MiddlePart>
                 const SizedBox(height: 10),
                 Image.network(
                   image,
-                  height: 200,
+                  height: 300,
                   width: double.infinity,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.fill,
                 ),
                 const SizedBox(height: 10),
                 Row(

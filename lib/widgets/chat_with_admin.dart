@@ -176,17 +176,23 @@ class _ChatWithAdminState extends State<ChatWithAdmin> {
     return Align(
       alignment:
           isCurrentUserSent ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isCurrentUserSent ? Color(0xFFE96560) : Colors.grey[300],
-          borderRadius: BorderRadius.circular(12),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width *
+              0.75, // Set maximum width to 80% of screen width
         ),
-        child: Text(
-          message.text,
-          style: TextStyle(
-            color: isCurrentUserSent ? Colors.white : Colors.black,
+        child: Container(
+          margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isCurrentUserSent ? Color(0xFFE96560) : Colors.grey[300],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            message.text,
+            style: TextStyle(
+              color: isCurrentUserSent ? Colors.white : Colors.black,
+            ),
           ),
         ),
       ),
