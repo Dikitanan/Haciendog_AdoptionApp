@@ -90,7 +90,9 @@ class PetDetailsDialog extends StatelessWidget {
                         padding:
                             EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
+                          color: petData['Status'] == 'Reserved'
+                              ? Colors.lightBlue
+                              : Colors.black.withOpacity(0.7),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -179,43 +181,53 @@ class PetDetailsDialog extends StatelessWidget {
                       return Center(child: Text('Error: ${snapshot.error}'));
                     }
                     String? formStatus = snapshot.data;
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: Text('Close'),
+                    // Assuming petStatus is retrieved from Animal Collection
+                    String petStatus = petData[
+                        'Status']; // You should replace this with the actual field name
+
+                    if (petStatus != 'Unadopted') {
+                      // Return Close button only if the pet status is not Pending
+                      return Center(
+                        child: Container(
+                          width: double.infinity,
                         ),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (formStatus == null) {
-                              _showAdoptionFormDialog(context);
-                            } else if (formStatus == 'Pending') {
-                              _cancelForm(context);
-                            } else if (formStatus == 'Cancelled') {
-                              _showAdoptionFormDialog(context);
-                            } else if (formStatus == 'Archived') {
-                              _showAdoptionFormDialog(
-                                  context); // Change action for 'Archived'
-                            } else {
-                              // If not 'Archived', show 'Redo Application'
-                              _showAdoptionFormDialog(context);
-                            }
-                          },
-                          child: Text(formStatus == null
-                              ? 'Adopt'
-                              : formStatus == 'Pending'
-                                  ? 'Cancel'
-                                  : formStatus ==
-                                          'Archived' // Change text for 'Archived'
-                                      ? 'Adopt'
-                                      : 'Redo Application'),
-                        ),
-                      ],
-                    );
+                      );
+                    } else {
+                      // Return Close and other buttons if pet status is Pending
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              if (formStatus == null) {
+                                _showAdoptionFormDialog(context);
+                              } else if (formStatus == 'Pending') {
+                                _cancelForm(context);
+                              } else if (formStatus == 'Cancelled') {
+                                _showAdoptionFormDialog(context);
+                              } else if (formStatus == 'Archived') {
+                                _showAdoptionFormDialog(
+                                    context); // Change action for 'Archived'
+                              } else {
+                                // If not 'Archived', show 'Redo Application'
+                                _showAdoptionFormDialog(context);
+                              }
+                            },
+                            child: Text(
+                              formStatus == null
+                                  ? 'Adopt'
+                                  : formStatus == 'Pending'
+                                      ? 'Cancel'
+                                      : formStatus ==
+                                              'Archived' // Change text for 'Archived'
+                                          ? 'Adopt'
+                                          : 'Redo Application',
+                            ),
+                          ),
+                        ],
+                      );
+                    }
                   },
                 ),
               ],

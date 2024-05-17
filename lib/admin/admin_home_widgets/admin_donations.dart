@@ -3,18 +3,39 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class AdminDonations extends StatefulWidget {
-  const AdminDonations({super.key});
+  const AdminDonations({Key? key}) : super(key: key);
 
   @override
   State<AdminDonations> createState() => _AdminDonationsState();
 }
 
 class _AdminDonationsState extends State<AdminDonations> {
+  String _selectedFilter = 'All';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Donations'),
+        actions: [
+          DropdownButton<String>(
+            value: _selectedFilter,
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _selectedFilter = newValue;
+                });
+              }
+            },
+            items: <String>['All', 'Pending', 'Accepted', 'Rejected']
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('Donations').snapshots(),
@@ -28,15 +49,35 @@ class _AdminDonationsState extends State<AdminDonations> {
           }
 
           final donations = snapshot.data?.docs ?? [];
+          final filteredDonations = donations.where((donation) {
+            final status = donation['status'] ?? 'Pending';
+            if (_selectedFilter == 'All') return true;
+            return status == _selectedFilter;
+          }).toList();
 
-          if (donations.isEmpty) {
+          // Sort the donations to place 'Pending' status at the top
+          filteredDonations.sort((a, b) {
+            final statusA = a['status'] ?? 'Pending';
+            final statusB = b['status'] ?? 'Pending';
+            if (statusA == 'Pending' && statusB != 'Pending') {
+              return -1; // Move 'Pending' status to the top
+            } else if (statusA != 'Pending' && statusB == 'Pending') {
+              return 1; // Move 'Pending' status to the top
+            } else {
+              // If both statuses are the same or both are not 'Pending',
+              // maintain their order
+              return 0;
+            }
+          });
+
+          if (filteredDonations.isEmpty) {
             return const Center(child: Text('No donations found'));
           }
 
           return ListView.builder(
-            itemCount: donations.length,
+            itemCount: filteredDonations.length,
             itemBuilder: (context, index) {
-              final donation = donations[index];
+              final donation = filteredDonations[index];
               final name = donation['name'] ?? 'Unknown';
               final status = donation['status'] ?? 'Pending';
 

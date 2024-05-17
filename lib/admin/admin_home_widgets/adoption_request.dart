@@ -29,8 +29,8 @@ class _AdoptionListsState extends State<AdoptionLists> {
               'Pending',
               'Accepted',
               'Rejected',
-              'Archived',
-              'Cancelled'
+              'Cancelled',
+              'Archived'
             ].map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
                 value: value,
@@ -42,7 +42,10 @@ class _AdoptionListsState extends State<AdoptionLists> {
       ),
       body: StreamBuilder(
         stream: _selectedStatus == 'All'
-            ? FirebaseFirestore.instance.collection('AdoptionForms').snapshots()
+            ? FirebaseFirestore.instance
+                .collection('AdoptionForms')
+                .where('status', isNotEqualTo: 'Archived')
+                .snapshots()
             : FirebaseFirestore.instance
                 .collection('AdoptionForms')
                 .where('status', isEqualTo: _selectedStatus)
@@ -397,40 +400,49 @@ class WebAdoptionRequestDialog extends StatelessWidget {
             SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: document['status'] == 'Pending'
+              children: document['status'] != 'Archived'
                   ? [
-                      ElevatedButton(
-                        onPressed: () {
-                          _updateAdoptionStatus(
-                            context,
-                            document.id,
-                            'Rejected',
-                            document['email'], // Pass user's email
-                          );
-                        },
-                        child: Text('Decline'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          _updateAdoptionStatus(
-                            context,
-                            document.id,
-                            'Accepted',
-                            document['email'], // Pass user's email
-                          );
-                        },
-                        child: Text('Accept'),
-                      ),
+                      if (document['status'] == 'Pending')
+                        ElevatedButton(
+                          onPressed: () {
+                            _updateAdoptionStatus(
+                              context,
+                              document.id,
+                              'Rejected',
+                              document['email'], // Pass user's email
+                              document['petId'], // Pass pet ID
+                            );
+                          },
+                          child: Text('Decline'),
+                        ),
+                      if (document['status'] == 'Pending')
+                        ElevatedButton(
+                          onPressed: () {
+                            _updateAdoptionStatus(
+                              context,
+                              document.id,
+                              'Accepted',
+                              document['email'], // Pass user's email
+                              document['petId'], // Pass pet ID
+                            );
+                          },
+                          child: Text('Accept'),
+                        ),
+                      if (document['status'] != 'Pending')
+                        ElevatedButton(
+                          onPressed: () {
+                            _updateAdoptionStatus(
+                              context,
+                              document.id,
+                              'Pending',
+                              document['email'],
+                              document['petId'],
+                            );
+                          },
+                          child: Text('Cancel'),
+                        ),
                     ]
-                  : [
-                      ElevatedButton(
-                        onPressed: () {
-                          _updateAdoptionStatus(context, document.id, 'Pending',
-                              document['email']);
-                        },
-                        child: Text('Cancel'),
-                      ),
-                    ],
+                  : [], // Empty list if status is "Archived"
             ),
           ],
         ),
@@ -439,37 +451,77 @@ class WebAdoptionRequestDialog extends StatelessWidget {
   }
 
   void _updateAdoptionStatus(BuildContext context, String documentId,
-      String status, String userEmail) {
+      String status, String userEmail, String petId) {
     FirebaseFirestore.instance
         .collection('AdoptionForms')
         .doc(documentId)
         .update({'status': status}).then((_) {
       print("Status updated successfully");
 
-      // Send message to user
-      String messageText = status == 'Accepted'
-          ? "We would like to inform you that your adoption form is accepted."
-          : "We would like to inform you that your adoption form is rejected.";
+      // If the adoption form is accepted, update the animal's status
+      if (status == 'Accepted') {
+        FirebaseFirestore.instance
+            .collection('Animal')
+            .doc(petId)
+            .update({'Status': 'Reserved'}).then((_) {
+          print("Animal status updated to Reserved");
+        }).catchError((error) {
+          print("Failed to update animal status: $error");
+          _showDialog(context, 'Failed to update animal status');
+        });
+      } else if (status == 'Pending') {
+        // If the adoption form is pending, update the animal's status to "Unadopted"
+        FirebaseFirestore.instance
+            .collection('Animal')
+            .doc(petId)
+            .update({'Status': 'Unadopted'}).then((_) {
+          print("Animal status updated to Unadopted");
+        }).catchError((error) {
+          print("Failed to update animal status: $error");
+          _showDialog(context, 'Failed to update animal status');
+        });
+      }
 
-      Map<String, dynamic> messageData = {
-        'receiverEmail': userEmail,
-        'senderEmail': 'ivory@gmail.com',
-        'text': messageText,
-        'timestamp': FieldValue.serverTimestamp(),
-      };
-
+      // Get the name of the animal
+      String animalName = "";
       FirebaseFirestore.instance
-          .collection('admin_messages')
-          .add(messageData)
-          .then((_) {
-        print("Message sent to user successfully");
-        // Close the AdoptionForm details dialog first
-        Navigator.pop(context);
-        // Show the feedback dialog
-        _showDialog(context, 'Form is $status');
+          .collection('Animal')
+          .doc(petId)
+          .get()
+          .then((animalSnapshot) {
+        animalName = animalSnapshot.data()?['Name'];
+
+        // Construct message text based on status
+        String messageText = status == 'Accepted'
+            ? "We would like to inform you that your adoption form for $animalName is accepted."
+            : (status == 'Pending'
+                ? "We would like to inform you that your adoption form for $animalName is cancelled."
+                : "We would like to inform you that your adoption form for $animalName is rejected.");
+
+        // Send message to user
+        Map<String, dynamic> messageData = {
+          'receiverEmail': userEmail,
+          'senderEmail': 'ivory@gmail.com',
+          'text': messageText,
+          'timestamp': FieldValue.serverTimestamp(),
+        };
+
+        FirebaseFirestore.instance
+            .collection('admin_messages')
+            .add(messageData)
+            .then((_) {
+          print("Message sent to user successfully");
+          // Close the AdoptionForm details dialog first
+          Navigator.pop(context);
+          // Show the feedback dialog
+          _showDialog(context, 'Form is $status');
+        }).catchError((error) {
+          print("Failed to send message to user: $error");
+          _showDialog(context, 'Failed to send message to user');
+        });
       }).catchError((error) {
-        print("Failed to send message to user: $error");
-        _showDialog(context, 'Failed to send message to user');
+        print("Failed to get animal name: $error");
+        _showDialog(context, 'Failed to get animal name');
       });
     }).catchError((error) {
       print("Failed to update status: $error");

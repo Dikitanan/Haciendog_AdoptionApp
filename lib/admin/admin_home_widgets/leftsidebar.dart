@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LeftSideBar extends StatefulWidget {
   final String? userName;
@@ -20,11 +21,13 @@ class LeftSideBar extends StatefulWidget {
 
 class _LeftSideBarState extends State<LeftSideBar> {
   late String _selectedMenu;
+  late Stream<int> _messageCountStream;
 
   @override
   void initState() {
     super.initState();
     _selectedMenu = 'Blogs'; // Initially select "Blogs"
+    _messageCountStream = _getMessageCountStream();
   }
 
   @override
@@ -47,6 +50,40 @@ class _LeftSideBarState extends State<LeftSideBar> {
             ),
           ),
           Divider(),
+          StreamBuilder<int>(
+            stream: _messageCountStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return ListTile(
+                  title: Text(
+                    'Messages (loading...)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: _selectedMenu == 'Messages' ? Colors.blue : null,
+                    ),
+                  ),
+                  onTap: () {
+                    _updateSelectedMenu('Messages');
+                  },
+                );
+              } else {
+                final messageCount = snapshot.data ?? 0;
+                return ListTile(
+                  title: Text(
+                    'Messages ($messageCount)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: _selectedMenu == 'Messages' ? Colors.blue : null,
+                    ),
+                  ),
+                  onTap: () {
+                    _updateSelectedMenu('Messages');
+                  },
+                );
+              }
+            },
+          ),
+          Divider(),
           for (var menu in _sortedMenus())
             Container(
               color: menu == _selectedMenu
@@ -64,16 +101,43 @@ class _LeftSideBarState extends State<LeftSideBar> {
                 ),
                 leading: _getMenuIcon(menu),
                 onTap: () {
-                  setState(() {
-                    _selectedMenu = menu; // Update selected menu
-                  });
-                  widget.onMenuSelected(menu);
+                  _updateSelectedMenu(menu);
                 },
               ),
             ),
         ],
       ),
     );
+  }
+
+  Future<int> _getMessageCount() async {
+    QuerySnapshot querySnapshot =
+        await FirebaseFirestore.instance.collection('UserNewMessage').get();
+    int totalCount = 0;
+    querySnapshot.docs.forEach((doc) {
+      totalCount += int.parse((doc['messageCount'] ?? 0).toString());
+    });
+    return totalCount;
+  }
+
+  Stream<int> _getMessageCountStream() {
+    return FirebaseFirestore.instance
+        .collection('UserNewMessage')
+        .snapshots()
+        .map((snapshot) {
+      int totalCount = 0;
+      snapshot.docs.forEach((doc) {
+        totalCount += int.parse((doc['messageCount'] ?? 0).toString());
+      });
+      return totalCount;
+    });
+  }
+
+  void _updateSelectedMenu(String menu) {
+    setState(() {
+      _selectedMenu = menu; // Update selected menu
+    });
+    widget.onMenuSelected(menu);
   }
 
   List<String> _sortedMenus() {

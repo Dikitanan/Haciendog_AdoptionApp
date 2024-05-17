@@ -334,6 +334,53 @@ class _PetListState extends State<PetList> {
 
   void toggleFavoriteStatus(
       DocumentSnapshot animalHeartedDoc, String petId, String userEmail) async {
+    // Function for checking the status of the AdoptionForms
+    Future<bool> checkAdoptionFormStatus() async {
+      bool isAccepted = false;
+      try {
+        QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+            .collection('AdoptionForms')
+            .where('petId', isEqualTo: petId)
+            .where('email', isEqualTo: userEmail)
+            .get();
+
+        querySnapshot.docs.forEach((doc) {
+          if (doc['status'] == 'Accepted') {
+            isAccepted = true;
+          }
+        });
+      } catch (error) {
+        print("Error checking adoption form status: $error");
+      }
+      return isAccepted;
+    }
+
+    // Check the status of the AdoptionForms
+    bool adoptionFormAccepted = await checkAdoptionFormStatus();
+
+    // If AdoptionForm is accepted, show dialog and return
+    if (adoptionFormAccepted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Action not Permitted"),
+            content: Text(
+                "Reason: Your Adoption form is already accepted. Please message the Admin if you want to Cancel your Adoption Form."),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     // Update the status of the document in the AdoptionForms collection to "Archived"
     await FirebaseFirestore.instance
         .collection('AdoptionForms')

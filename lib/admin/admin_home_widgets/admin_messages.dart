@@ -71,6 +71,10 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
     // Fetch message counts for each user
     await fetchUserMessageCounts();
 
+    // Sort userProfiles based on message count in descending order
+    userProfiles.sort((a, b) => userMessageCounts[b['email']!]!
+        .compareTo(userMessageCounts[a['email']]!));
+
     if (userProfiles.isNotEmpty) {
       setState(() {
         selectedUser = userProfiles.first['username'];
@@ -255,7 +259,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return Center(
-                                child: CircularProgressIndicator(),
+                                child: Container(),
                               );
                             }
                             if (snapshot.hasError) {
