@@ -29,6 +29,8 @@ class _AdoptionListsState extends State<AdoptionLists> {
               'Pending',
               'Accepted',
               'Rejected',
+              'Shipped',
+              'Adopted',
               'Cancelled',
               'Archived'
             ].map<DropdownMenuItem<String>>((String value) {
@@ -97,7 +99,11 @@ class _AdoptionListsState extends State<AdoptionLists> {
                                 ? Colors.red
                                 : document['status'] == 'Archived'
                                     ? Colors.yellow
-                                    : Colors.blue,
+                                    : document['status'] == 'Shipped'
+                                        ? Colors.green
+                                        : document['status'] == 'Adopted'
+                                            ? Colors.green
+                                            : Colors.blue,
                   ),
                 ),
                 onTap: () {
@@ -428,7 +434,34 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                           },
                           child: Text('Accept'),
                         ),
-                      if (document['status'] != 'Pending')
+                      if (document['status'] == 'Accepted')
+                        ElevatedButton(
+                          onPressed: () {
+                            _updateAdoptionStatus(
+                              context,
+                              document.id,
+                              'Shipped',
+                              document['email'], // Pass user's email
+                              document['petId'], // Pass pet ID
+                            );
+                          },
+                          child: Text('Ship'),
+                        ),
+                      if (document['status'] == 'Shipped')
+                        ElevatedButton(
+                          onPressed: () {
+                            _updateAdoptionStatus(
+                              context,
+                              document.id,
+                              'Adopted',
+                              document['email'], // Pass user's email
+                              document['petId'], // Pass pet ID
+                            );
+                          },
+                          child: Text('Done'),
+                        ),
+                      if (document['status'] != 'Pending' &&
+                          document['status'] != 'Adopted')
                         ElevatedButton(
                           onPressed: () {
                             _updateAdoptionStatus(
@@ -469,6 +502,27 @@ class WebAdoptionRequestDialog extends StatelessWidget {
           print("Failed to update animal status: $error");
           _showDialog(context, 'Failed to update animal status');
         });
+      } else if (status == 'Shipped') {
+        FirebaseFirestore.instance
+            .collection('Animal')
+            .doc(petId)
+            .update({'Status': 'Shipped'}).then((_) {
+          print("Animal status updated to Shipped");
+        }).catchError((error) {
+          print("Failed to update animal status: $error");
+          _showDialog(context, 'Failed to update animal status');
+        });
+      } else if (status == 'Adopted') {
+        // If the adoption form is Shipped, update the animal's status to "Adopted"
+        FirebaseFirestore.instance
+            .collection('Animal')
+            .doc(petId)
+            .update({'Status': 'Adopted'}).then((_) {
+          print("Animal status updated to Adopted");
+        }).catchError((error) {
+          print("Failed to update animal status: $error");
+          _showDialog(context, 'Failed to update animal status');
+        });
       } else if (status == 'Pending') {
         // If the adoption form is pending, update the animal's status to "Unadopted"
         FirebaseFirestore.instance
@@ -496,7 +550,11 @@ class WebAdoptionRequestDialog extends StatelessWidget {
             ? "We would like to inform you that your adoption form for $animalName is accepted."
             : (status == 'Pending'
                 ? "We would like to inform you that your adoption form for $animalName is cancelled."
-                : "We would like to inform you that your adoption form for $animalName is rejected.");
+                : (status == 'Shipped'
+                    ? "We would like to inform you that your adoption form for $animalName is shipped."
+                    : (status == 'Adopted'
+                        ? "We would like to inform you that your adoption process with $animalName is done."
+                        : "We would like to inform you that your adoption form for $animalName is rejected.")));
 
         // Send message to user
         Map<String, dynamic> messageData = {

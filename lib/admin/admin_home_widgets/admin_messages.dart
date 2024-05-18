@@ -241,7 +241,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                 Container(
                   padding: EdgeInsets.all(8.0),
                   child: Text(
-                    selectedUser ?? "Loading...",
+                    selectedUser ?? "",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,

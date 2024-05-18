@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
-import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:typed_data';
-
 import 'package:image_picker/image_picker.dart';
 
 class PersonalDetailsPage extends StatefulWidget {
@@ -70,6 +68,28 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
   }
 
   Future<void> uploadProfilePicture() async {
+    if (!areProfileDetailsFilled()) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Cannot upload profile yet'),
+            content:
+                Text('Please fill up the details and update profile first.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     final picker = ImagePicker();
     final pickedFile = await picker.getImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -92,6 +112,14 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
         });
       }
     }
+  }
+
+  bool areProfileDetailsFilled() {
+    return usernameController.text.isNotEmpty &&
+        firstNameController.text.isNotEmpty &&
+        lastNameController.text.isNotEmpty &&
+        addressController.text.isNotEmpty &&
+        ageController.text.isNotEmpty;
   }
 
   Future<void> updateProfilePicture(String downloadUrl) async {

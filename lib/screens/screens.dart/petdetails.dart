@@ -92,11 +92,17 @@ class PetDetailsDialog extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: petData['Status'] == 'Reserved'
                               ? Colors.lightBlue
-                              : Colors.black.withOpacity(0.7),
+                              : petData['Status'] == 'Shipped'
+                                  ? Colors.blue
+                                  : petData['Status'] == 'Adopted'
+                                      ? Colors.green
+                                      : Colors.black.withOpacity(0.7),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
-                          petData['Status'],
+                          petData['Status'] != 'Adopted'
+                              ? petData['Status']
+                              : 'Already ${petData['Status']}',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

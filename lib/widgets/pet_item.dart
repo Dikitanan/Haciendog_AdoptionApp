@@ -106,6 +106,9 @@ class _PetItemState extends State<PetItem> {
 
     List<DocumentSnapshot> pets = snapshot.docs.toList();
 
+    // Filter out pets with status "Adopted"
+    pets = pets.where((pet) => pet['Status'] != 'Adopted').toList();
+
     // Shuffle the list initially
     pets.shuffle();
 

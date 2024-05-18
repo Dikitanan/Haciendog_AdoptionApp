@@ -175,13 +175,13 @@ class _AdminDonationsState extends State<AdminDonations> {
                             'description':
                                 'Thank you $name for donating in our Shelter!',
                             'imageURL':
-                                'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/thank_you_donation.jpg?alt=media&token=c457ecd4-275d-4517-986d-42c3997ba988', // Using proofOfDonation as imageURL
+                                'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/thank_you_donation.jpg?alt=media&token=9c04c165-9260-4de3-9f8d-297474ccb7a5', // Using proofOfDonation as imageURL
                             'createdAt': FieldValue.serverTimestamp(),
                             'heartCount': 0,
                             'commentCount': 0,
                             'userEmail': email,
                             'profilePicture':
-                                'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/adminpic.jpg?alt=media&token=0690002b-83e0-49c1-8c43-c55336b5bde0',
+                                'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/adminpic.jpg?alt=media&token=0fef831c-2c4e-4f4a-9979-e6fb5de3ef02',
                             'username': 'Donation Bot',
                           });
 

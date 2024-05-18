@@ -218,6 +218,12 @@ class _PetListState extends State<PetList> {
         } else if (status == 'Archived') {
           // If the status is "Archived", we don't want to display any tag
           formStatusText = '';
+        } else if (status == 'Shipped') {
+          formStatusText = 'Pet is Shipped';
+          formStatusColor = Colors.green;
+        } else if (status == 'Adopted') {
+          formStatusText = 'Successful Adoption';
+          formStatusColor = Colors.green;
         } else {
           formStatusText = isFormSubmitted ? 'Form Submitted' : '';
         }
@@ -345,7 +351,9 @@ class _PetListState extends State<PetList> {
             .get();
 
         querySnapshot.docs.forEach((doc) {
-          if (doc['status'] == 'Accepted') {
+          if (doc['status'] == 'Accepted' ||
+              doc['status'] == 'Shipped' ||
+              doc['status'] == 'Adopted') {
             isAccepted = true;
           }
         });
