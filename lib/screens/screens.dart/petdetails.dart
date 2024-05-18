@@ -191,7 +191,8 @@ class PetDetailsDialog extends StatelessWidget {
                     String petStatus = petData[
                         'Status']; // You should replace this with the actual field name
 
-                    if (petStatus != 'Unadopted') {
+                    if (petStatus != 'Unadopted' && petStatus == 'Reserved' ||
+                        petStatus == 'Shipped') {
                       // Return Close button only if the pet status is not Pending
                       return Center(
                         child: Container(
@@ -206,7 +207,13 @@ class PetDetailsDialog extends StatelessWidget {
                         children: [
                           ElevatedButton(
                             onPressed: () {
-                              if (formStatus == null) {
+                              if (formStatus != 'Adopted' &&
+                                      petStatus == 'Adopted' ||
+                                  petStatus != 'Unadopted' &&
+                                      petStatus == 'Reserved' ||
+                                  petStatus == 'Shipped') {
+                                print('Cannot Adopt');
+                              } else if (formStatus == null) {
                                 _showAdoptionFormDialog(context);
                               } else if (formStatus == 'Pending') {
                                 _cancelForm(context);
@@ -215,20 +222,69 @@ class PetDetailsDialog extends StatelessWidget {
                               } else if (formStatus == 'Archived') {
                                 _showAdoptionFormDialog(
                                     context); // Change action for 'Archived'
+                              } else if (formStatus == 'Adopted' &&
+                                  petStatus == 'Adopted') {
+                                User? user = FirebaseAuth.instance.currentUser;
+                                if (user != null) {
+                                  FirebaseFirestore.instance
+                                      .collection('ShelterRatings')
+                                      .where('email', isEqualTo: user.email)
+                                      .where('petId', isEqualTo: currentPetId)
+                                      .get()
+                                      .then((QuerySnapshot querySnapshot) {
+                                    if (querySnapshot.docs.isNotEmpty) {
+                                      // User has already rated for this pet
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: Text('Already Rated'),
+                                            content: Text(
+                                                'You have already rated this shelter for this pet.'),
+                                            actions: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: Text('OK'),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    } else {
+                                      // User has not rated yet, show the rating dialog
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => RatingDialog(
+                                            currentPetId: currentPetId),
+                                      );
+                                    }
+                                  });
+                                }
                               } else {
                                 // If not 'Archived', show 'Redo Application'
                                 _showAdoptionFormDialog(context);
                               }
                             },
                             child: Text(
-                              formStatus == null
-                                  ? 'Adopt'
-                                  : formStatus == 'Pending'
-                                      ? 'Cancel'
-                                      : formStatus ==
-                                              'Archived' // Change text for 'Archived'
-                                          ? 'Adopt'
-                                          : 'Redo Application',
+                              formStatus != 'Adopted' &&
+                                          petStatus == 'Adopted' ||
+                                      petStatus != 'Unadopted' &&
+                                          petStatus == 'Reserved' ||
+                                      petStatus == 'Shipped'
+                                  ? 'Cannot Be Adopted'
+                                  : formStatus == null
+                                      ? 'Adopt'
+                                      : formStatus == 'Pending'
+                                          ? 'Cancel'
+                                          : formStatus ==
+                                                  'Archived' // Change text for 'Archived'
+                                              ? 'Adopt'
+                                              : formStatus ==
+                                                      'Adopted' // Change text for 'Archived'
+                                                  ? 'Rate Experience'
+                                                  : 'Redo Application',
                             ),
                           ),
                         ],
@@ -678,6 +734,100 @@ class PetDetailsDialog extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class RatingDialog extends StatefulWidget {
+  final String currentPetId;
+
+  RatingDialog({required this.currentPetId});
+
+  @override
+  _RatingDialogState createState() => _RatingDialogState();
+}
+
+class _RatingDialogState extends State<RatingDialog> {
+  double _rating = 0.0;
+  TextEditingController _testimonialsController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Rate the Shelter'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (index) {
+              return IconButton(
+                icon: Icon(
+                  index < _rating.floor() ? Icons.star : Icons.star_border,
+                  color: Colors.orange,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _rating = index + 1.0;
+                  });
+                },
+              );
+            }),
+          ),
+          SizedBox(height: 16),
+          TextField(
+            controller: _testimonialsController,
+            decoration: InputDecoration(
+              labelText: 'Testimonials',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+          ),
+        ],
+      ),
+      actions: [
+        ElevatedButton(
+          onPressed: () {
+            User? user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              FirebaseFirestore.instance.collection('ShelterRatings').add({
+                'email': user.email,
+                'rate': _rating.toInt(),
+                'testimonials': _testimonialsController.text,
+                'petId': widget.currentPetId, // Include currentPetId
+              }).then((_) {
+                Navigator.of(context).pop(); // Close rating dialog
+                _showSuccessDialog();
+              }).catchError((error) {
+                print('Error submitting rating: $error');
+                // Handle error if needed
+              });
+            }
+          },
+          child: Text('Submit'),
+        ),
+      ],
+    );
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Success'),
+          content: Text('Thank you for your rating!'),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
