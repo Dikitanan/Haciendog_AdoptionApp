@@ -175,7 +175,7 @@ class _AdminDonationsState extends State<AdminDonations> {
                             'description':
                                 'Thank you $name for donating in our Shelter!',
                             'imageURL':
-                                'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/thank_you_donation.jpg?alt=media&token=9c04c165-9260-4de3-9f8d-297474ccb7a5', // Using proofOfDonation as imageURL
+                                'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/thank_you_donation.jpg?alt=media&token=9c04c165-9260-4de3-9f8d-297474ccb7a5',
                             'createdAt': FieldValue.serverTimestamp(),
                             'heartCount': 0,
                             'commentCount': 0,
@@ -185,6 +185,39 @@ class _AdminDonationsState extends State<AdminDonations> {
                             'username': 'Donation Bot',
                           });
 
+                          // Add notification for accepted donation
+                          await FirebaseFirestore.instance
+                              .collection('Notifications')
+                              .add({
+                            'title': 'Donation',
+                            'body': 'Thank you for Donating!',
+                            'timestamp': FieldValue.serverTimestamp(),
+                            'email': email,
+                            'isSeen': false,
+                          });
+
+                          // Update UserNewMessage collection
+                          DocumentReference userNewMessageDoc =
+                              FirebaseFirestore.instance
+                                  .collection('UserNewMessage')
+                                  .doc(email);
+                          await FirebaseFirestore.instance
+                              .runTransaction((transaction) async {
+                            DocumentSnapshot snapshot =
+                                await transaction.get(userNewMessageDoc);
+                            if (!snapshot.exists) {
+                              transaction.set(
+                                  userNewMessageDoc, {'notificationCount': 1});
+                            } else {
+                              Map<String, dynamic>? data =
+                                  snapshot.data() as Map<String, dynamic>?;
+                              int newCount =
+                                  (data?['notificationCount'] ?? 0) + 1;
+                              transaction.update(userNewMessageDoc,
+                                  {'notificationCount': newCount});
+                            }
+                          });
+
                           Navigator.of(context)
                               .pop(); // Close dialog after updating
                         },
@@ -192,17 +225,52 @@ class _AdminDonationsState extends State<AdminDonations> {
                       ),
                       IconButton(
                         onPressed: () async {
+                          // Function for rejecting donation
                           await FirebaseFirestore.instance
                               .collection('Donations')
                               .doc(donation.id)
                               .update({'status': 'Rejected'});
 
-                          Navigator.of(context).pop();
+                          // Add notification for rejected donation
+                          await FirebaseFirestore.instance
+                              .collection('Notifications')
+                              .add({
+                            'title': 'Donation',
+                            'body': 'Your Donation is not Valid',
+                            'timestamp': FieldValue.serverTimestamp(),
+                            'email': email,
+                            'isSeen': false,
+                          });
+
+                          // Update UserNewMessage collection
+                          DocumentReference userNewMessageDoc =
+                              FirebaseFirestore.instance
+                                  .collection('UserNewMessage')
+                                  .doc(email);
+                          await FirebaseFirestore.instance
+                              .runTransaction((transaction) async {
+                            DocumentSnapshot snapshot =
+                                await transaction.get(userNewMessageDoc);
+                            if (!snapshot.exists) {
+                              transaction.set(
+                                  userNewMessageDoc, {'notificationCount': 1});
+                            } else {
+                              Map<String, dynamic>? data =
+                                  snapshot.data() as Map<String, dynamic>?;
+                              int newCount =
+                                  (data?['notificationCount'] ?? 0) + 1;
+                              transaction.update(userNewMessageDoc,
+                                  {'notificationCount': newCount});
+                            }
+                          });
+
+                          Navigator.of(context)
+                              .pop(); // Close dialog after updating
                         },
                         icon: Icon(Icons.close, color: Colors.red),
                       ),
                     ],
-                  ),
+                  )
                 ]
               : [], // Empty list if status is not "Pending"
         );

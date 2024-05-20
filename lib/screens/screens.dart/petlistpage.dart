@@ -42,7 +42,7 @@ class _PetListState extends State<PetList> {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: DropdownButton<String>(
                 value: currentFilter,
-                items: <String>['All', 'Form Submitted', 'Form Unsubmitted']
+                items: <String>['All', 'Form Submitted', 'Form To Fill-up']
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
@@ -158,7 +158,7 @@ class _PetListState extends State<PetList> {
       bool isFormSubmitted = await _isFormSubmitted(userEmail, animal.id);
       if (currentFilter == 'All' ||
           (currentFilter == 'Form Submitted' && isFormSubmitted) ||
-          (currentFilter == 'Form Unsubmitted' && !isFormSubmitted)) {
+          (currentFilter == 'Form To Fill-up' && !isFormSubmitted)) {
         filteredAnimals.add(animal);
       }
     }
@@ -173,7 +173,13 @@ class _PetListState extends State<PetList> {
         .where('petId', isEqualTo: petId)
         .get();
 
-    return formSnapshots.docs.isNotEmpty;
+    for (QueryDocumentSnapshot doc in formSnapshots.docs) {
+      if (doc['status'] != 'Archived') {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   Widget buildPetTile(DocumentSnapshot pet, DocumentSnapshot animalHeartedDoc,

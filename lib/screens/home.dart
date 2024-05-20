@@ -2,11 +2,13 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mad/admin/post_provider.dart';
+import 'package:mad/screens/screens.dart/notifications.dart';
 import 'package:mad/screens/screens.dart/userBlogs.dart';
 import 'package:mad/theme/color.dart';
 import 'package:mad/utils/data.dart';
 import 'package:mad/widgets/category_item.dart';
 import 'package:mad/widgets/notification_box.dart';
+
 import 'package:mad/widgets/pet_item.dart';
 
 class HomePage extends StatefulWidget {
@@ -20,12 +22,14 @@ class _HomePageState extends State<HomePage> {
   int _selectedCategory = 0;
   String _category = 'All';
   String _selectedScreen = 'Pets';
-  bool _showPets = true; // Define _showPets variable
+  bool _showPets = true;
+  bool _notificationClicked = false;
   LikeState likeState = LikeState();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColor.appBgColor,
+      backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -70,7 +74,6 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Icon(
                               Icons.place_outlined,
-                              color: AppColor.labelColor,
                               size: 20,
                             ),
                             const SizedBox(
@@ -79,7 +82,6 @@ class _HomePageState extends State<HomePage> {
                             Text(
                               'Location',
                               style: TextStyle(
-                                color: AppColor.labelColor,
                                 fontSize: 13,
                               ),
                             ),
@@ -91,7 +93,6 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           'Loading Location...',
                           style: TextStyle(
-                            color: AppColor.textColor,
                             fontWeight: FontWeight.w500,
                             fontSize: 14,
                           ),
@@ -99,10 +100,6 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-                  NotificationBox(
-                    notifiedNumber: 1,
-                    onTap: null,
-                  )
                 ],
               );
             } else if (snapshot.hasError) {
@@ -127,7 +124,6 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Icon(
                               Icons.place_outlined,
-                              color: AppColor.labelColor,
                               size: 20,
                             ),
                             const SizedBox(
@@ -136,7 +132,6 @@ class _HomePageState extends State<HomePage> {
                             Text(
                               "Location",
                               style: TextStyle(
-                                color: AppColor.labelColor,
                                 fontSize: 13,
                               ),
                             ),
@@ -148,7 +143,6 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           location,
                           style: TextStyle(
-                            color: AppColor.textColor,
                             fontWeight: FontWeight.w500,
                             fontSize: 14,
                           ),
@@ -156,52 +150,70 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-                  Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Color(
-                          0xFFE96560), // Set the background color of the dropdown button
-                      borderRadius: BorderRadius.circular(
-                          8), // Optional: Add border radius for rounded corners
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(5.0),
-                      child: DropdownButton<String>(
-                        value: _selectedScreen,
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _selectedScreen = newValue!;
-                            _showPets = newValue == 'Pets';
-                          });
-                        },
-                        // Set the background color of the dropdown list
-                        dropdownColor: Color(0xFFE96560),
-                        items: <String>['Pets', 'Blogs'].map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
+                  _notificationClicked
+                      ? Container(
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Color(0xFFE96560),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              value,
+                              'Notification',
                               style: TextStyle(
-                                fontWeight: FontWeight
-                                    .bold, // Emphasize the dropdown item text
-                                fontSize:
-                                    16, // Increase the font size for visibility
-                                color: Colors
-                                    .white, // Change the text color to white
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
+                          ),
+                        )
+                      : Container(
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Color(0xFFE96560),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(5.0),
+                            child: DropdownButton<String>(
+                              value: _selectedScreen,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedScreen = newValue!;
+                                  _showPets = newValue == 'Pets';
+                                });
+                              },
+                              dropdownColor: Color(0xFFE96560),
+                              items:
+                                  <String>['Pets', 'Blogs'].map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(
+                                    value,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
                   SizedBox(
                     width: 15,
                   ),
                   NotificationBox(
-                    notifiedNumber: 1,
-                    onTap: null,
-                  )
+                    onTap: () {
+                      setState(() {
+                        _notificationClicked = !_notificationClicked;
+                      });
+                    },
+                    notificationClicked: _notificationClicked,
+                  ),
                 ],
               );
             }
@@ -211,7 +223,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  _buildBody() {
+  Widget _buildBody() {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.only(top: 0, bottom: 10),
@@ -219,25 +231,12 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 25),
-            _buildCategories(),
+            if (!_notificationClicked) _buildCategories(),
             SizedBox(height: 10),
-            // Check if _showPets is true
-            if (_showPets)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(15, 0, 15, 25),
-                child: Text(
-                  "Haciendog",
-                  style: TextStyle(
-                    color: AppColor.textColor,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-              )
+            if (_notificationClicked)
+              UserNotifications()
             else
-              Container(), // Empty container if _showPets is false
-            // Conditional rendering based on _showPets
-            _showPets ? _buildPets() : _buildBlogs(),
+              _showPets ? _buildPets() : _buildBlogs(),
           ],
         ),
       ),

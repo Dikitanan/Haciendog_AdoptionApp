@@ -9,7 +9,31 @@ class AdoptionLists extends StatefulWidget {
 }
 
 class _AdoptionListsState extends State<AdoptionLists> {
-  String _selectedStatus = 'All'; // Default selected status
+  String _selectedStatus = 'All';
+  Stream<Map<String, int>> statusCountsStream = (() {
+    return FirebaseFirestore.instance
+        .collection('AdoptionForms')
+        .snapshots()
+        .map((snapshot) {
+      final statuses = [
+        'Pending',
+        'Accepted',
+        'Rejected',
+        'Shipped',
+        'Adopted',
+        'Cancelled',
+        'Archived'
+      ];
+      Map<String, int> counts = {for (var status in statuses) status: 0};
+      for (var doc in snapshot.docs) {
+        final status = doc['status'];
+        if (counts.containsKey(status)) {
+          counts[status] = counts[status]! + 1;
+        }
+      }
+      return counts;
+    });
+  })();
 
   @override
   Widget build(BuildContext context) {
@@ -17,28 +41,39 @@ class _AdoptionListsState extends State<AdoptionLists> {
       appBar: AppBar(
         title: Text('Adoption Requests'),
         actions: [
-          DropdownButton<String>(
-            value: _selectedStatus,
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedStatus = newValue!;
-              });
-            },
-            items: <String>[
-              'All',
-              'Pending',
-              'Accepted',
-              'Rejected',
-              'Shipped',
-              'Adopted',
-              'Cancelled',
-              'Archived'
-            ].map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
+          StreamBuilder<Map<String, int>>(
+            stream: statusCountsStream,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return DropdownButton<String>(
+                  value: _selectedStatus,
+                  items: [DropdownMenuItem(value: 'All', child: Text('All'))],
+                  onChanged: null,
+                );
+              }
+              final statusCounts = snapshot.data!;
+              return DropdownButton<String>(
+                value: _selectedStatus,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedStatus = newValue!;
+                  });
+                },
+                items: <String>[
+                  'All',
+                  ...statusCounts.keys.toList(),
+                ].map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value == 'All'
+                          ? 'All'
+                          : '$value (${statusCounts[value] ?? 0})',
+                    ),
+                  );
+                }).toList(),
               );
-            }).toList(),
+            },
           ),
         ],
       ),
@@ -58,8 +93,16 @@ class _AdoptionListsState extends State<AdoptionLists> {
               child: CircularProgressIndicator(),
             );
           }
+
+          // Filter out 'Adopted' status if _selectedStatus is 'All'
+          final documents = _selectedStatus == 'All'
+              ? snapshot.data!.docs
+                  .where((doc) => doc['status'] != 'Adopted')
+                  .toList()
+              : snapshot.data!.docs;
+
           return ListView(
-            children: snapshot.data!.docs.map((document) {
+            children: documents.map((document) {
               return ListTile(
                 title: Text(
                   document['name'],
@@ -93,17 +136,15 @@ class _AdoptionListsState extends State<AdoptionLists> {
                     fontWeight: FontWeight.bold,
                     color: document['status'] == 'Accepted'
                         ? Colors.green
-                        : document['status'] == 'Rejected'
+                        : document['status'] == 'Rejected' ||
+                                document['status'] == 'Cancelled'
                             ? Colors.red
-                            : document['status'] == 'Cancelled'
-                                ? Colors.red
-                                : document['status'] == 'Archived'
-                                    ? Colors.yellow
-                                    : document['status'] == 'Shipped'
-                                        ? Colors.green
-                                        : document['status'] == 'Adopted'
-                                            ? Colors.green
-                                            : Colors.blue,
+                            : document['status'] == 'Archived'
+                                ? Colors.yellow
+                                : document['status'] == 'Shipped' ||
+                                        document['status'] == 'Adopted'
+                                    ? Colors.green
+                                    : Colors.blue,
                   ),
                 ),
                 onTap: () {
@@ -447,6 +488,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                           },
                           child: Text('Ship'),
                         ),
+                      if (document['status'] == 'Cancelled') Container(),
                       if (document['status'] == 'Shipped')
                         ElevatedButton(
                           onPressed: () {
@@ -461,7 +503,8 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                           child: Text('Done'),
                         ),
                       if (document['status'] != 'Pending' &&
-                          document['status'] != 'Adopted')
+                          document['status'] != 'Adopted' &&
+                          document['status'] != 'Cancelled')
                         ElevatedButton(
                           onPressed: () {
                             _updateAdoptionStatus(
@@ -491,45 +534,24 @@ class WebAdoptionRequestDialog extends StatelessWidget {
         .update({'status': status}).then((_) {
       print("Status updated successfully");
 
-      // If the adoption form is accepted, update the animal's status
+      // Update the animal's status based on the adoption form status
+      String animalStatus = '';
       if (status == 'Accepted') {
-        FirebaseFirestore.instance
-            .collection('Animal')
-            .doc(petId)
-            .update({'Status': 'Reserved'}).then((_) {
-          print("Animal status updated to Reserved");
-        }).catchError((error) {
-          print("Failed to update animal status: $error");
-          _showDialog(context, 'Failed to update animal status');
-        });
+        animalStatus = 'Reserved';
       } else if (status == 'Shipped') {
-        FirebaseFirestore.instance
-            .collection('Animal')
-            .doc(petId)
-            .update({'Status': 'Shipped'}).then((_) {
-          print("Animal status updated to Shipped");
-        }).catchError((error) {
-          print("Failed to update animal status: $error");
-          _showDialog(context, 'Failed to update animal status');
-        });
+        animalStatus = 'Shipped';
       } else if (status == 'Adopted') {
-        // If the adoption form is Shipped, update the animal's status to "Adopted"
-        FirebaseFirestore.instance
-            .collection('Animal')
-            .doc(petId)
-            .update({'Status': 'Adopted'}).then((_) {
-          print("Animal status updated to Adopted");
-        }).catchError((error) {
-          print("Failed to update animal status: $error");
-          _showDialog(context, 'Failed to update animal status');
-        });
+        animalStatus = 'Adopted';
       } else if (status == 'Pending') {
-        // If the adoption form is pending, update the animal's status to "Unadopted"
+        animalStatus = 'Unadopted';
+      }
+
+      if (animalStatus.isNotEmpty) {
         FirebaseFirestore.instance
             .collection('Animal')
             .doc(petId)
-            .update({'Status': 'Unadopted'}).then((_) {
-          print("Animal status updated to Unadopted");
+            .update({'Status': animalStatus}).then((_) {
+          print("Animal status updated to $animalStatus");
         }).catchError((error) {
           print("Failed to update animal status: $error");
           _showDialog(context, 'Failed to update animal status');
@@ -569,6 +591,44 @@ class WebAdoptionRequestDialog extends StatelessWidget {
             .add(messageData)
             .then((_) {
           print("Message sent to user successfully");
+
+          // Add to Notifications collection
+          FirebaseFirestore.instance.collection('Notifications').add({
+            'title': 'Adoption Update',
+            'body': messageText,
+            'timestamp': FieldValue.serverTimestamp(),
+            'email': userEmail,
+            'isSeen': false,
+          }).then((_) {
+            print("Notification added successfully");
+          }).catchError((error) {
+            print("Failed to add notification: $error");
+          });
+
+          // Update UserNewMessage collection
+          DocumentReference userNewMessageDoc = FirebaseFirestore.instance
+              .collection('UserNewMessage')
+              .doc(userEmail);
+          FirebaseFirestore.instance.runTransaction((transaction) async {
+            DocumentSnapshot snapshot =
+                await transaction.get(userNewMessageDoc);
+            if (!snapshot.exists) {
+              // If the document does not exist, create it with notificationCount set to 1
+              transaction.set(userNewMessageDoc, {'notificationCount': 1});
+            } else {
+              // If the document exists, increment the notificationCount field
+              Map<String, dynamic>? data =
+                  snapshot.data() as Map<String, dynamic>?;
+              int newCount = (data?['notificationCount'] ?? 0) + 1;
+              transaction
+                  .update(userNewMessageDoc, {'notificationCount': newCount});
+            }
+          }).then((_) {
+            print("UserNewMessage notification count updated successfully");
+          }).catchError((error) {
+            print("Failed to update UserNewMessage notification count: $error");
+          });
+
           // Close the AdoptionForm details dialog first
           Navigator.pop(context);
           // Show the feedback dialog

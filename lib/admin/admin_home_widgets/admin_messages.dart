@@ -185,11 +185,38 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
 
   Future<void> sendMessage(String text, String receiverEmail) async {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    // Add to 'admin_messages' collection
     await firestore.collection('admin_messages').add({
       'text': text,
       'timestamp': Timestamp.now(),
       'senderEmail': 'ivory@gmail.com', // Default sender email
       'receiverEmail': receiverEmail,
+    });
+
+    // Add to 'Notifications' collection
+    await firestore.collection('Notifications').add({
+      'title': 'New Message',
+      'body': 'Admin has messaged you.',
+      'timestamp': Timestamp.now(),
+      'email': receiverEmail,
+      'isSeen': false,
+    });
+
+    // Update 'UserNewMessage' collection
+    DocumentReference userNewMessageDoc =
+        firestore.collection('UserNewMessage').doc(receiverEmail);
+    await firestore.runTransaction((transaction) async {
+      DocumentSnapshot snapshot = await transaction.get(userNewMessageDoc);
+      if (!snapshot.exists) {
+        // If the document does not exist, create it with notificationCount set to 1
+        transaction.set(userNewMessageDoc, {'notificationCount': 1});
+      } else {
+        // If the document exists, increment the notificationCount field
+        Map<String, dynamic>? data = snapshot.data() as Map<String, dynamic>?;
+        int newCount = (data?['notificationCount'] ?? 0) + 1;
+        transaction.update(userNewMessageDoc, {'notificationCount': newCount});
+      }
     });
   }
 
