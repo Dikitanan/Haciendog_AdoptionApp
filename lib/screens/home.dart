@@ -33,6 +33,7 @@ class _HomePageState extends State<HomePage> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
+            automaticallyImplyLeading: false,
             backgroundColor: AppColor.appBarColor,
             pinned: true,
             snap: true,

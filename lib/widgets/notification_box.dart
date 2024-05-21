@@ -19,7 +19,7 @@ class NotificationBox extends StatefulWidget {
 }
 
 class _NotificationBoxState extends State<NotificationBox> {
-  late Stream<DocumentSnapshot> _notificationStream;
+  late Stream<DocumentSnapshot<Map<String, dynamic>>> _notificationStream;
 
   @override
   void initState() {
@@ -29,22 +29,19 @@ class _NotificationBoxState extends State<NotificationBox> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<DocumentSnapshot>(
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: _notificationStream,
       builder: (context, snapshot) {
         int notifiedNumber = 0;
 
-        if (snapshot.hasData) {
-          var data = snapshot.data!.data() as Map<String, dynamic>;
-          if (data.containsKey('notificationCount')) {
+        if (snapshot.hasData && snapshot.data!.exists) {
+          var data = snapshot.data!.data();
+          if (data != null && data.containsKey('notificationCount')) {
             notifiedNumber = data['notificationCount'] as int;
           }
         }
 
-        String bellIconPath = widget.notificationClicked
-            ? "assets/icons/bell.svg"
-            : "assets/icons/bell.svg";
-
+        String bellIconPath = "assets/icons/bell.svg";
         MaterialColor? iconColor =
             widget.notificationClicked ? Colors.red : null;
 
@@ -79,13 +76,18 @@ class _NotificationBoxState extends State<NotificationBox> {
     );
   }
 
-  Stream<DocumentSnapshot> _subscribeToNotificationCount() {
+  Stream<DocumentSnapshot<Map<String, dynamic>>>
+      _subscribeToNotificationCount() {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       return FirebaseFirestore.instance
           .collection('UserNewMessage')
           .doc(user.email) // Assuming email is the document ID
-          .snapshots();
+          .snapshots()
+          .handleError((error) {
+        // Log the error or handle it appropriately
+        print('Error fetching notification count: $error');
+      });
     } else {
       throw Exception("User not logged in");
     }

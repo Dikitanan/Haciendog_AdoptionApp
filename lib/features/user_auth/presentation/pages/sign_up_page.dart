@@ -172,7 +172,7 @@ class _SignUpPageState extends State<SignUpPage> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const RootApp(),
+              builder: (context) => const LoginPage(),
             ),
           );
         }
@@ -180,7 +180,7 @@ class _SignUpPageState extends State<SignUpPage> {
         // Display success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Successfully registered and signed in."),
+            content: Text("Successfully registered. Please Log in."),
             backgroundColor: Colors.green,
           ),
         );
