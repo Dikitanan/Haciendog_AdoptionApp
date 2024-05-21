@@ -228,35 +228,44 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
           Expanded(
             flex: 1,
             child: Container(
+              height: double.infinity,
               color: Colors.grey[200],
-              child: ListView.builder(
-                itemCount: userProfiles.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final userProfile = userProfiles[index];
-                  final username = userProfile['username']!;
-                  final email = userProfile['email']!;
-                  final messageCount = userMessageCounts[email];
+              child: SingleChildScrollView(
+                // Wrap the ListView.builder with SingleChildScrollView
+                child: Column(
+                  children: [
+                    ListView.builder(
+                      shrinkWrap: true, // Set shrinkWrap to true
+                      itemCount: userProfiles.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final userProfile = userProfiles[index];
+                        final username = userProfile['username']!;
+                        final email = userProfile['email']!;
+                        final messageCount = userMessageCounts[email];
 
-                  // If message count is zero or null, display the username without the count
-                  final title = messageCount == null || messageCount == 0
-                      ? username
-                      : '$username ($messageCount)';
+                        // If message count is zero or null, display the username without the count
+                        final title = messageCount == null || messageCount == 0
+                            ? username
+                            : '$username ($messageCount)';
 
-                  return ListTile(
-                    title: Text(
-                      title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
+                        return ListTile(
+                          title: Text(
+                            title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              selectedUser = username;
+                            });
+                            fetchUserEmail(selectedUser!);
+                          },
+                        );
+                      },
                     ),
-                    onTap: () {
-                      setState(() {
-                        selectedUser = username;
-                      });
-                      fetchUserEmail(selectedUser!);
-                    },
-                  );
-                },
+                  ],
+                ),
               ),
             ),
           ),
@@ -309,6 +318,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                               child: SingleChildScrollView(
+                                // Wrap SingleChildScrollView around Column
                                 reverse: true,
                                 child: Column(
                                   crossAxisAlignment:

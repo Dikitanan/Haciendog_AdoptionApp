@@ -279,8 +279,35 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                               children: [
                                 Icon(Icons.email, color: Colors.grey),
                                 SizedBox(width: 5),
-                                Text('Email: ${document['email']}',
-                                    style: TextStyle(fontSize: 16)),
+                                Flexible(
+                                  child: RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: 'Email: ',
+                                          style: TextStyle(
+                                              fontSize: 16, color: Colors.grey),
+                                        ),
+                                        TextSpan(
+                                          text: document['email'].length > 12
+                                              ? document['email']
+                                                  .substring(0, 12)
+                                              : document['email'],
+                                          style: TextStyle(
+                                              fontSize: 16, color: Colors.grey),
+                                        ),
+                                        if (document['email'].length > 12)
+                                          TextSpan(
+                                            text:
+                                                '\n${document['email'].substring(12)}',
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.grey),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             SizedBox(height: 5),
