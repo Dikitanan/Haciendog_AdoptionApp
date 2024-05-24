@@ -43,61 +43,75 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
     await Firebase.initializeApp();
     FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-    // Fetch emails from 'UserEmails' collection
-    QuerySnapshot userEmailsSnapshot =
-        await firestore.collection('UserEmails').get();
+    try {
+      // Fetch emails from 'UserEmails' collection
+      QuerySnapshot userEmailsSnapshot =
+          await firestore.collection('UserEmails').get();
 
-    // Filter out "ivory@gmail.com" from the list of user emails
-    List<String> userEmails = userEmailsSnapshot.docs
-        .map((doc) => doc['email'] as String)
-        .where((email) => email != "ivory@gmail.com")
-        .toList();
+      // Filter out "ivory@gmail.com" from the list of user emails
+      List<String> userEmails = userEmailsSnapshot.docs
+          .map((doc) => doc['email'] as String)
+          .where((email) => email != "ivory@gmail.com")
+          .toList();
 
-    // Fetch usernames from 'Profiles' collection using the emails
-    userProfiles = [];
-    for (String email in userEmails) {
-      QuerySnapshot profileSnapshot = await firestore
-          .collection('Profiles')
-          .where('email', isEqualTo: email)
-          .get();
-      if (profileSnapshot.docs.isNotEmpty) {
-        userProfiles.add({
-          'username': profileSnapshot.docs.first['username'] as String,
-          'email': email,
-        });
+      // Fetch usernames from 'Profiles' collection using the emails
+      userProfiles = [];
+      for (String email in userEmails) {
+        QuerySnapshot profileSnapshot = await firestore
+            .collection('Profiles')
+            .where('email', isEqualTo: email)
+            .get();
+        if (profileSnapshot.docs.isNotEmpty) {
+          userProfiles.add({
+            'username': profileSnapshot.docs.first['username'] as String,
+            'email': email,
+          });
+        }
       }
-    }
 
-    // Fetch message counts for each user
-    await fetchUserMessageCounts();
+      // Fetch message counts for each user
+      await fetchUserMessageCounts();
 
-    // Sort userProfiles based on message count in descending order
-    userProfiles.sort((a, b) => userMessageCounts[b['email']!]!
-        .compareTo(userMessageCounts[a['email']]!));
+      // Sort userProfiles based on message count in descending order
+      userProfiles.sort((a, b) => userMessageCounts[b['email']!]!
+          .compareTo(userMessageCounts[a['email']]!));
 
-    if (userProfiles.isNotEmpty) {
+      // Fetch the email of the selected user
+      if (selectedUser != null) {
+        await fetchUserEmail(selectedUser!);
+      }
+    } catch (e) {
+      print("Error fetching user profiles: $e");
+    } finally {
       setState(() {
-        selectedUser = userProfiles.first['username'];
+        isLoadingMessages = false;
       });
-      fetchUserEmail(selectedUser!);
     }
   }
 
   Future<void> fetchUserMessageCounts() async {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-    // Fetch documents from 'UserNewMessage' collection
-    QuerySnapshot userMessageCountSnapshot =
-        await firestore.collection('UserNewMessage').get();
+    try {
+      // Fetch documents from 'UserNewMessage' collection
+      QuerySnapshot userMessageCountSnapshot =
+          await firestore.collection('UserNewMessage').get();
 
-    // Extract email and message count from each document and store it in the map
-    userMessageCounts = {
-      for (var doc in userMessageCountSnapshot.docs)
-        doc['email'] as String: doc['messageCount'] as int
-    };
+      // Extract email and message count from each document
+      for (var doc in userMessageCountSnapshot.docs) {
+        String email = doc['email'] as String;
+        int messageCount = doc['messageCount'] as int;
 
-    // Update the UI
-    setState(() {});
+        // Check if the email exists in 'UserEmails' before adding to userMessageCounts
+        if (userProfiles.any((profile) => profile['email'] == email)) {
+          userMessageCounts[email] = messageCount;
+        }
+      }
+
+      setState(() {}); // Update the UI
+    } catch (e) {
+      print("Error fetching user message counts: $e");
+    }
   }
 
   void _listenToMessageCount() {
@@ -121,39 +135,51 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
     });
 
     FirebaseFirestore firestore = FirebaseFirestore.instance;
-    QuerySnapshot querySnapshot = await firestore
-        .collection('Profiles')
-        .where('username', isEqualTo: username)
-        .get();
+    try {
+      QuerySnapshot querySnapshot = await firestore
+          .collection('Profiles')
+          .where('username', isEqualTo: username)
+          .get();
 
-    if (querySnapshot.docs.isNotEmpty) {
-      // If there's a match in the Profiles collection, set the email and username as the label
-      setState(() {
-        selectedUserEmail = querySnapshot.docs.first['email'] as String?;
-        selectedUser = username;
-      });
+      if (querySnapshot.docs.isNotEmpty) {
+        // If there's a match in the Profiles collection, set the email and username as the label
+        setState(() {
+          selectedUserEmail = querySnapshot.docs.first['email'] as String?;
+          selectedUser = username;
+        });
 
-      // Reset message count to 0 when user is clicked
-      await resetMessageCount(selectedUserEmail!);
-    } else {
-      // If no match is found in the Profiles collection, set the label as "User Profile Not Set Yet"
+        // Reset message count to 0 when user is clicked
+        await resetMessageCount(selectedUserEmail!);
+      } else {
+        // If no match is found in the Profiles collection, set the label as "User Profile Not Set Yet"
+        setState(() {
+          selectedUserEmail = null;
+          selectedUser = "User Profile Not Set Yet";
+        });
+      }
+
+      fetchMessages();
+    } catch (e) {
+      print("Error fetching user email: $e");
+    } finally {
       setState(() {
-        selectedUserEmail = null;
-        selectedUser = "User Profile Not Set Yet";
+        isLoadingMessages = false;
       });
     }
-
-    fetchMessages();
   }
 
   Future<void> resetMessageCount(String userEmail) async {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
-    await firestore
-        .collection('UserNewMessage')
-        .doc(userEmail)
-        .update({'messageCount': 0});
-    // Refresh message counts after updating
-    await fetchUserMessageCounts();
+    try {
+      await firestore
+          .collection('UserNewMessage')
+          .doc(userEmail)
+          .update({'messageCount': 0});
+      // Refresh message counts after updating
+      await fetchUserMessageCounts();
+    } catch (e) {
+      print("Error resetting message count: $e");
+    }
   }
 
   Stream<List<Map<String, dynamic>>> messagesStream() {
@@ -186,38 +212,43 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
   Future<void> sendMessage(String text, String receiverEmail) async {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-    // Add to 'admin_messages' collection
-    await firestore.collection('admin_messages').add({
-      'text': text,
-      'timestamp': Timestamp.now(),
-      'senderEmail': 'ivory@gmail.com', // Default sender email
-      'receiverEmail': receiverEmail,
-    });
+    try {
+      // Add to 'admin_messages' collection
+      await firestore.collection('admin_messages').add({
+        'text': text,
+        'timestamp': Timestamp.now(),
+        'senderEmail': 'ivory@gmail.com', // Default sender email
+        'receiverEmail': receiverEmail,
+      });
 
-    // Add to 'Notifications' collection
-    await firestore.collection('Notifications').add({
-      'title': 'New Message',
-      'body': 'Admin has messaged you.',
-      'timestamp': Timestamp.now(),
-      'email': receiverEmail,
-      'isSeen': false,
-    });
+      // Add to 'Notifications' collection
+      await firestore.collection('Notifications').add({
+        'title': 'New Message',
+        'body': 'Admin has messaged you.',
+        'timestamp': Timestamp.now(),
+        'email': receiverEmail,
+        'isSeen': false,
+      });
 
-    // Update 'UserNewMessage' collection
-    DocumentReference userNewMessageDoc =
-        firestore.collection('UserNewMessage').doc(receiverEmail);
-    await firestore.runTransaction((transaction) async {
-      DocumentSnapshot snapshot = await transaction.get(userNewMessageDoc);
-      if (!snapshot.exists) {
-        // If the document does not exist, create it with notificationCount set to 1
-        transaction.set(userNewMessageDoc, {'notificationCount': 1});
-      } else {
-        // If the document exists, increment the notificationCount field
-        Map<String, dynamic>? data = snapshot.data() as Map<String, dynamic>?;
-        int newCount = (data?['notificationCount'] ?? 0) + 1;
-        transaction.update(userNewMessageDoc, {'notificationCount': newCount});
-      }
-    });
+      // Update 'UserNewMessage' collection
+      DocumentReference userNewMessageDoc =
+          firestore.collection('UserNewMessage').doc(receiverEmail);
+      await firestore.runTransaction((transaction) async {
+        DocumentSnapshot snapshot = await transaction.get(userNewMessageDoc);
+        if (!snapshot.exists) {
+          // If the document does not exist, create it with notificationCount set to 1
+          transaction.set(userNewMessageDoc, {'notificationCount': 1});
+        } else {
+          // If the document exists, increment the notificationCount field
+          Map<String, dynamic>? data = snapshot.data() as Map<String, dynamic>?;
+          int newCount = (data?['notificationCount'] ?? 0) + 1;
+          transaction
+              .update(userNewMessageDoc, {'notificationCount': newCount});
+        }
+      });
+    } catch (e) {
+      print("Error sending message: $e");
+    }
   }
 
   @override
@@ -236,32 +267,49 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                   children: [
                     ListView.builder(
                       shrinkWrap: true, // Set shrinkWrap to true
-                      itemCount: userProfiles.length,
+                      itemCount: userProfiles.length +
+                          1, // Add 1 for the "SELECT MESSAGE" item
                       itemBuilder: (BuildContext context, int index) {
-                        final userProfile = userProfiles[index];
-                        final username = userProfile['username']!;
-                        final email = userProfile['email']!;
-                        final messageCount = userMessageCounts[email];
-
-                        // If message count is zero or null, display the username without the count
-                        final title = messageCount == null || messageCount == 0
-                            ? username
-                            : '$username ($messageCount)';
-
-                        return ListTile(
-                          title: Text(
-                            title,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
+                        if (index == 0) {
+                          // Render the "SELECT MESSAGE" item
+                          return ListTile(
+                            title: Text('SELECT MESSAGE'),
+                            selected: selectedUser ==
+                                null, // Selected when no user is selected
+                            onTap: () async {
+                              setState(() {
+                                selectedUser = null; // Reset selected user
+                              });
+                            },
+                          );
+                        } else {
+                          // Render the user profiles
+                          final userProfile =
+                              userProfiles[index - 1]; // Adjust index by 1
+                          final username = userProfile['username'];
+                          final email = userProfile['email'];
+                          final messageCount = userMessageCounts[email] ?? 0;
+                          return ListTile(
+                            title: Text(username ?? ''),
+                            subtitle: Text(email ?? ''),
+                            trailing: CircleAvatar(
+                              backgroundColor: messageCount > 0
+                                  ? Colors.red
+                                  : Colors.transparent,
+                              child: Text(
+                                messageCount > 0 ? '$messageCount' : '',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
-                          ),
-                          onTap: () {
-                            setState(() {
-                              selectedUser = username;
-                            });
-                            fetchUserEmail(selectedUser!);
-                          },
-                        );
+                            selected: selectedUser == username,
+                            onTap: () async {
+                              setState(() {
+                                selectedUser = username;
+                              });
+                              await fetchUserEmail(username!);
+                            },
+                          );
+                        }
                       },
                     ),
                   ],
@@ -270,101 +318,100 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
             ),
           ),
           Expanded(
-            flex: 3,
+            flex: 2,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    selectedUser ?? "",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: isLoadingMessages
-                      ? Center(
-                          child: Container(),
-                        )
-                      : StreamBuilder<List<Map<String, dynamic>>>(
-                          stream: messagesStream(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return Center(
-                                child: Container(),
-                              );
-                            }
-                            if (snapshot.hasError) {
-                              return Center(
-                                child: Text('Error: ${snapshot.error}'),
-                              );
-                            }
-                            List<Map<String, dynamic>> messages =
-                                snapshot.data ?? [];
-                            if (messages.isEmpty) {
-                              return Center(
-                                child: Text('Empty Chat'),
-                              );
-                            }
-                            return Container(
-                              padding: EdgeInsets.all(16.0),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              child: SingleChildScrollView(
-                                // Wrap SingleChildScrollView around Column
-                                reverse: true,
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children:
-                                      _buildMessagesWithDividers(messages),
+              children: <Widget>[
+                if (selectedUser != null) ...[
+                  Expanded(
+                    child: isLoadingMessages
+                        ? Center(
+                            child: CircularProgressIndicator(),
+                          )
+                        : StreamBuilder<List<Map<String, dynamic>>>(
+                            stream: messagesStream(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              if (snapshot.hasError) {
+                                return Center(
+                                  child: Text('Error: ${snapshot.error}'),
+                                );
+                              }
+                              List<Map<String, dynamic>> messages =
+                                  snapshot.data ?? [];
+                              if (messages.isEmpty) {
+                                return Center(
+                                  child: Text('Empty Chat'),
+                                );
+                              }
+                              return Container(
+                                padding: EdgeInsets.all(16.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(8.0),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-                SizedBox(height: 10),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: messageController,
-                          decoration: InputDecoration(
-                            hintText: 'Type your message here',
-                            border: OutlineInputBorder(),
+                                child: SingleChildScrollView(
+                                  // Wrap SingleChildScrollView around Column
+                                  reverse: true,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children:
+                                        _buildMessagesWithDividers(messages),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                  SizedBox(height: 10),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: messageController,
+                            decoration: InputDecoration(
+                              hintText: 'Type your message here',
+                              border: OutlineInputBorder(),
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(width: 10),
-                      IconButton(
-                        onPressed: () async {
-                          if (selectedUser != null &&
-                              messageController.text.isNotEmpty) {
-                            await sendMessage(
-                                messageController.text, selectedUserEmail!);
+                        SizedBox(width: 10),
+                        IconButton(
+                          onPressed: () async {
+                            if (selectedUser != null &&
+                                messageController.text.isNotEmpty) {
+                              await sendMessage(
+                                  messageController.text, selectedUserEmail!);
 
-                            messageController.clear();
+                              messageController.clear();
 
-                            await resetMessageCount(
-                                selectedUserEmail!); // Reset message count
-                          }
-                        },
-                        icon: Icon(Icons.send),
-                        color: Colors.blue,
-                      ),
-                    ],
+                              await resetMessageCount(
+                                  selectedUserEmail!); // Reset message count
+                            }
+                          },
+                          icon: Icon(Icons.send),
+                          color: Colors.blue,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ] else
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        'Select a user to see messages',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
