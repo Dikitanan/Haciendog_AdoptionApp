@@ -46,15 +46,22 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            ClipOval(
-              child: Image.asset(
-                'assets/icons/haciendoglogo-removebg-preview.png',
-                width: 300,
-                height: 300,
-                fit: BoxFit.cover,
+            Container(
+              width: 270,
+              height: 270,
+              decoration: BoxDecoration(
+                color: Color(0xFFE96560),
+                shape: BoxShape.circle, // Set the shape to circle
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/icons/haciendoglogo-removebg-preview.png',
+                  width: 300,
+                  height: 300,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-
             SizedBox(height: 20), // Provides some spacing
             kIsWeb ? webText() : animatedMobileText(),
             SizedBox(height: 20), // More spacing

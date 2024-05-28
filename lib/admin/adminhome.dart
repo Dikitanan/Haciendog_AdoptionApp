@@ -56,51 +56,67 @@ class _AdminHomeState extends State<AdminHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color.fromARGB(255, 247, 210, 209),
       appBar: AppBar(
-        backgroundColor: Colors.grey[200],
-        title: Text('Admin Dashboard'),
+        backgroundColor: Color(0xFFE96560),
+        title: Text(
+          'Admin Dashboard',
+          style: TextStyle(color: const Color.fromARGB(255, 255, 255, 255)),
+        ),
         bottomOpacity: 100,
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                children: [
-                  LeftSideBar(
-                    userName: userName,
-                    userProfilePicture: userProfilePicture,
-                    menus: [
-                      'Statistics',
-                      'Blogs',
-                      'Donations',
-                      'Adoption Requests',
-                      'Messages'
-                    ],
-                    onMenuSelected: (menu) {
-                      setState(() {
-                        selectedMenu = menu;
-                        // Update middleContent based on selected menu
-                        if (menu == 'Blogs') {
-                          middleContent = MiddlePart(likeState: likeState);
-                        } else if (menu == 'Statistics') {
-                          middleContent = Center(
-                            child: Text('Statistics Content'),
-                          );
-                        } else if (menu == 'Donations') {
-                          middleContent = AdminDonations();
-                        } else if (menu == 'Adoption Requests') {
-                          middleContent = AdoptionLists();
-                        } else if (menu == 'Messages') {
-                          middleContent = AdminSideMessage();
-                        }
-                      });
-                    },
-                  ),
-                  SizedBox(width: 20),
-                  Expanded(child: middleContent),
-                  SizedBox(width: 20),
-                ],
+          : Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Color.fromARGB(255, 244, 217, 217),
+                    Colors.white,
+                  ],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    LeftSideBar(
+                      userName: userName,
+                      userProfilePicture: userProfilePicture,
+                      menus: [
+                        'Statistics',
+                        'Blogs',
+                        'Donations',
+                        'Adoption Requests',
+                        'Messages'
+                      ],
+                      onMenuSelected: (menu) {
+                        setState(() {
+                          selectedMenu = menu;
+                          // Update middleContent based on selected menu
+                          if (menu == 'Blogs') {
+                            middleContent = MiddlePart(likeState: likeState);
+                          } else if (menu == 'Statistics') {
+                            middleContent = Center(
+                              child: Text('Statistics Content'),
+                            );
+                          } else if (menu == 'Donations') {
+                            middleContent = AdminDonations();
+                          } else if (menu == 'Adoption Requests') {
+                            middleContent = AdoptionLists();
+                          } else if (menu == 'Messages') {
+                            middleContent = AdminSideMessage();
+                          }
+                        });
+                      },
+                    ),
+                    SizedBox(width: 20),
+                    Expanded(child: middleContent),
+                    SizedBox(width: 20),
+                  ],
+                ),
               ),
             ),
     );

@@ -34,14 +34,18 @@ class _LeftSideBarState extends State<LeftSideBar> {
   Widget build(BuildContext context) {
     return Container(
       width: 250,
-      color: Colors.grey[200],
+      color: Color(0xFFE96560),
       child: ListView(
         padding: EdgeInsets.symmetric(vertical: 20),
         children: <Widget>[
           ListTile(
             title: Text(
               widget.userName ?? 'User Name not available',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.grey[300],
+              ),
             ),
             leading: CircleAvatar(
               backgroundImage: widget.userProfilePicture != null
@@ -59,7 +63,9 @@ class _LeftSideBarState extends State<LeftSideBar> {
                     'Messages (loading...)',
                     style: TextStyle(
                       fontSize: 16,
-                      color: _selectedMenu == 'Messages' ? Colors.blue : null,
+                      color: _selectedMenu == 'Messages'
+                          ? Color.fromARGB(255, 241, 136, 132)
+                          : null,
                     ),
                   ),
                   onTap: () {
@@ -73,7 +79,9 @@ class _LeftSideBarState extends State<LeftSideBar> {
                     'Messages ($messageCount)',
                     style: TextStyle(
                       fontSize: 16,
-                      color: _selectedMenu == 'Messages' ? Colors.blue : null,
+                      color: _selectedMenu == 'Messages'
+                          ? Colors.white
+                          : Colors.white,
                     ),
                   ),
                   onTap: () {
@@ -87,7 +95,8 @@ class _LeftSideBarState extends State<LeftSideBar> {
           for (var menu in _sortedMenus())
             Container(
               color: menu == _selectedMenu
-                  ? Colors.blue.withOpacity(0.3) // Color when selected
+                  ? Color.fromARGB(255, 239, 152, 149)
+                      .withOpacity(0.3) // Color when selected
                   : null,
               child: ListTile(
                 title: Text(
@@ -95,8 +104,10 @@ class _LeftSideBarState extends State<LeftSideBar> {
                   style: TextStyle(
                     fontSize: 16,
                     color: menu == _selectedMenu
-                        ? Colors.blue // Text color when selected
-                        : null, // Default text color
+                        ? const Color.fromARGB(
+                            255, 255, 255, 255) // Text color when selected
+                        : const Color.fromARGB(
+                            255, 255, 255, 255), // Default text color
                   ),
                 ),
                 leading: _getMenuIcon(menu),
@@ -150,15 +161,32 @@ class _LeftSideBarState extends State<LeftSideBar> {
   Widget? _getMenuIcon(String menu) {
     switch (menu.toLowerCase()) {
       case 'statistics':
-        return Icon(Icons.analytics);
+        return Container(
+          child: Icon(
+            Icons.analytics,
+            color: Colors.grey[300],
+          ),
+        );
       case 'blogs':
-        return Icon(Icons.article);
+        return Icon(
+          Icons.article,
+          color: Colors.grey[300],
+        );
       case 'donations':
-        return Icon(Icons.attach_money);
+        return Icon(
+          Icons.attach_money,
+          color: Colors.grey[300],
+        );
       case 'adoption requests':
-        return Icon(Icons.pets);
+        return Icon(
+          Icons.pets,
+          color: Colors.grey[300],
+        );
       case 'messages':
-        return Icon(Icons.message);
+        return Icon(
+          Icons.message,
+          color: Colors.grey[300],
+        );
       default:
         return null;
     }
