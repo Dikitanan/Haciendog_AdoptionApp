@@ -68,7 +68,14 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
   }
 
   Future<void> uploadProfilePicture() async {
-    if (!areProfileDetailsFilled()) {
+    final User? user = FirebaseAuth.instance.currentUser;
+    final String userEmail = user!.email!;
+    final profileDoc = await FirebaseFirestore.instance
+        .collection('Profiles')
+        .doc(userEmail)
+        .get();
+
+    if (!profileDoc.exists) {
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -111,6 +118,24 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
           uploading = false;
         });
       }
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Error'),
+            content: Text('No image selected'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 

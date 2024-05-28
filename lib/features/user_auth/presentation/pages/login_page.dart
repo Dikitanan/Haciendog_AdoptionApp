@@ -4,9 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mad/admin/admin_dashboard.dart';
 import 'package:mad/features/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
-import 'package:mad/features/user_auth/presentation/pages/home_page.dart';
 import 'package:mad/features/user_auth/presentation/pages/sign_up_page.dart';
-import 'package:mad/features/user_auth/presentation/widget/form_container_widget.dart';
 import 'package:mad/screens/root_app.dart';
 
 class LoginPage extends StatefulWidget {
@@ -21,6 +19,8 @@ class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -38,93 +38,124 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text("Login"),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "Login",
-                style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              FormContainerWidget(
-                controller: _emailController,
-                hintText: "Email",
-                isPasswordField: false,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              FormContainerWidget(
-                controller: _passwordController,
-                hintText: "Password",
-                isPasswordField: true,
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              GestureDetector(
-                onTap: _signIn,
-                child: Container(
-                  width: double.infinity,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadiusDirectional.circular(10),
+    Widget content = Container(
+      padding: EdgeInsets.only(bottom: 30),
+      child: Column(
+        children: <Widget>[
+          HeaderContainer(""),
+          Expanded(
+            flex: 1,
+            child: Container(
+              margin: EdgeInsets.only(left: 20, right: 20, top: 30),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: <Widget>[
+                  _textInput(
+                    hint: "Email",
+                    icon: Icons.email,
+                    controller: _emailController,
+                    isPassword: false,
                   ),
-                  child: const Center(
-                    child: Text(
-                      "Login",
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
+                  _textInput(
+                    hint: "Password",
+                    icon: Icons.vpn_key,
+                    controller: _passwordController,
+                    isPassword: true,
+                  ),
+                  Container(
+                    margin: EdgeInsets.only(top: 10),
+                    alignment: Alignment.centerRight,
+                    child: Text("Forgot Password?"),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: _isLoading
+                          ? CircularProgressIndicator()
+                          : ButtonWidget(
+                              onClick: () {
+                                _signIn();
+                              },
+                              btnText: "LOGIN",
+                            ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Don't have an Account?"),
-                  const SizedBox(
-                    width: 5,
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SignUpPage(),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "Don't have an account? ",
+                          style: TextStyle(color: Colors.black),
                         ),
-                      );
-                    },
-                    child: const Text(
-                      "Sign Up",
-                      style: TextStyle(
-                          color: Colors.blue, fontWeight: FontWeight.bold),
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.baseline,
+                          baseline: TextBaseline.alphabetic,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SignUpPage(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              "Register",
+                              style: TextStyle(color: orangeColors),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  )
+                  ),
                 ],
-              )
-            ],
+              ),
+            ),
           ),
+        ],
+      ),
+    );
+
+    if (kIsWeb) {
+      content = Center(
+        child: Container(
+          width: 600,
+          padding: EdgeInsets.all(16),
+          child: content,
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Color.fromARGB(255, 218, 197, 196),
+      body: content,
+    );
+  }
+
+  Widget _textInput({controller, hint, icon, required bool isPassword}) {
+    return Container(
+      margin: EdgeInsets.only(top: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+        color: Colors.white,
+      ),
+      padding: EdgeInsets.only(left: 10),
+      child: TextFormField(
+        controller: controller,
+        obscureText: isPassword,
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: hint,
+          prefixIcon: Icon(icon),
         ),
       ),
     );
   }
 
   void _signIn() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     String email = _emailController.text;
     String password = _passwordController.text;
 
@@ -134,6 +165,9 @@ class _LoginPageState extends State<LoginPage> {
       if (isBanned) {
         // Show modal indicating account is banned
         _showBannedModal();
+        setState(() {
+          _isLoading = false;
+        });
         return;
       }
 
@@ -178,6 +212,10 @@ class _LoginPageState extends State<LoginPage> {
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -241,3 +279,86 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 }
+
+class HeaderContainer extends StatelessWidget {
+  var text = "Login";
+
+  HeaderContainer(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isWeb =
+        kIsWeb; // Assuming you have imported 'package:flutter/foundation.dart';
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.4,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [orangeColors, orangeLightColors],
+          end: Alignment.bottomCenter,
+          begin: Alignment.topCenter,
+        ),
+        borderRadius: isWeb
+            ? BorderRadius.only(
+                bottomLeft: Radius.circular(100),
+                bottomRight: Radius.circular(100),
+              )
+            : BorderRadius.only(
+                bottomLeft: Radius.circular(100),
+              ),
+      ),
+      child: Stack(
+        children: <Widget>[
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: Text(
+              text,
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+          ),
+          Center(
+            child:
+                Image.asset('assets/icons/haciendoglogo-removebg-preview.png'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ButtonWidget extends StatelessWidget {
+  var btnText;
+  var onClick;
+
+  ButtonWidget({this.btnText, this.onClick});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onClick,
+      child: Container(
+        width: double.infinity,
+        height: 40,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+              colors: [orangeColors, orangeLightColors],
+              end: Alignment.centerLeft,
+              begin: Alignment.centerRight),
+          borderRadius: BorderRadius.all(
+            Radius.circular(100),
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          btnText,
+          style: TextStyle(
+              fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+}
+
+Color orangeColors = Color.fromARGB(255, 230, 143, 140);
+Color orangeLightColors = Color(0xFFE96560);

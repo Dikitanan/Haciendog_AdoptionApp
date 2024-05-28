@@ -47,14 +47,14 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             ClipOval(
-              child: Image.network(
-                'https://cdn.i-scmp.com/sites/default/files/d8/images/canvas/2024/03/27/1e1676e5-4b7b-4734-9b77-b63abb5ca315_293a4ec5.jpg',
-                width: 200,
-                height: 200,
-                fit: BoxFit
-                    .cover, // Ensures the image covers the clip area without altering its aspect ratio
+              child: Image.asset(
+                'assets/icons/haciendoglogo-removebg-preview.png',
+                width: 300,
+                height: 300,
+                fit: BoxFit.cover,
               ),
             ),
+
             SizedBox(height: 20), // Provides some spacing
             kIsWeb ? webText() : animatedMobileText(),
             SizedBox(height: 20), // More spacing
@@ -81,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen> {
       style: TextStyle(
         fontSize: 35.0,
         fontWeight: FontWeight.bold,
-        color: Colors.blue.shade700,
+        color: Color(0xFFE96560),
       ),
       textAlign: TextAlign.center,
     );
