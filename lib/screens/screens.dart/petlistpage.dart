@@ -21,21 +21,43 @@ class _PetListState extends State<PetList> {
     }
 
     String userEmail = user.email!;
+    Color tabBackgroundColor =
+        Colors.white; // Set the background color of the TabBar
 
     return DefaultTabController(
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Favorite Pets'),
-          bottom: TabBar(
-            tabs: ['All', 'Dog', 'Cat']
-                .map((category) => Tab(text: category))
-                .toList(),
-            onTap: (index) {
-              setState(() {
-                currentCategory = ['All', 'Dog', 'Cat'][index];
-              });
-            },
+          backgroundColor: Color(0xFFE96560),
+          title: Text(
+            'Favorite Pets',
+            style: TextStyle(color: Colors.white),
+          ),
+          bottom: PreferredSize(
+            // Wrap TabBar in PreferredSize
+            preferredSize:
+                Size.fromHeight(kToolbarHeight), // Set the preferred height
+            child: Container(
+              // Wrap TabBar in Container
+              color:
+                  tabBackgroundColor, // Set the background color of the Container
+              child: TabBar(
+                tabs: ['All', 'Dog', 'Cat']
+                    .map((category) => Tab(text: category))
+                    .toList(),
+                onTap: (index) {
+                  setState(() {
+                    currentCategory = ['All', 'Dog', 'Cat'][index];
+                  });
+                },
+                labelColor: Colors.black,
+                unselectedLabelColor: const Color.fromARGB(255, 0, 0, 0),
+                labelStyle:
+                    TextStyle(color: const Color.fromARGB(255, 0, 0, 0)),
+                unselectedLabelStyle:
+                    TextStyle(color: const Color.fromARGB(255, 0, 0, 0)),
+              ),
+            ),
           ),
           actions: [
             Padding(
@@ -46,7 +68,11 @@ class _PetListState extends State<PetList> {
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
-                    child: Text(value),
+                    child: Text(
+                      value,
+                      style:
+                          TextStyle(color: const Color.fromARGB(255, 0, 0, 0)),
+                    ),
                   );
                 }).toList(),
                 onChanged: (String? newValue) {

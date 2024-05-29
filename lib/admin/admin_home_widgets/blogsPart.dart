@@ -36,7 +36,16 @@ class _MiddlePartState extends State<MiddlePart>
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 100),
         height: 1000,
-        color: Colors.white,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              Color.fromARGB(255, 244, 217, 217),
+              Colors.white,
+            ],
+          ),
+        ),
         child: StreamBuilder(
           stream: _stream,
           builder:

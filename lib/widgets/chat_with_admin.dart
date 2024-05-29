@@ -23,13 +23,17 @@ class _ChatWithAdminState extends State<ChatWithAdmin> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chat with Admin'),
+        backgroundColor: Color(0xFFE96560),
+        title: Text(
+          'Chat with Admin',
+          style: TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
       ),
       body: Card(
         margin: EdgeInsets.symmetric(vertical: 16),
         child: Container(
-          height: 600,
+          height: 660,
           padding: EdgeInsets.all(8),
           child: Column(
             children: [

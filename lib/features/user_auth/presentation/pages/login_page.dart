@@ -39,7 +39,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     Widget content = Container(
-      padding: EdgeInsets.only(bottom: 30),
+      padding: EdgeInsets.only(bottom: 5),
       child: Column(
         children: <Widget>[
           HeaderContainer(""),
@@ -68,15 +68,20 @@ class _LoginPageState extends State<LoginPage> {
                     child: Text("Forgot Password?"),
                   ),
                   Expanded(
-                    child: Center(
-                      child: _isLoading
-                          ? CircularProgressIndicator()
-                          : ButtonWidget(
-                              onClick: () {
-                                _signIn();
-                              },
-                              btnText: "LOGIN",
-                            ),
+                    child: Padding(
+                      padding: kIsWeb
+                          ? const EdgeInsets.all(8.0)
+                          : const EdgeInsets.fromLTRB(0, 0, 0, 200),
+                      child: Center(
+                        child: _isLoading
+                            ? CircularProgressIndicator()
+                            : ButtonWidget(
+                                onClick: () {
+                                  _signIn();
+                                },
+                                btnText: "LOGIN",
+                              ),
+                      ),
                     ),
                   ),
                   RichText(
@@ -291,7 +296,9 @@ class HeaderContainer extends StatelessWidget {
         kIsWeb; // Assuming you have imported 'package:flutter/foundation.dart';
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.4,
+      height: isWeb
+          ? MediaQuery.of(context).size.height * 0.4
+          : MediaQuery.of(context).size.height * 0.35,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [orangeColors, orangeLightColors],
@@ -305,6 +312,7 @@ class HeaderContainer extends StatelessWidget {
               )
             : BorderRadius.only(
                 bottomLeft: Radius.circular(100),
+                bottomRight: Radius.circular(100),
               ),
       ),
       child: Stack(

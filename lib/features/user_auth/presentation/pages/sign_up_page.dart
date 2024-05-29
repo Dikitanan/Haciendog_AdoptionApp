@@ -44,14 +44,13 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = Container(
-      padding: EdgeInsets.only(bottom: 30),
-      child: Column(
-        children: <Widget>[
-          HeaderContainer(""),
-          Expanded(
-            flex: 1,
-            child: Container(
+    Widget content = SingleChildScrollView(
+      child: Container(
+        padding: EdgeInsets.only(bottom: 30),
+        child: Column(
+          children: <Widget>[
+            HeaderContainer(""),
+            Container(
               margin: EdgeInsets.only(left: 20, right: 20, top: 30),
               child: Column(
                 mainAxisSize: MainAxisSize.max,
@@ -74,29 +73,26 @@ class _SignUpPageState extends State<SignUpPage> {
                     controller: _confirmPasswordController,
                     isPassword: true,
                   ),
-                  Container(
-                    margin: EdgeInsets.only(top: 10),
-                    alignment: Alignment.centerRight,
-                    child: Text("Forgot Password?"),
+                  SizedBox(
+                    height: 50,
                   ),
-                  Expanded(
-                    child: Center(
-                      child: _isLoading
-                          ? CircularProgressIndicator()
-                          : ButtonWidget(
-                              onClick: () {
-                                setState(() {
-                                  _isLoading =
-                                      true; // Set isLoading to true when the button is clicked
-                                });
-                                _signUp();
-                              },
-                              btnText: "REGISTER",
-                              isLoading:
-                                  _isLoading, // Pass the isLoading state to ButtonWidget
-                            ),
-                    ),
+                  Center(
+                    child: _isLoading
+                        ? CircularProgressIndicator()
+                        : ButtonWidget(
+                            onClick: () {
+                              setState(() {
+                                _isLoading =
+                                    true; // Set isLoading to true when the button is clicked
+                              });
+                              _signUp();
+                            },
+                            btnText: "REGISTER",
+                            isLoading:
+                                _isLoading, // Pass the isLoading state to ButtonWidget
+                          ),
                   ),
+                  SizedBox(height: kIsWeb ? 75 : 130),
                   RichText(
                     text: TextSpan(
                       children: [
@@ -128,8 +124,8 @@ class _SignUpPageState extends State<SignUpPage> {
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
 
@@ -271,7 +267,9 @@ class HeaderContainer extends StatelessWidget {
         kIsWeb; // Assuming you have imported 'package:flutter/foundation.dart';
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.4,
+      height: isWeb
+          ? MediaQuery.of(context).size.height * 0.4
+          : MediaQuery.of(context).size.height * 0.35,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [orangeColors, orangeLightColors],
@@ -285,6 +283,7 @@ class HeaderContainer extends StatelessWidget {
               )
             : BorderRadius.only(
                 bottomLeft: Radius.circular(100),
+                bottomRight: Radius.circular(100),
               ),
       ),
       child: Stack(

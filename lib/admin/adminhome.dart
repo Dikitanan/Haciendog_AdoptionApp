@@ -58,10 +58,10 @@ class _AdminHomeState extends State<AdminHome> {
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 247, 210, 209),
       appBar: AppBar(
-        backgroundColor: Color(0xFFE96560),
+        backgroundColor: Colors.grey[100],
         title: Text(
           'Admin Dashboard',
-          style: TextStyle(color: const Color.fromARGB(255, 255, 255, 255)),
+          style: TextStyle(color: Colors.black),
         ),
         bottomOpacity: 100,
       ),

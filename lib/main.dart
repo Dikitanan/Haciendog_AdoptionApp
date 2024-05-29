@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Firebase',
+      title: 'Haciendog App',
       home: _getInitialScreen(),
     );
   }

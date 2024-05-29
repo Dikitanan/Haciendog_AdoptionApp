@@ -1,15 +1,10 @@
-import 'dart:typed_data';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:image_picker/image_picker.dart';
+
 import 'package:mad/admin/admin_settings_page/accountsettings.dart';
 import 'package:mad/admin/admin_settings_page/sheltersettings.dart';
 import 'package:mad/admin/admin_settings_page/userlist.dart';
 import 'package:mad/features/user_auth/presentation/pages/login_page.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
 class AdminSettingsForm extends StatefulWidget {
   const AdminSettingsForm({Key? key}) : super(key: key);
@@ -89,7 +84,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
                 }
               },
               labelType: NavigationRailLabelType.all,
-              backgroundColor: Colors.blue, // Change background color
+              backgroundColor: Color(0xFFE96560), // Change background color
               selectedIconTheme: IconThemeData(
                   color: Colors.white, size: 30), // Increase icon size
               unselectedIconTheme: IconThemeData(

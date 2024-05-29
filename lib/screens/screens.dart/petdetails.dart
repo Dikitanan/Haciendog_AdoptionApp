@@ -656,7 +656,7 @@ class PetDetailsDialog extends StatelessWidget {
                 },
               ),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Self Description'),
+                decoration: InputDecoration(labelText: 'Reason For Adopting'),
                 maxLines: 3,
                 onSaved: (value) {
                   _selfDescription = value;

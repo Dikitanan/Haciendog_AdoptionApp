@@ -34,7 +34,7 @@ class _HomePageState extends State<HomePage> {
         slivers: [
           SliverAppBar(
             automaticallyImplyLeading: false,
-            backgroundColor: AppColor.appBarColor,
+            backgroundColor: Color(0xFFE96560),
             pinned: true,
             snap: true,
             floating: true,
@@ -82,9 +82,8 @@ class _HomePageState extends State<HomePage> {
                             ),
                             Text(
                               'Location',
-                              style: TextStyle(
-                                fontSize: 13,
-                              ),
+                              style:
+                                  TextStyle(fontSize: 13, color: Colors.white),
                             ),
                           ],
                         ),
@@ -126,15 +125,15 @@ class _HomePageState extends State<HomePage> {
                             Icon(
                               Icons.place_outlined,
                               size: 20,
+                              color: Colors.grey[300],
                             ),
                             const SizedBox(
                               width: 5,
                             ),
                             Text(
                               "Location",
-                              style: TextStyle(
-                                fontSize: 13,
-                              ),
+                              style:
+                                  TextStyle(fontSize: 13, color: Colors.white),
                             ),
                           ],
                         ),
@@ -144,9 +143,9 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           location,
                           style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              color: Colors.white),
                         ),
                       ],
                     ),
@@ -187,6 +186,9 @@ class _HomePageState extends State<HomePage> {
                                 });
                               },
                               dropdownColor: Color(0xFFE96560),
+                              icon: Icon(Icons.arrow_drop_down,
+                                  color:
+                                      Colors.white), // Set the icon color here
                               items:
                                   <String>['Pets', 'Blogs'].map((String value) {
                                 return DropdownMenuItem<String>(

@@ -194,7 +194,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                       controller: pwdController,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(),
-                        hintText: 'Enter PWD status',
+                        hintText: 'Enter Health status',
                       ),
                     ),
                   ],

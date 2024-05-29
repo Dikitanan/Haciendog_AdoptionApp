@@ -267,187 +267,284 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              Color.fromARGB(255, 244, 217, 217),
+              Colors.white,
+            ],
+          ),
+        ),
         width: MediaQuery.of(context).size.width - 200,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Edit Profile',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  Color.fromARGB(255, 244, 217, 217),
+                  Colors.white,
+                ],
               ),
-              SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 150,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              image: DecorationImage(
-                                image: profilePictureUrl != null
-                                    ? NetworkImage(profilePictureUrl!)
-                                    : NetworkImage(
-                                            "https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png")
-                                        as ImageProvider,
-                                fit: BoxFit.cover,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Edit Profile',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 150,
+                              height: 150,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  image: profilePictureUrl != null
+                                      ? NetworkImage(profilePictureUrl!)
+                                      : NetworkImage(
+                                              "https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png")
+                                          as ImageProvider,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        SizedBox(height: 10),
-                        Center(
-                          child: ElevatedButton(
-                            onPressed: uploadProfilePicture,
-                            child: Text("Upload Profile"),
+                          SizedBox(height: 10),
+                          Center(
+                            child: ElevatedButton(
+                              onPressed: uploadProfilePicture,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Color(0xFFE96560), // Background color
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      5), // No rounded corners
+                                ),
+                              ),
+                              child: Text(
+                                "Upload Profile",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 20),
-                  Expanded(
+                    SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextFormField(
+                            controller: usernameController,
+                            decoration: InputDecoration(
+                              labelText: "Username",
+                              hintText: "Enter your username",
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          TextFormField(
+                            controller: firstNameController,
+                            decoration: InputDecoration(
+                              labelText: "First Name",
+                              hintText: "Enter your first name",
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          TextFormField(
+                            controller: lastNameController,
+                            decoration: InputDecoration(
+                              labelText: "Last Name",
+                              hintText: "Enter your last name",
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          TextFormField(
+                            controller: ageController,
+                            decoration: InputDecoration(
+                              labelText: "Age",
+                              hintText: "Enter your Age",
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          TextFormField(
+                            controller: addressController,
+                            decoration: InputDecoration(
+                              labelText: "Address",
+                              hintText: "Enter your address",
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          TextFormField(
+                            initialValue: userEmail ?? "",
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              labelText: "Email",
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Center(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                updateProfile(
+                                  profilePicture: profilePictureUrl ??
+                                      "default_profile_picture_url",
+                                  username: usernameController.text,
+                                  firstName: firstNameController.text,
+                                  lastName: lastNameController.text,
+                                  address: addressController.text,
+                                  age: ageController.text,
+                                  email: userEmail!,
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor:
+                                    Color(0xFFE96560), // Text color
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(5), // Border radius
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 30,
+                                    vertical: 15), // Button padding
+                              ),
+                              child: Text("Update Profile"),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 40),
+                Divider(),
+                Text(
+                  'Change Password',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Center(
+                  child: Container(
+                    constraints: BoxConstraints(maxWidth: 700),
+                    padding: EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        SizedBox(height: 20),
                         TextFormField(
-                          controller: usernameController,
+                          controller: currentPasswordController,
+                          obscureText: true,
                           decoration: InputDecoration(
-                            labelText: "Username",
-                            hintText: "Enter your username",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        TextFormField(
-                          controller: firstNameController,
-                          decoration: InputDecoration(
-                            labelText: "First Name",
-                            hintText: "Enter your first name",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        TextFormField(
-                          controller: lastNameController,
-                          decoration: InputDecoration(
-                            labelText: "Last Name",
-                            hintText: "Enter your last name",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        TextFormField(
-                          controller: ageController,
-                          decoration: InputDecoration(
-                            labelText: "Age",
-                            hintText: "Enter your Age",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        TextFormField(
-                          controller: addressController,
-                          decoration: InputDecoration(
-                            labelText: "Address",
-                            hintText: "Enter your address",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        TextFormField(
-                          initialValue: userEmail ?? "",
-                          readOnly: true,
-                          decoration: InputDecoration(
-                            labelText: "Email",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Center(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              updateProfile(
-                                profilePicture: profilePictureUrl ??
-                                    "default_profile_picture_url",
-                                username: usernameController.text,
-                                firstName: firstNameController.text,
-                                lastName: lastNameController.text,
-                                address: addressController.text,
-                                age: ageController.text,
-                                email: userEmail!,
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              backgroundColor: Colors.blue,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 30, vertical: 15),
+                            labelText: "Current Password",
+                            hintText: "Enter your current password",
+                            labelStyle:
+                                TextStyle(color: Colors.black), // Text color
+                            hintStyle: TextStyle(
+                                color: Colors.black), // Hint text color
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Colors.black,
+                                  width: 2.0), // Border color and thickness
                             ),
-                            child: Text("Update Profile"),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.black, width: 2.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.black, width: 2.0),
+                            ),
                           ),
                         ),
+                        SizedBox(height: 20),
+                        TextFormField(
+                          controller: newPasswordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: "New Password",
+                            hintText: "Enter your new password",
+                            labelStyle: TextStyle(color: Colors.black),
+                            hintStyle: TextStyle(color: Colors.black),
+                            border: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.black, width: 2.0),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.black, width: 2.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.black, width: 2.0),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        TextFormField(
+                          controller: confirmPasswordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: "Confirm Password",
+                            hintText: "Confirm your new password",
+                            labelStyle: TextStyle(color: Colors.black),
+                            hintStyle: TextStyle(color: Colors.black),
+                            border: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.black, width: 2.0),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.black, width: 2.0),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.black, width: 2.0),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 20),
                       ],
                     ),
                   ),
-                ],
-              ),
-              SizedBox(height: 40),
-              Text(
-                'Change Password',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-              TextFormField(
-                controller: currentPasswordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "Current Password",
-                  hintText: "Enter your current password",
-                  border: OutlineInputBorder(),
                 ),
-              ),
-              SizedBox(height: 20),
-              TextFormField(
-                controller: newPasswordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "New Password",
-                  hintText: "Enter your new password",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 20),
-              TextFormField(
-                controller: confirmPasswordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "Confirm Password",
-                  hintText: "Confirm your new password",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 20),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    changePassword();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      changePassword();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Color(0xFFE96560), // Text color
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5), // Border radius
+                      ),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 15), // Button padding
+                    ),
+                    child: Text("Change Password"),
                   ),
-                  child: Text("Change Password"),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

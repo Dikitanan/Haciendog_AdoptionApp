@@ -156,6 +156,16 @@ class _ShelterSettingsFormState extends State<ShelterSettingsForm> {
       child: Form(
         key: _formKey, // Assign the form key
         child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              colors: [
+                Color.fromARGB(255, 244, 217, 217),
+                Colors.white,
+              ],
+            ),
+          ),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,11 +175,14 @@ class _ShelterSettingsFormState extends State<ShelterSettingsForm> {
                 style: Theme.of(context).textTheme.headline4,
               ),
               SizedBox(
-                height: 25,
+                height: 40,
               ),
-              Text(
-                "Upload G-Cash QR Code",
-                style: Theme.of(context).textTheme.headline6,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(45, 0, 0, 0),
+                child: Text(
+                  "Upload G-Cash QR Code",
+                  style: Theme.of(context).textTheme.headline6,
+                ),
               ),
               SizedBox(height: 10),
               Row(
@@ -184,7 +197,8 @@ class _ShelterSettingsFormState extends State<ShelterSettingsForm> {
                           width: 150,
                           height: 150,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200], // Placeholder color
+                            color: Color.fromARGB(
+                                255, 220, 153, 150), // Placeholder color
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: _imageUrls[i] != null
@@ -201,65 +215,155 @@ class _ShelterSettingsFormState extends State<ShelterSettingsForm> {
                 ],
               ),
               SizedBox(height: 30),
-              Text(
-                "Shelter Description",
-                style: Theme.of(context).textTheme.headline5,
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: "Enter Description",
-                  hintText: "Write a brief description about the shelter",
+              Padding(
+                padding: const EdgeInsets.fromLTRB(45, 0, 0, 0),
+                child: Text(
+                  "Shelter Description",
+                  style: Theme.of(context).textTheme.headline5,
                 ),
               ),
-              SizedBox(height: 10),
-              TextFormField(
-                controller: _locationController,
-                decoration: InputDecoration(
-                  labelText: "Enter Location",
-                  hintText: "Write the Shelter's Location",
-                ),
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                controller: _phoneNumberController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(11),
-                ],
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a phone number.';
-                  }
-                  if (value.length != 11) {
-                    return 'Phone number must have 11 digits.';
-                  }
-                  return null;
-                },
-                decoration: InputDecoration(
-                  labelText: "Enter Phone Number",
-                  hintText: "Write your Phone Number",
-                ),
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                controller: _facebookController,
-                decoration: InputDecoration(
-                  labelText: "Enter Facebook Account",
-                  hintText: "Write your Facebook Account",
+              SizedBox(height: 15),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(70, 0, 70, 0),
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _locationController,
+                      decoration: InputDecoration(
+                        labelText: "Enter Location",
+                        hintText: "Write the Shelter's Location",
+                        labelStyle:
+                            TextStyle(color: Colors.black), // Text color
+                        hintStyle:
+                            TextStyle(color: Colors.black), // Hint text color
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Colors.black,
+                              width: 2.0), // Border color and thickness
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                    TextFormField(
+                      controller: _phoneNumberController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a phone number.';
+                        }
+                        if (value.length != 11) {
+                          return 'Phone number must have 11 digits.';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        labelText: "Enter Phone Number",
+                        hintText: "Write your Phone Number",
+                        labelStyle:
+                            TextStyle(color: Colors.black), // Text color
+                        hintStyle:
+                            TextStyle(color: Colors.black), // Hint text color
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Colors.black,
+                              width: 2.0), // Border color and thickness
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                    TextFormField(
+                      controller: _facebookController,
+                      decoration: InputDecoration(
+                        labelText: "Enter Facebook Account",
+                        hintText: "Write your Facebook Account",
+                        labelStyle:
+                            TextStyle(color: Colors.black), // Text color
+                        hintStyle:
+                            TextStyle(color: Colors.black), // Hint text color
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Colors.black,
+                              width: 2.0), // Border color and thickness
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                    TextFormField(
+                      controller: _descriptionController,
+                      maxLines: 3, // Set the maximum lines to 3
+                      decoration: InputDecoration(
+                        labelText: "Enter Description",
+                        hintText: "Write a brief description about the shelter",
+                        labelStyle:
+                            TextStyle(color: Colors.black), // Text color
+                        hintStyle:
+                            TextStyle(color: Colors.black), // Hint text color
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Colors.black,
+                              width: 2.0), // Border color and thickness
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    // Validate form
-                    _uploadDataToFirestore(); // Submit form if validation succeeds
-                  }
-                },
-                child: Text("Update Shelter Settings"),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      // Validate form
+                      _uploadDataToFirestore(); // Submit form if validation succeeds
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Color(0xFFE96560), // Text color
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5), // Border radius
+                    ),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 15), // Button padding
+                  ),
+                  child: Text("Update Shelter Settings"),
+                ),
               ),
             ],
           ),

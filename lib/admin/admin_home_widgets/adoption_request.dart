@@ -320,7 +320,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                               ],
                             ),
                             SizedBox(height: 10),
-                            Text('Self Description:',
+                            Text('Reason for Adopting:',
                                 style: TextStyle(
                                     fontSize: 18, fontWeight: FontWeight.bold)),
                             SizedBox(height: 5),
@@ -600,7 +600,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
             : (status == 'Pending'
                 ? "We would like to inform you that your adoption form for $animalName is cancelled."
                 : (status == 'Shipped'
-                    ? "We would like to inform you that your adoption form for $animalName is shipped."
+                    ? "We would like to inform you that your pet $animalName is shipped."
                     : (status == 'Adopted'
                         ? "We would like to inform you that your adoption process with $animalName is done."
                         : "We would like to inform you that your adoption form for $animalName is rejected.")));
@@ -659,7 +659,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
           // Close the AdoptionForm details dialog first
           Navigator.pop(context);
           // Show the feedback dialog
-          _showDialog(context, 'Form is $status');
+          _showDialog(context, 'Form status is $status');
         }).catchError((error) {
           print("Failed to send message to user: $error");
           _showDialog(context, 'Failed to send message to user');

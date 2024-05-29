@@ -62,8 +62,13 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
             .where('email', isEqualTo: email)
             .get();
         if (profileSnapshot.docs.isNotEmpty) {
+          var profileDoc = profileSnapshot.docs.first;
+
+          String? firstName = profileDoc['firstName'] as String?;
+          String? lastName = profileDoc['lastName'] as String?;
+          String username = '$firstName $lastName';
           userProfiles.add({
-            'username': profileSnapshot.docs.first['username'] as String,
+            'username': username,
             'email': email,
           });
         }
@@ -128,7 +133,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
     });
   }
 
-  Future<void> fetchUserEmail(String username) async {
+  Future<void> fetchUserEmail(String email) async {
     setState(() {
       isLoadingMessages = true; // Show circular progress indicator
       selectedUser = "Loading..."; // Change label to "Loading..."
@@ -138,14 +143,14 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
     try {
       QuerySnapshot querySnapshot = await firestore
           .collection('Profiles')
-          .where('username', isEqualTo: username)
+          .where('email', isEqualTo: email)
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
         // If there's a match in the Profiles collection, set the email and username as the label
         setState(() {
           selectedUserEmail = querySnapshot.docs.first['email'] as String?;
-          selectedUser = username;
+          selectedUser = email;
         });
 
         // Reset message count to 0 when user is clicked
@@ -301,12 +306,12 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                                 style: TextStyle(color: Colors.white),
                               ),
                             ),
-                            selected: selectedUser == username,
+                            selected: selectedUser == email,
                             onTap: () async {
                               setState(() {
-                                selectedUser = username;
+                                selectedUser = email;
                               });
-                              await fetchUserEmail(username!);
+                              await fetchUserEmail(email!);
                             },
                           );
                         }
@@ -398,7 +403,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                             }
                           },
                           icon: Icon(Icons.send),
-                          color: Colors.blue,
+                          color: Color(0xFFE96560),
                         ),
                       ],
                     ),

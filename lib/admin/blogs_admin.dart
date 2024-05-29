@@ -859,70 +859,86 @@ class _BlogsAdminState extends State<BlogsAdmin> {
         backgroundColor: Colors.blue, // Change color to stand out
         child: Icon(Icons.add),
       ),
-      body: StreamBuilder(
-        stream: FirebaseFirestore.instance.collection('AdminBlogs').snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(),
-            ); // Show a loading indicator while fetching data
-          }
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              Color.fromARGB(255, 244, 217, 217),
+              Colors.white,
+            ],
+          ),
+        ),
+        child: StreamBuilder(
+          stream:
+              FirebaseFirestore.instance.collection('AdminBlogs').snapshots(),
+          builder:
+              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: CircularProgressIndicator(),
+              ); // Show a loading indicator while fetching data
+            }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Error: ${snapshot.error}',
+                ),
+              ); // Show an error message if fetching data fails
+            }
+
+            // Extract the list of blog posts from the snapshot
+            List<DocumentSnapshot> blogPosts = snapshot.data!.docs;
+
+            // Sort blog posts by createdAt in descending order, handling null values
+            blogPosts.sort((a, b) {
+              final timestampA = a['createdAt'] as Timestamp?;
+              final timestampB = b['createdAt'] as Timestamp?;
+
+              // Handle null values
+              if (timestampA == null && timestampB == null) {
+                return 0; // Both timestamps are null, consider them equal
+              }
+              if (timestampA == null) {
+                return 1; // Place nulls at the end
+              }
+              if (timestampB == null) {
+                return -1; // Place nulls at the beginning
+              }
+
+              // Compare timestamps normally if they are not null
+              return timestampB.compareTo(timestampA);
+            });
+
+            return MouseRegion(
+              cursor: SystemMouseCursors.click, // Change cursor to pointer
+              child: GridView.builder(
+                padding: EdgeInsets.all(10),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount:
+                      4, // Increase the number of columns to make cards smaller
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio:
+                      1, // Adjust aspect ratio for better card size
+                ),
+                itemCount: blogPosts
+                    .length, // Use the count of blog posts from the database
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      _showViewBlogPostModal(
+                          blogPosts[index]); // Pass the document snapshot
+                    },
+                    child: _buildBlogPostTile(blogPosts[index]),
+                  );
+                },
               ),
-            ); // Show an error message if fetching data fails
-          }
-
-          // Extract the list of blog posts from the snapshot
-          List<DocumentSnapshot> blogPosts = snapshot.data!.docs;
-
-          // Sort blog posts by createdAt in descending order, handling null values
-          blogPosts.sort((a, b) {
-            final timestampA = a['createdAt'] as Timestamp?;
-            final timestampB = b['createdAt'] as Timestamp?;
-
-            // Handle null values
-            if (timestampA == null && timestampB == null) {
-              return 0; // Both timestamps are null, consider them equal
-            }
-            if (timestampA == null) {
-              return 1; // Place nulls at the end
-            }
-            if (timestampB == null) {
-              return -1; // Place nulls at the beginning
-            }
-
-            // Compare timestamps normally if they are not null
-            return timestampB.compareTo(timestampA);
-          });
-
-          return MouseRegion(
-            cursor: SystemMouseCursors.click, // Change cursor to pointer
-            child: GridView.builder(
-              padding: EdgeInsets.all(10),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1,
-              ),
-              itemCount: blogPosts
-                  .length, // Use the count of blog posts from the database
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    _showViewBlogPostModal(
-                        blogPosts[index]); // Pass the document snapshot
-                  },
-                  child: _buildBlogPostTile(blogPosts[index]),
-                );
-              },
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
