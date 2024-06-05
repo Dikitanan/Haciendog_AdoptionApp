@@ -86,7 +86,7 @@ class _AdminHomeState extends State<AdminHome> {
                       userName: userName,
                       userProfilePicture: userProfilePicture,
                       menus: [
-                        'Statistics',
+                        'Analytics',
                         'Blogs',
                         'Donations',
                         'Adoption Requests',
@@ -98,9 +98,9 @@ class _AdminHomeState extends State<AdminHome> {
                           // Update middleContent based on selected menu
                           if (menu == 'Blogs') {
                             middleContent = MiddlePart(likeState: likeState);
-                          } else if (menu == 'Statistics') {
+                          } else if (menu == 'Analytics') {
                             middleContent = Center(
-                              child: Text('Statistics Content'),
+                              child: Text('Analytics Content'),
                             );
                           } else if (menu == 'Donations') {
                             middleContent = AdminDonations();

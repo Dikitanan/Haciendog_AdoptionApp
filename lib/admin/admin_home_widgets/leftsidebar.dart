@@ -160,7 +160,7 @@ class _LeftSideBarState extends State<LeftSideBar> {
 
   Widget? _getMenuIcon(String menu) {
     switch (menu.toLowerCase()) {
-      case 'statistics':
+      case 'analytics':
         return Container(
           child: Icon(
             Icons.analytics,

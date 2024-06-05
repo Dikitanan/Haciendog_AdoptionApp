@@ -476,7 +476,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
         padding: EdgeInsets.all(8.0),
         margin: EdgeInsets.only(bottom: 8.0),
         decoration: BoxDecoration(
-          color: isSentMessage ? Colors.grey[200] : Colors.blue,
+          color: isSentMessage ? Colors.grey[200] : Color(0xFFE96560),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(12.0),
             bottomLeft: isSentMessage ? Radius.circular(12.0) : Radius.zero,

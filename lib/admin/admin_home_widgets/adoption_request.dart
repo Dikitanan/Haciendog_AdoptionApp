@@ -294,7 +294,9 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                                                   .substring(0, 12)
                                               : document['email'],
                                           style: TextStyle(
-                                              fontSize: 16, color: Colors.grey),
+                                              fontSize: 16,
+                                              color: const Color.fromARGB(
+                                                  255, 0, 0, 0)),
                                         ),
                                         if (document['email'].length > 12)
                                           TextSpan(
@@ -302,7 +304,8 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                                                 '\n${document['email'].substring(12)}',
                                             style: TextStyle(
                                                 fontSize: 16,
-                                                color: Colors.grey),
+                                                color: const Color.fromARGB(
+                                                    255, 0, 0, 0)),
                                           ),
                                       ],
                                     ),

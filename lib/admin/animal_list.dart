@@ -225,12 +225,12 @@ class _AnimalListState extends State<AnimalList> {
                                         DataColumn(
                                           label: Center(
                                             child: Text(
-                                              'PWD',
+                                              'Health Status',
                                               style: TextStyle(
                                                   color: Colors.white),
                                             ),
                                           ),
-                                          tooltip: 'PWD',
+                                          tooltip: 'Health Status',
                                           numeric: false,
                                         ),
                                         DataColumn(
