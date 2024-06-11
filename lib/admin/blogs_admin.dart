@@ -856,7 +856,8 @@ class _BlogsAdminState extends State<BlogsAdmin> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddBlogPostModal,
-        backgroundColor: Colors.blue, // Change color to stand out
+        backgroundColor: Color(0xFFE96560), // Change color to stand out
+        tooltip: 'Add Blog',
         child: Icon(Icons.add),
       ),
       body: Container(

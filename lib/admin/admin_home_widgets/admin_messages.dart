@@ -77,9 +77,47 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
       // Fetch message counts for each user
       await fetchUserMessageCounts();
 
-      // Sort userProfiles based on message count in descending order
-      userProfiles.sort((a, b) => userMessageCounts[b['email']!]!
-          .compareTo(userMessageCounts[a['email']]!));
+      // Fetch total message count for each user from 'UserNewMessage' collection
+      await fetchUserTotalMessages();
+
+      // Fetch 'UserNewMessage' collection and check for 'LastMessage' field
+      for (var userProfile in userProfiles) {
+        QuerySnapshot newMessageSnapshot = await firestore
+            .collection('UserNewMessage')
+            .where('email', isEqualTo: userProfile['email'])
+            .get();
+        if (newMessageSnapshot.docs.isNotEmpty) {
+          var messageDoc = newMessageSnapshot.docs.first;
+          var messageData =
+              messageDoc.data() as Map<String, dynamic>; // Explicit cast
+          if (messageData.containsKey('LastMessage')) {
+            userProfile['LastMessage'] = messageData['LastMessage'];
+          } else {
+            userProfile['LastMessage'] = '';
+          }
+        } else {
+          userProfile['LastMessage'] = '';
+        }
+      }
+
+      // Sort userProfiles based on new messages and total message count
+      userProfiles.sort((a, b) {
+        // Check if there's a new message for each user
+        bool hasNewMessageA = a['LastMessage'] != '';
+        bool hasNewMessageB = b['LastMessage'] != '';
+
+        // Sort by new message presence (new messages first)
+        if (hasNewMessageA && !hasNewMessageB) {
+          return -1;
+        } else if (!hasNewMessageA && hasNewMessageB) {
+          return 1;
+        }
+
+        // If both have new messages or no new messages, sort by total message count
+        int messageCountA = userMessageCounts[a['email']] ?? 0;
+        int messageCountB = userMessageCounts[b['email']] ?? 0;
+        return messageCountB.compareTo(messageCountA); // Descending order
+      });
 
       // Fetch the email of the selected user
       if (selectedUser != null) {
@@ -91,6 +129,27 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
       setState(() {
         isLoadingMessages = false;
       });
+    }
+  }
+
+// Method to fetch total message count for each user from 'UserNewMessage' collection
+  Future<void> fetchUserTotalMessages() async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    for (var userProfile in userProfiles) {
+      QuerySnapshot totalMessageSnapshot = await firestore
+          .collection('UserNewMessage')
+          .where('email', isEqualTo: userProfile['email'])
+          .get();
+      if (totalMessageSnapshot.docs.isNotEmpty) {
+        var messageDoc = totalMessageSnapshot.docs.first;
+        var messageData =
+            messageDoc.data() as Map<String, dynamic>; // Explicit cast
+        userProfile['totalMessage'] =
+            (messageData['totalMessage'] ?? 0).toString(); // Convert to string
+      } else {
+        userProfile['totalMessage'] = '0'; // Default string value
+      }
     }
   }
 
@@ -226,6 +285,8 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
         'receiverEmail': receiverEmail,
       });
 
+      messageController.clear();
+
       // Add to 'Notifications' collection
       await firestore.collection('Notifications').add({
         'title': 'New Message',
@@ -251,6 +312,33 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
               .update(userNewMessageDoc, {'notificationCount': newCount});
         }
       });
+
+      // Update 'UserNewMessage' collection for message count
+      final userMessageDoc =
+          await firestore.collection('UserNewMessage').doc(receiverEmail).get();
+
+      if (userMessageDoc.exists) {
+        // If document exists, update messageCount, LastMessage, and totalMessage
+        await firestore.collection('UserNewMessage').doc(receiverEmail).update({
+          'LastMessage': 'You: $text', // Update LastMessage
+        });
+
+        // Update userProfiles list with the new LastMessage
+        for (var profile in userProfiles) {
+          if (profile['email'] == receiverEmail) {
+            setState(() {
+              profile['LastMessage'] = 'You: $text';
+            });
+            break;
+          }
+        }
+      } else {
+        // If document doesn't exist, create a new one with messageCount, LastMessage, and totalMessage
+        await firestore.collection('UserNewMessage').doc(receiverEmail).set({
+          'email': receiverEmail,
+          'LastMessage': 'You: $text', // Prefix "You:" to the message
+        });
+      }
     } catch (e) {
       print("Error sending message: $e");
     }
@@ -265,54 +353,83 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
             flex: 1,
             child: Container(
               height: double.infinity,
-              color: Colors.grey[200],
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Color.fromARGB(255, 244, 217, 217),
+                    Colors.white,
+                  ],
+                ),
+              ),
               child: SingleChildScrollView(
-                // Wrap the ListView.builder with SingleChildScrollView
                 child: Column(
                   children: [
                     ListView.builder(
-                      shrinkWrap: true, // Set shrinkWrap to true
-                      itemCount: userProfiles.length +
-                          1, // Add 1 for the "SELECT MESSAGE" item
+                      shrinkWrap: true,
+                      itemCount: userProfiles.length + 1,
                       itemBuilder: (BuildContext context, int index) {
                         if (index == 0) {
-                          // Render the "SELECT MESSAGE" item
-                          return ListTile(
-                            title: Text('SELECT MESSAGE'),
-                            selected: selectedUser ==
-                                null, // Selected when no user is selected
-                            onTap: () async {
-                              setState(() {
-                                selectedUser = null; // Reset selected user
-                              });
-                            },
-                          );
-                        } else {
-                          // Render the user profiles
-                          final userProfile =
-                              userProfiles[index - 1]; // Adjust index by 1
-                          final username = userProfile['username'];
-                          final email = userProfile['email'];
-                          final messageCount = userMessageCounts[email] ?? 0;
-                          return ListTile(
-                            title: Text(username ?? ''),
-                            subtitle: Text(email ?? ''),
-                            trailing: CircleAvatar(
-                              backgroundColor: messageCount > 0
-                                  ? Colors.red
-                                  : Colors.transparent,
-                              child: Text(
-                                messageCount > 0 ? '$messageCount' : '',
+                          return Container(
+                            color: Color(0xFFE96560),
+                            child: ListTile(
+                              title: Text(
+                                'MESSAGES',
                                 style: TextStyle(color: Colors.white),
                               ),
+                              selected: selectedUser == null,
+                              onTap: () async {
+                                setState(() {
+                                  selectedUser = null;
+                                });
+                              },
                             ),
-                            selected: selectedUser == email,
-                            onTap: () async {
-                              setState(() {
-                                selectedUser = email;
-                              });
-                              await fetchUserEmail(email!);
-                            },
+                          );
+                        } else {
+                          final userProfile = userProfiles[index - 1];
+                          final username = userProfile['username'];
+                          final email = userProfile['email'];
+                          final lastMessage = userProfile['LastMessage'];
+                          final messageCount = userMessageCounts[email] ?? 0;
+                          return Column(
+                            children: [
+                              ListTile(
+                                title: Text(
+                                  username ?? '',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  lastMessage ?? '',
+                                  style: TextStyle(
+                                    color:
+                                        const Color.fromARGB(255, 62, 53, 53),
+                                    fontStyle: FontStyle.italic,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                trailing: CircleAvatar(
+                                  backgroundColor: messageCount > 0
+                                      ? Colors.red
+                                      : Colors.transparent,
+                                  child: Text(
+                                    messageCount > 0 ? '$messageCount' : '',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                selected: selectedUser == email,
+                                onTap: () async {
+                                  setState(() {
+                                    selectedUser = email;
+                                  });
+                                  await fetchUserEmail(email!);
+                                },
+                              ),
+                              Divider(), // Add Divider between users
+                            ],
                           );
                         }
                       },

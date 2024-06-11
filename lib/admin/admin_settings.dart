@@ -15,6 +15,7 @@ class AdminSettingsForm extends StatefulWidget {
 
 class _AdminSettingsFormState extends State<AdminSettingsForm> {
   int _selectedPage = 0; // Default to the first page
+  List<bool> _isSelected = [true, false, false, false]; // Track selected state
 
   Future<void> _signOut(BuildContext context) async {
     bool confirmLogout = await showDialog(
@@ -67,71 +68,56 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
-        children: [
-          Container(
-            width: 200, // Adjust the width of the NavigationRail
-            child: NavigationRail(
-              selectedIndex: _selectedPage,
-              onDestinationSelected: (index) {
-                if (index == 3) {
-                  // Logout
-                  _signOut(context);
-                } else {
-                  setState(() {
-                    _selectedPage = index;
-                  });
-                }
-              },
-              labelType: NavigationRailLabelType.all,
-              backgroundColor: Color(0xFFE96560), // Change background color
-              selectedIconTheme: IconThemeData(
-                  color: Colors.white, size: 30), // Increase icon size
-              unselectedIconTheme: IconThemeData(
-                  color: Colors.white, size: 30), // Increase icon size
-              selectedLabelTextStyle: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16), // Increase label font size
-              unselectedLabelTextStyle: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16), // Increase label font size
-              destinations: const [
-                NavigationRailDestination(
-                  icon: Icon(Icons.account_circle),
-                  selectedIcon: Icon(Icons.account_circle),
-                  label: Text('Account Settings'),
-                  padding: EdgeInsets.symmetric(vertical: 25),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.home),
-                  selectedIcon: Icon(Icons.home),
-                  label: Text('Shelter Settings'),
-                  padding: EdgeInsets.symmetric(vertical: 25),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.list),
-                  selectedIcon: Icon(Icons.list),
-                  label: Text('User Lists'),
-                  padding: EdgeInsets.symmetric(vertical: 25),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.exit_to_app),
-                  selectedIcon: Icon(Icons.exit_to_app),
-                  label: Text('Logout'),
-                  padding: EdgeInsets.symmetric(vertical: 25),
-                ),
-              ],
-            ),
-          ),
-          const VerticalDivider(thickness: 1, width: 1),
-          Expanded(
-            child: IndexedStack(
-              index: _selectedPage,
-              children: _pages,
-            ),
-          ),
+      appBar: AppBar(
+        title: Text('Admin Settings'),
+        actions: [
+          SizedBox(width: 25),
+          _buildIconButton(0, Icons.account_circle, 'Account Settings'),
+          SizedBox(width: 25),
+          _buildIconButton(1, Icons.home, 'Shelter Settings'),
+          SizedBox(width: 25),
+          _buildIconButton(2, Icons.list, 'User Lists'),
+          SizedBox(width: 25),
+          _buildIconButton(3, Icons.exit_to_app, 'Logout'),
         ],
       ),
+      body: _pages[_selectedPage],
     );
+  }
+
+  Widget _buildIconButton(int index, IconData icon, String tooltip) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: () {
+          if (index != 3) {
+            setState(() {
+              _selectedPage = index;
+              _updateSelectedState(index);
+            });
+          } else {
+            _signOut(context);
+          }
+        },
+        child: Container(
+          padding: EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: _isSelected[index] ? Color(0xFFE96560) : Colors.transparent,
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: Icon(
+            icon,
+            size: 30,
+            color: _isSelected[index] ? Colors.white : Colors.black,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _updateSelectedState(int index) {
+    for (int i = 0; i < _isSelected.length; i++) {
+      _isSelected[i] = i == index;
+    }
   }
 }

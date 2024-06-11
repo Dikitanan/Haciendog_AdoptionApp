@@ -48,7 +48,6 @@ class _AnimalListState extends State<AnimalList> {
   @override
   Widget build(BuildContext context) {
     // Check if it's a web view
-    bool isWeb = MediaQuery.of(context).size.width > 600;
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('Animal').snapshots(),
@@ -131,415 +130,311 @@ class _AnimalListState extends State<AnimalList> {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Center(
                       child: Container(
+                        width: 1200,
                         alignment: Alignment.topCenter,
-                        child: isWeb
-                            ? SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.vertical,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20.0),
-                                    child: DataTable(
-                                      columnSpacing: 20.0,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5),
-                                        border: Border.all(
-                                          color:
-                                              Color(0xFFE96560), // Border color
-                                          width: 0.5, // Border width
-                                        ),
-                                      ),
-                                      headingRowColor: MaterialStateColor
-                                          .resolveWith((states) => Color(
-                                              0xFFE96560)!), // Header row color
-                                      dataRowHeight:
-                                          120.0, // Adjust row height as needed
-                                      columns: const [
-                                        DataColumn(
-                                          label: Center(
-                                            child: Text(
-                                              'Image',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          tooltip: 'Image',
-                                          numeric: false,
-                                        ),
-                                        DataColumn(
-                                          label: Center(
-                                            child: Text(
-                                              'Pet Name',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          tooltip: 'Pet Name',
-                                          numeric: false,
-                                        ),
-                                        DataColumn(
-                                          label: Center(
-                                            child: Text(
-                                              'Breed',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          tooltip: 'Breed',
-                                          numeric: false,
-                                        ),
-                                        DataColumn(
-                                          label: Center(
-                                            child: Text(
-                                              'Age on Shelter',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          tooltip: 'Age on Shelter',
-                                          numeric: false,
-                                        ),
-                                        DataColumn(
-                                          label: Center(
-                                            child: Text(
-                                              'Personality',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          tooltip: 'Personality',
-                                          numeric: false,
-                                        ),
-                                        DataColumn(
-                                          label: Center(
-                                            child: Text(
-                                              'Gender',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          tooltip: 'Gender',
-                                          numeric: false,
-                                        ),
-                                        DataColumn(
-                                          label: Center(
-                                            child: Text(
-                                              'Health Status',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          tooltip: 'Health Status',
-                                          numeric: false,
-                                        ),
-                                        DataColumn(
-                                          label: Center(
-                                            child: Text(
-                                              'Cat or Dog',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          tooltip: 'Cat or Dog',
-                                          numeric: false,
-                                        ),
-                                        DataColumn(
-                                          label: Center(
-                                            child: Text(
-                                              'Status',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          tooltip: 'Status',
-                                          numeric: false,
-                                        ),
-                                        DataColumn(
-                                          label: Center(
-                                            child: Text(
-                                              'Action',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          tooltip: 'Action',
-                                          numeric: false,
-                                        ),
-                                        DataColumn(
-                                          label: Center(
-                                            child: Text(
-                                              'Action',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          tooltip: 'Action',
-                                          numeric: false,
-                                        ),
-                                      ],
-                                      rows: _filteredAnimals(animals)
-                                          .map((animal) {
-                                        return DataRow(cells: [
-                                          DataCell(
-                                            SizedBox(
-                                              width: 100,
-                                              height: 100,
-                                              child: ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(8.0),
-                                                child: Image.network(
-                                                  animal['Image'],
-                                                  fit: BoxFit.fill,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child: Text(animal['Name']),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child: Text(animal['Breed']),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child:
-                                                  Text(animal['AgeInShelter']),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child:
-                                                  Text(animal['Personality']),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child: Text(animal['Gender']),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child: Text(animal['PWD']),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child: Text(animal['CatOrDog']),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child: Text(animal['Status']),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child: ElevatedButton(
-                                                onPressed: () {
-                                                  // Call edit function when edit button is clicked
-                                                  editAnimalDetails(animal);
-                                                },
-                                                child: Container(
-                                                  height: 25,
-                                                  width: 50,
-                                                  child: const Center(
-                                                    child: Text('Edit'),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Center(
-                                              child: ElevatedButton(
-                                                onPressed: _isUploading
-                                                    ? null
-                                                    : () {
-                                                        // Disable button if uploading is in progress
-                                                        // Show modal bottom sheet
-                                                        showModalBottomSheet(
-                                                          context: context,
-                                                          builder: (BuildContext
-                                                              context) {
-                                                            return StatefulBuilder(
-                                                              builder: (BuildContext
-                                                                      context,
-                                                                  StateSetter
-                                                                      setState) {
-                                                                return Container(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .all(
-                                                                          20.0),
-                                                                  child: Column(
-                                                                    mainAxisSize:
-                                                                        MainAxisSize
-                                                                            .min,
-                                                                    children: <Widget>[
-                                                                      _uploadedImageURL !=
-                                                                              null
-                                                                          ? Image
-                                                                              .network(
-                                                                              _uploadedImageURL!,
-                                                                              width: 200,
-                                                                              height: 200,
-                                                                            )
-                                                                          : const SizedBox(), // Display uploaded image if available
-                                                                      ElevatedButton(
-                                                                        onPressed: _isUploading
-                                                                            ? null
-                                                                            : () async {
-                                                                                // Disable button if uploading is in progress
-                                                                                setState(() {
-                                                                                  _isUploading = true; // Set uploading flag
-                                                                                });
-                                                                                await _uploadImage(); // Wait for image upload
-                                                                                setState(() {
-                                                                                  _isUploading = false; // Reset uploading flag
-                                                                                  _imageUploaded = true; // Set image uploaded flag
-                                                                                });
-                                                                                // Don't close the modal here
-                                                                              },
-                                                                        child: const Text(
-                                                                            'Upload Image'),
-                                                                      ),
-                                                                      const SizedBox(
-                                                                          height:
-                                                                              10),
-                                                                      ElevatedButton(
-                                                                        onPressed: _imageUploaded
-                                                                            ? () {
-                                                                                // Enable button only if image is uploaded
-                                                                                // Handle submit logic here
-                                                                                // This function will be called when the submit button is pressed
-                                                                                _updateAnimalDetails(animal);
-                                                                                // Close the modal
-                                                                                Navigator.pop(context);
-                                                                              }
-                                                                            : null,
-                                                                        child: const Text(
-                                                                            'Submit'),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                );
-                                                              },
-                                                            );
-                                                          },
-                                                        );
-                                                      },
-                                                child: Container(
-                                                  height: 25,
-                                                  width: 100,
-                                                  child: const Center(
-                                                    child: Text('Change Photo'),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ]);
-                                      }).toList(),
-                                    ),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.vertical,
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10.0),
+                              child: DataTable(
+                                columnSpacing: 15.0,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(
+                                    color: Color(0xFFE96560), // Border color
+                                    width: 0.5, // Border width
                                   ),
                                 ),
-                              )
-                            : Container(
-                                constraints:
-                                    const BoxConstraints(maxWidth: 600),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8.0),
-                                child: ListView.builder(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0),
-                                  itemCount: _filteredAnimals(animals).length,
-                                  itemBuilder: (context, index) {
-                                    var animal =
-                                        _filteredAnimals(animals)[index];
-                                    return Card(
-                                      elevation: 4,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12.0),
+                                headingRowColor: MaterialStateColor.resolveWith(
+                                    (states) =>
+                                        Color(0xFFE96560)!), // Header row color
+                                dataRowHeight:
+                                    120.0, // Adjust row height as needed
+                                columns: const [
+                                  DataColumn(
+                                    label: Center(
+                                      child: Text(
+                                        'Image',
+                                        style: TextStyle(color: Colors.white),
                                       ),
-                                      child: ListTile(
-                                        contentPadding:
-                                            const EdgeInsets.all(12.0),
-                                        leading: SizedBox(
-                                          width: 100,
-                                          height: 100,
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(8.0),
-                                            child: Image.network(
-                                              animal['Image'],
-                                              fit: BoxFit.fill,
-                                            ),
+                                    ),
+                                    tooltip: 'Image',
+                                    numeric: false,
+                                  ),
+                                  DataColumn(
+                                    label: Center(
+                                      child: Text(
+                                        'Pet Name',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                    tooltip: 'Pet Name',
+                                    numeric: false,
+                                  ),
+                                  DataColumn(
+                                    label: Center(
+                                      child: Text(
+                                        'Breed',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                    tooltip: 'Breed',
+                                    numeric: false,
+                                  ),
+                                  DataColumn(
+                                    label: Center(
+                                      child: Text(
+                                        'Age on Shelter',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                    tooltip: 'Age on Shelter',
+                                    numeric: false,
+                                  ),
+                                  DataColumn(
+                                    label: Center(
+                                      child: Text(
+                                        'Personality',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                    tooltip: 'Personality',
+                                    numeric: false,
+                                  ),
+                                  DataColumn(
+                                    label: Center(
+                                      child: Text(
+                                        'Gender',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                    tooltip: 'Gender',
+                                    numeric: false,
+                                  ),
+                                  DataColumn(
+                                    label: Center(
+                                      child: Text(
+                                        'Health Status',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                    tooltip: 'Health Status',
+                                    numeric: false,
+                                  ),
+                                  DataColumn(
+                                    label: Center(
+                                      child: Text(
+                                        'Cat or Dog',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                    tooltip: 'Cat or Dog',
+                                    numeric: false,
+                                  ),
+                                  DataColumn(
+                                    label: Center(
+                                      child: Text(
+                                        'Status',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                    tooltip: 'Status',
+                                    numeric: false,
+                                  ),
+                                  DataColumn(
+                                    label: Center(
+                                      child: Text(
+                                        'Action',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                    tooltip: 'Action',
+                                    numeric: false,
+                                  ),
+                                  DataColumn(
+                                    label: Center(
+                                      child: Text(
+                                        'Action',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                    tooltip: 'Action',
+                                    numeric: false,
+                                  ),
+                                ],
+                                rows: _filteredAnimals(animals).map((animal) {
+                                  return DataRow(cells: [
+                                    DataCell(
+                                      SizedBox(
+                                        width: 100,
+                                        height: 100,
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(8.0),
+                                          child: Image.network(
+                                            animal['Image'],
+                                            fit: BoxFit.fill,
                                           ),
                                         ),
-                                        title: Text(
-                                          animal['Name'],
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.blue[900],
-                                          ),
-                                        ),
-                                        subtitle: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const SizedBox(height: 8.0),
-                                            Text('Breed: ${animal['Breed']}'),
-                                            const SizedBox(height: 4.0),
-                                            Text(
-                                              'Age on Shelter: ${animal['AgeInShelter']}',
-                                            ),
-                                            const SizedBox(height: 4.0),
-                                            Text(
-                                              'Description: ${animal['Description']}',
-                                              style: const TextStyle(
-                                                fontStyle: FontStyle.italic,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4.0),
-                                            Text(
-                                              'Personality: ${animal['Personality']}',
-                                            ),
-                                            const SizedBox(height: 4.0),
-                                            Text(
-                                              'Gender: ${animal['Gender']}',
-                                            ),
-                                            const SizedBox(height: 4.0),
-                                            Text(
-                                              'PWD: ${animal['PWD']}',
-                                            ),
-                                            const SizedBox(height: 4.0),
-                                            Text(
-                                              'Cat or Dog: ${animal['CatOrDog']}',
-                                            ),
-                                            const SizedBox(height: 4.0),
-                                            Text(
-                                              'Status: ${animal['Status']}',
-                                            ),
-                                          ],
-                                        ),
-                                        trailing: ElevatedButton(
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: Text(animal['Name']),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: Text(animal['Breed']),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: Text(animal['AgeInShelter']),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: Text(animal['Personality']),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: Text(animal['Gender']),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: Text(animal['PWD']),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: Text(animal['CatOrDog']),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: Text(animal['Status']),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: ElevatedButton(
                                           onPressed: () {
                                             // Call edit function when edit button is clicked
                                             editAnimalDetails(animal);
                                           },
-                                          child: const Text('Edit'),
+                                          child: Container(
+                                            height: 25,
+                                            width: 50,
+                                            child: const Center(
+                                              child: Text('Edit'),
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    );
-                                  },
-                                ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: ElevatedButton(
+                                          onPressed: _isUploading
+                                              ? null
+                                              : () {
+                                                  // Disable button if uploading is in progress
+                                                  // Show modal bottom sheet
+                                                  showModalBottomSheet(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext context) {
+                                                      return StatefulBuilder(
+                                                        builder: (BuildContext
+                                                                context,
+                                                            StateSetter
+                                                                setState) {
+                                                          return Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(20.0),
+                                                            child: Column(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: <Widget>[
+                                                                _uploadedImageURL !=
+                                                                        null
+                                                                    ? Image
+                                                                        .network(
+                                                                        _uploadedImageURL!,
+                                                                        width:
+                                                                            200,
+                                                                        height:
+                                                                            200,
+                                                                      )
+                                                                    : const SizedBox(), // Display uploaded image if available
+                                                                ElevatedButton(
+                                                                  onPressed:
+                                                                      _isUploading
+                                                                          ? null
+                                                                          : () async {
+                                                                              // Disable button if uploading is in progress
+                                                                              setState(() {
+                                                                                _isUploading = true; // Set uploading flag
+                                                                              });
+                                                                              await _uploadImage(); // Wait for image upload
+                                                                              setState(() {
+                                                                                _isUploading = false; // Reset uploading flag
+                                                                                _imageUploaded = true; // Set image uploaded flag
+                                                                              });
+                                                                              // Don't close the modal here
+                                                                            },
+                                                                  child: const Text(
+                                                                      'Upload Image'),
+                                                                ),
+                                                                const SizedBox(
+                                                                    height: 10),
+                                                                ElevatedButton(
+                                                                  onPressed:
+                                                                      _imageUploaded
+                                                                          ? () {
+                                                                              // Enable button only if image is uploaded
+                                                                              // Handle submit logic here
+                                                                              // This function will be called when the submit button is pressed
+                                                                              _updateAnimalDetails(animal);
+                                                                              // Close the modal
+                                                                              Navigator.pop(context);
+                                                                            }
+                                                                          : null,
+                                                                  child: const Text(
+                                                                      'Submit'),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          );
+                                                        },
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                          child: Container(
+                                            height: 25,
+                                            width: 100,
+                                            child: const Center(
+                                              child: Text('Change Photo'),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ]);
+                                }).toList(),
                               ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),

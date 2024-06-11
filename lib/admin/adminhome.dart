@@ -6,6 +6,9 @@ import 'package:mad/admin/admin_home_widgets/admin_messages.dart';
 import 'package:mad/admin/admin_home_widgets/adoption_request.dart';
 import 'package:mad/admin/admin_home_widgets/blogsPart.dart';
 import 'package:mad/admin/admin_home_widgets/leftsidebar.dart';
+import 'package:mad/admin/admin_settings.dart';
+import 'package:mad/admin/animal_list.dart';
+import 'package:mad/admin/pet_profile_form.dart';
 import 'package:mad/admin/post_provider.dart';
 
 class AdminHome extends StatefulWidget {
@@ -28,8 +31,10 @@ class _AdminHomeState extends State<AdminHome> {
 
   void initState() {
     super.initState();
-    selectedMenu = 'Blogs';
-    middleContent = MiddlePart(likeState: likeState);
+    selectedMenu = 'Analytics';
+    middleContent = middleContent = Center(
+      child: Text('Analytics Content'),
+    );
     getUserData();
   }
 
@@ -58,10 +63,10 @@ class _AdminHomeState extends State<AdminHome> {
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 247, 210, 209),
       appBar: AppBar(
-        backgroundColor: Colors.grey[100],
+        backgroundColor: Color(0xFFE96560),
         title: Text(
           'Admin Dashboard',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: Colors.white),
         ),
         bottomOpacity: 100,
       ),
@@ -88,26 +93,35 @@ class _AdminHomeState extends State<AdminHome> {
                       menus: [
                         'Analytics',
                         'Blogs',
+                        'Add Pet',
+                        'Animal List',
                         'Donations',
                         'Adoption Requests',
-                        'Messages'
+                        'Messages',
+                        'Settings'
                       ],
                       onMenuSelected: (menu) {
                         setState(() {
                           selectedMenu = menu;
                           // Update middleContent based on selected menu
-                          if (menu == 'Blogs') {
-                            middleContent = MiddlePart(likeState: likeState);
-                          } else if (menu == 'Analytics') {
+                          if (menu == 'Analytics') {
                             middleContent = Center(
                               child: Text('Analytics Content'),
                             );
+                          } else if (menu == 'Blogs') {
+                            middleContent = MiddlePart(likeState: likeState);
+                          } else if (menu == 'Add Pet') {
+                            middleContent = PetProfileForm();
+                          } else if (menu == 'Animal List') {
+                            middleContent = AnimalList();
                           } else if (menu == 'Donations') {
                             middleContent = AdminDonations();
                           } else if (menu == 'Adoption Requests') {
                             middleContent = AdoptionLists();
                           } else if (menu == 'Messages') {
                             middleContent = AdminSideMessage();
+                          } else if (menu == 'Settings') {
+                            middleContent = AdminSettingsForm();
                           }
                         });
                       },

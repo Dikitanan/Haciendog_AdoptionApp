@@ -158,26 +158,38 @@ class _UserListsPageState extends State<UserListsPage> {
               child: Text('No Users Yet'),
             );
           } else {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ListView.builder(
-                itemCount: users.length,
-                itemBuilder: (context, index) {
-                  final user = users[index];
-                  return ListTile(
-                    title: Text(user.email),
-                    subtitle: Text(user.username),
-                    trailing: Icon(Icons.edit),
-                    leading: user.isBanned
-                        ? Chip(
-                            label: Text('Banned'),
-                            backgroundColor: Colors.red,
-                          )
-                        : null,
-                    onTap: () => _showEditProfileModal(
-                        context, user.email, user.isBanned),
-                  );
-                },
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Color.fromARGB(255, 244, 217, 217),
+                    Colors.white,
+                  ],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ListView.builder(
+                  itemCount: users.length,
+                  itemBuilder: (context, index) {
+                    final user = users[index];
+                    return ListTile(
+                      title: Text(user.email),
+                      subtitle: Text(user.username),
+                      trailing: Icon(Icons.edit),
+                      leading: user.isBanned
+                          ? Chip(
+                              label: Text('Banned'),
+                              backgroundColor: Colors.red,
+                            )
+                          : null,
+                      onTap: () => _showEditProfileModal(
+                          context, user.email, user.isBanned),
+                    );
+                  },
+                ),
               ),
             );
           }

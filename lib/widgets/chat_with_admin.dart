@@ -253,18 +253,27 @@ class _ChatWithAdminState extends State<ChatWithAdmin> {
             .get();
 
         if (userMessageDoc.exists) {
-          // If document exists, update messageCount
+          // If document exists, update messageCount, LastMessage, and totalMessage
           int currentMessageCount = userMessageDoc.data()?['messageCount'] ?? 0;
           await FirebaseFirestore.instance
               .collection('UserNewMessage')
               .doc(userEmail)
-              .update({'messageCount': currentMessageCount + 1});
+              .update({
+            'messageCount': currentMessageCount + 1,
+            'LastMessage': messageText, // Update LastMessage
+            'totalMessage': FieldValue.increment(1), // Increment totalMessage
+          });
         } else {
-          // If document doesn't exist, create a new one
+          // If document doesn't exist, create a new one with messageCount, LastMessage, and totalMessage
           await FirebaseFirestore.instance
               .collection('UserNewMessage')
               .doc(userEmail)
-              .set({'email': userEmail, 'messageCount': 1});
+              .set({
+            'email': userEmail,
+            'messageCount': 1,
+            'LastMessage': messageText, // Set LastMessage
+            'totalMessage': 1, // Set totalMessage
+          });
         }
       } else {
         showDialog(

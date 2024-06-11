@@ -26,7 +26,7 @@ class _LeftSideBarState extends State<LeftSideBar> {
   @override
   void initState() {
     super.initState();
-    _selectedMenu = 'Blogs'; // Initially select "Blogs"
+    _selectedMenu = 'Analytics'; // Initially select "Blogs"
     _messageCountStream = _getMessageCountStream();
   }
 
@@ -54,44 +54,6 @@ class _LeftSideBarState extends State<LeftSideBar> {
             ),
           ),
           Divider(),
-          StreamBuilder<int>(
-            stream: _messageCountStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return ListTile(
-                  title: Text(
-                    'Messages (loading...)',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: _selectedMenu == 'Messages'
-                          ? Color.fromARGB(255, 241, 136, 132)
-                          : null,
-                    ),
-                  ),
-                  onTap: () {
-                    _updateSelectedMenu('Messages');
-                  },
-                );
-              } else {
-                final messageCount = snapshot.data ?? 0;
-                return ListTile(
-                  title: Text(
-                    'Messages ($messageCount)',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: _selectedMenu == 'Messages'
-                          ? Colors.white
-                          : Colors.white,
-                    ),
-                  ),
-                  onTap: () {
-                    _updateSelectedMenu('Messages');
-                  },
-                );
-              }
-            },
-          ),
-          Divider(),
           for (var menu in _sortedMenus())
             Container(
               color: menu == _selectedMenu
@@ -99,16 +61,26 @@ class _LeftSideBarState extends State<LeftSideBar> {
                       .withOpacity(0.3) // Color when selected
                   : null,
               child: ListTile(
-                title: Text(
-                  menu,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: menu == _selectedMenu
-                        ? const Color.fromARGB(
-                            255, 255, 255, 255) // Text color when selected
-                        : const Color.fromARGB(
-                            255, 255, 255, 255), // Default text color
-                  ),
+                title: StreamBuilder<int>(
+                  stream: menu.toLowerCase() == 'messages'
+                      ? _messageCountStream
+                      : Stream.value(0),
+                  builder: (context, snapshot) {
+                    final messageCount = snapshot.data ?? 0;
+                    return Text(
+                      menu.toLowerCase() == 'messages'
+                          ? 'Messages ($messageCount)'
+                          : menu,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: menu == _selectedMenu
+                            ? const Color.fromARGB(
+                                255, 255, 255, 255) // Text color when selected
+                            : const Color.fromARGB(
+                                255, 255, 255, 255), // Default text color
+                      ),
+                    );
+                  },
                 ),
                 leading: _getMenuIcon(menu),
                 onTap: () {
@@ -119,16 +91,6 @@ class _LeftSideBarState extends State<LeftSideBar> {
         ],
       ),
     );
-  }
-
-  Future<int> _getMessageCount() async {
-    QuerySnapshot querySnapshot =
-        await FirebaseFirestore.instance.collection('UserNewMessage').get();
-    int totalCount = 0;
-    querySnapshot.docs.forEach((doc) {
-      totalCount += int.parse((doc['messageCount'] ?? 0).toString());
-    });
-    return totalCount;
   }
 
   Stream<int> _getMessageCountStream() {
@@ -153,8 +115,8 @@ class _LeftSideBarState extends State<LeftSideBar> {
 
   List<String> _sortedMenus() {
     List<String> sortedMenus = [...widget.menus];
-    sortedMenus.remove('Blogs');
-    sortedMenus.insert(0, 'Blogs');
+    sortedMenus.remove('Analytics');
+    sortedMenus.insert(0, 'Analytics');
     return sortedMenus;
   }
 
@@ -172,6 +134,16 @@ class _LeftSideBarState extends State<LeftSideBar> {
           Icons.article,
           color: Colors.grey[300],
         );
+      case 'add pet':
+        return Icon(
+          Icons.pets,
+          color: Colors.grey[300],
+        );
+      case 'animal list':
+        return Icon(
+          Icons.list,
+          color: Colors.grey[300],
+        );
       case 'donations':
         return Icon(
           Icons.attach_money,
@@ -185,6 +157,11 @@ class _LeftSideBarState extends State<LeftSideBar> {
       case 'messages':
         return Icon(
           Icons.message,
+          color: Colors.grey[300],
+        );
+      case 'settings':
+        return Icon(
+          Icons.settings,
           color: Colors.grey[300],
         );
       default:
