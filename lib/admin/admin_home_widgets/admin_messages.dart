@@ -513,8 +513,6 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                               await sendMessage(
                                   messageController.text, selectedUserEmail!);
 
-                              messageController.clear();
-
                               await resetMessageCount(
                                   selectedUserEmail!); // Reset message count
                             }

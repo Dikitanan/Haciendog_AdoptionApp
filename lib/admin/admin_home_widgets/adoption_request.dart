@@ -95,11 +95,18 @@ class _AdoptionListsState extends State<AdoptionLists> {
           }
 
           // Filter out 'Adopted' status if _selectedStatus is 'All'
-          final documents = _selectedStatus == 'All'
+          var documents = _selectedStatus == 'All'
               ? snapshot.data!.docs
                   .where((doc) => doc['status'] != 'Adopted')
                   .toList()
               : snapshot.data!.docs;
+
+          // Sort the documents to bring 'Pending' status to the top
+          documents.sort((a, b) {
+            if (a['status'] == 'Pending' && b['status'] != 'Pending') return -1;
+            if (a['status'] != 'Pending' && b['status'] == 'Pending') return 1;
+            return 0;
+          });
 
           return ListView(
             children: documents.map((document) {
@@ -134,15 +141,15 @@ class _AdoptionListsState extends State<AdoptionLists> {
                   document['status'],
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: document['status'] == 'Accepted'
-                        ? Colors.green
+                    color: document['status'] == 'Accepted' ||
+                            document['status'] == 'Shipped'
+                        ? Color.fromARGB(255, 9, 188, 167)
                         : document['status'] == 'Rejected' ||
                                 document['status'] == 'Cancelled'
                             ? Colors.red
                             : document['status'] == 'Archived'
                                 ? Colors.yellow
-                                : document['status'] == 'Shipped' ||
-                                        document['status'] == 'Adopted'
+                                : document['status'] == 'Adopted'
                                     ? Colors.green
                                     : Colors.blue,
                   ),
@@ -286,7 +293,8 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                                         TextSpan(
                                           text: 'Email: ',
                                           style: TextStyle(
-                                              fontSize: 16, color: Colors.grey),
+                                              fontSize: 16,
+                                              color: Color(0xFF5B5A5D)),
                                         ),
                                         TextSpan(
                                           text: document['email'].length > 12
@@ -295,8 +303,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                                               : document['email'],
                                           style: TextStyle(
                                               fontSize: 16,
-                                              color: const Color.fromARGB(
-                                                  255, 0, 0, 0)),
+                                              color: Color(0xFF5B5A5D)),
                                         ),
                                         if (document['email'].length > 12)
                                           TextSpan(
@@ -304,8 +311,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                                                 '\n${document['email'].substring(12)}',
                                             style: TextStyle(
                                                 fontSize: 16,
-                                                color: const Color.fromARGB(
-                                                    255, 0, 0, 0)),
+                                                color: Color(0xFF5B5A5D)),
                                           ),
                                       ],
                                     ),

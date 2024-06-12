@@ -310,45 +310,35 @@ class _FavoriteBoxStatefulWidgetState extends State<FavoriteBoxStatefulWidget> {
               String currentUserEmail = user.email!;
               String collectionName = "AnimalHearted";
 
-              // Check if there's a match for the current user's email and currentPetId
-              QuerySnapshot snapshot = await FirebaseFirestore.instance
-                  .collection(collectionName)
+              // Check if the pet is already adopted or in the process
+              String adoptionFormsCollection = "AdoptionForms";
+              QuerySnapshot adoptionSnapshot = await FirebaseFirestore.instance
+                  .collection(adoptionFormsCollection)
                   .where("email", isEqualTo: currentUserEmail)
-                  .where("currentPetId", isEqualTo: widget.currentPetId)
+                  .where("petId", isEqualTo: widget.currentPetId)
                   .get();
 
-              // Toggle favorite status and update Firestore
-              bool isFavorited = snapshot.docs.isNotEmpty
-                  ? snapshot.docs[0]["is_favorited"]
-                  : false;
-              String toastMessage;
-              if (snapshot.docs.isEmpty) {
-                await FirebaseFirestore.instance
-                    .collection(collectionName)
-                    .add({
-                  "email": currentUserEmail,
-                  "is_favorited": !isFavorited,
-                  "currentPetId": widget.currentPetId,
-                });
-                toastMessage = !isFavorited
-                    ? "Pet Added to Favorites"
-                    : "Pet Removed from Favorites";
-              } else {
-                await snapshot.docs[0].reference.update({
-                  "is_favorited": !isFavorited,
-                });
-                toastMessage = !isFavorited
-                    ? "Pet Added to Favorites"
-                    : "Pet Removed from Favorites";
+              if (adoptionSnapshot.docs.isNotEmpty) {
+                String status = adoptionSnapshot.docs[0]["status"];
+                if (status == "Accepted" ||
+                    status == "Shipped" ||
+                    status == "Adopted") {
+                  // Pet cannot be unfavorited, send a message to the user
+                  Fluttertoast.showToast(
+                      msg:
+                          "Pet cannot be unfavorited because it is already adopted or in the process.",
+                      toastLength: Toast.LENGTH_SHORT,
+                      gravity: ToastGravity.CENTER,
+                      timeInSecForIosWeb: 1,
+                      backgroundColor: Colors.red,
+                      textColor: Colors.white,
+                      fontSize: 16.0);
+                  return; // Exit the onTap function without toggling favorite status
+                }
               }
-              Fluttertoast.showToast(
-                  msg: toastMessage,
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.grey[800],
-                  textColor: Colors.white,
-                  fontSize: 16.0);
+
+              // Proceed with toggling favorite status and updating Firestore
+              _unfavoritePet(currentUserEmail);
             } else {
               // Handle case where user is not signed in
               Fluttertoast.showToast(
@@ -364,6 +354,59 @@ class _FavoriteBoxStatefulWidgetState extends State<FavoriteBoxStatefulWidget> {
         );
       },
     );
+  }
+
+  void _unfavoritePet(String userEmail) async {
+    // Update status to "Archived" for the pet
+    await FirebaseFirestore.instance
+        .collection('AdoptionForms')
+        .where('petId', isEqualTo: widget.currentPetId)
+        .where('email', isEqualTo: userEmail)
+        .get()
+        .then((querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        doc.reference.update({'status': 'Archived'});
+      });
+    }).catchError((error) {
+      print("Error updating document status: $error");
+    });
+
+    // Toggle favorite status and update Firestore
+    String collectionName = "AnimalHearted";
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection(collectionName)
+        .where("email", isEqualTo: userEmail)
+        .where("currentPetId", isEqualTo: widget.currentPetId)
+        .get();
+
+    bool isFavorited =
+        snapshot.docs.isNotEmpty ? snapshot.docs[0]["is_favorited"] : false;
+    String toastMessage;
+    if (snapshot.docs.isEmpty) {
+      await FirebaseFirestore.instance.collection(collectionName).add({
+        "email": userEmail,
+        "is_favorited": !isFavorited,
+        "currentPetId": widget.currentPetId,
+      });
+      toastMessage = !isFavorited
+          ? "Pet Added to Favorites"
+          : "Pet Removed from Favorites";
+    } else {
+      await snapshot.docs[0].reference.update({
+        "is_favorited": !isFavorited,
+      });
+      toastMessage = !isFavorited
+          ? "Pet Added to Favorites"
+          : "Pet Removed from Favorites";
+    }
+    Fluttertoast.showToast(
+        msg: toastMessage,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.grey[800],
+        textColor: Colors.white,
+        fontSize: 16.0);
   }
 
   Stream<bool> _checkIsFavorited(String currentPetId) {
@@ -382,9 +425,29 @@ class _FavoriteBoxStatefulWidgetState extends State<FavoriteBoxStatefulWidget> {
           .where("email", isEqualTo: currentUserEmail)
           .where("currentPetId", isEqualTo: currentPetId)
           .snapshots()
-          .listen((snapshot) {
+          .listen((snapshot) async {
         if (snapshot.docs.isNotEmpty) {
-          controller.add(snapshot.docs[0]["is_favorited"]);
+          String adoptionFormsCollection = "AdoptionForms";
+          QuerySnapshot adoptionSnapshot = await FirebaseFirestore.instance
+              .collection(adoptionFormsCollection)
+              .where("email", isEqualTo: currentUserEmail)
+              .where("petId", isEqualTo: currentPetId)
+              .get();
+
+          if (adoptionSnapshot.docs.isNotEmpty) {
+            String status = adoptionSnapshot.docs[0]["status"];
+            if (status == "Accepted" ||
+                status == "Shipped" ||
+                status == "Adopted") {
+              // Pet cannot be unfavorited, send a message to the user
+              controller.addError(
+                  "Pet cannot be unfavorited because it is already adopted or in the process.");
+            } else {
+              controller.add(snapshot.docs[0]["is_favorited"]);
+            }
+          } else {
+            controller.add(false);
+          }
         } else {
           controller.add(false);
         }
