@@ -150,7 +150,16 @@ class _AdminDonationsState extends State<AdminDonations> {
               Text('Amount: $amount'),
               const SizedBox(height: 10),
               imageUrl.isNotEmpty
-                  ? Image.network(imageUrl, height: 200)
+                  ? Container(
+                      height: 300,
+                      width: 200,
+                      child: Image.network(
+                        imageUrl,
+                        height: 200,
+                        width: 150,
+                        fit: BoxFit.fill,
+                      ),
+                    )
                   : const Text('No proof of donation provided'),
             ],
           ),

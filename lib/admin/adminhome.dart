@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mad/admin/admin_home_widgets/admin_analytics.dart';
 import 'package:mad/admin/admin_home_widgets/admin_donations.dart';
 import 'package:mad/admin/admin_home_widgets/admin_messages.dart';
 import 'package:mad/admin/admin_home_widgets/adoption_request.dart';
@@ -32,9 +33,7 @@ class _AdminHomeState extends State<AdminHome> {
   void initState() {
     super.initState();
     selectedMenu = 'Analytics';
-    middleContent = middleContent = Center(
-      child: Text('Analytics Content'),
-    );
+    middleContent = middleContent = Center(child: AdminAnalytics());
     getUserData();
   }
 
@@ -105,9 +104,7 @@ class _AdminHomeState extends State<AdminHome> {
                           selectedMenu = menu;
                           // Update middleContent based on selected menu
                           if (menu == 'Analytics') {
-                            middleContent = Center(
-                              child: Text('Analytics Content'),
-                            );
+                            middleContent = AdminAnalytics();
                           } else if (menu == 'Blogs') {
                             middleContent = MiddlePart(likeState: likeState);
                           } else if (menu == 'Add Pet') {

@@ -594,93 +594,166 @@ class WebAdoptionRequestDialog extends StatelessWidget {
         });
       }
 
-      // Get the name of the animal
-      String animalName = "";
-      FirebaseFirestore.instance
-          .collection('Animal')
-          .doc(petId)
-          .get()
-          .then((animalSnapshot) {
-        animalName = animalSnapshot.data()?['Name'];
+      // Handle Rejected status with a reason
+      if (status == 'Rejected') {
+        Navigator.pop(context); // Close the AdoptionForm details dialog
 
-        // Construct message text based on status
-        String messageText = status == 'Accepted'
-            ? "We would like to inform you that your adoption form for $animalName is accepted."
-            : (status == 'Pending'
-                ? "We would like to inform you that your adoption form for $animalName is cancelled."
-                : (status == 'Shipped'
-                    ? "We would like to inform you that your pet $animalName is shipped."
-                    : (status == 'Adopted'
-                        ? "We would like to inform you that your adoption process with $animalName is done."
-                        : "We would like to inform you that your adoption form for $animalName is rejected.")));
-
-        // Send message to user
-        Map<String, dynamic> messageData = {
-          'receiverEmail': userEmail,
-          'senderEmail': 'ivory@gmail.com',
-          'text': messageText,
-          'timestamp': FieldValue.serverTimestamp(),
-        };
-
-        FirebaseFirestore.instance
-            .collection('admin_messages')
-            .add(messageData)
-            .then((_) {
-          print("Message sent to user successfully");
-
-          // Add to Notifications collection
-          FirebaseFirestore.instance.collection('Notifications').add({
-            'title': 'Adoption Update',
-            'body': messageText,
-            'timestamp': FieldValue.serverTimestamp(),
-            'email': userEmail,
-            'isSeen': false,
-          }).then((_) {
-            print("Notification added successfully");
-          }).catchError((error) {
-            print("Failed to add notification: $error");
-          });
-
-          // Update UserNewMessage collection
-          DocumentReference userNewMessageDoc = FirebaseFirestore.instance
-              .collection('UserNewMessage')
-              .doc(userEmail);
-          FirebaseFirestore.instance.runTransaction((transaction) async {
-            DocumentSnapshot snapshot =
-                await transaction.get(userNewMessageDoc);
-            if (!snapshot.exists) {
-              // If the document does not exist, create it with notificationCount set to 1
-              transaction.set(userNewMessageDoc, {'notificationCount': 1});
-            } else {
-              // If the document exists, increment the notificationCount field
-              Map<String, dynamic>? data =
-                  snapshot.data() as Map<String, dynamic>?;
-              int newCount = (data?['notificationCount'] ?? 0) + 1;
-              transaction
-                  .update(userNewMessageDoc, {'notificationCount': newCount});
-            }
-          }).then((_) {
-            print("UserNewMessage notification count updated successfully");
-          }).catchError((error) {
-            print("Failed to update UserNewMessage notification count: $error");
-          });
-
-          // Close the AdoptionForm details dialog first
-          Navigator.pop(context);
-          // Show the feedback dialog
-          _showDialog(context, 'Form status is $status');
-        }).catchError((error) {
-          print("Failed to send message to user: $error");
-          _showDialog(context, 'Failed to send message to user');
-        });
-      }).catchError((error) {
-        print("Failed to get animal name: $error");
-        _showDialog(context, 'Failed to get animal name');
-      });
+        _showRejectedDialog(context, userEmail, petId);
+      } else {
+        _processStatusUpdate(context, status, userEmail, petId);
+      }
     }).catchError((error) {
       print("Failed to update status: $error");
       _showDialog(context, 'Failed to update status');
     });
+  }
+
+  void _processStatusUpdate(
+      BuildContext context, String status, String userEmail, String petId,
+      [String? reason]) {
+    // Get the name of the animal
+    String animalName = "";
+    FirebaseFirestore.instance
+        .collection('Animal')
+        .doc(petId)
+        .get()
+        .then((animalSnapshot) {
+      animalName = animalSnapshot.data()?['Name'];
+
+      // Construct message text based on status
+      String messageText = status == 'Accepted'
+          ? "We would like to inform you that your adoption form for $animalName is accepted."
+          : (status == 'Pending'
+              ? "We would like to inform you that your adoption form for $animalName is cancelled."
+              : (status == 'Shipped'
+                  ? "We would like to inform you that your pet $animalName is shipped."
+                  : (status == 'Adopted'
+                      ? "We would like to inform you that your adoption process with $animalName is done."
+                      : reason != null
+                          ? "Your adoption form for $animalName is rejected. Reason: $reason"
+                          : "We would like to inform you that your adoption form for $animalName is rejected.")));
+
+      // Send message to user
+      Map<String, dynamic> messageData = {
+        'receiverEmail': userEmail,
+        'senderEmail': 'ivory@gmail.com',
+        'text': messageText,
+        'timestamp': FieldValue.serverTimestamp(),
+      };
+
+      FirebaseFirestore.instance
+          .collection('admin_messages')
+          .add(messageData)
+          .then((_) {
+        print("Message sent to user successfully");
+
+        // Add to Notifications collection
+        FirebaseFirestore.instance.collection('Notifications').add({
+          'title': 'Adoption Update',
+          'body': messageText,
+          'timestamp': FieldValue.serverTimestamp(),
+          'email': userEmail,
+          'isSeen': false,
+        }).then((_) {
+          print("Notification added successfully");
+        }).catchError((error) {
+          print("Failed to add notification: $error");
+        });
+
+        // Update UserNewMessage collection
+        DocumentReference userNewMessageDoc = FirebaseFirestore.instance
+            .collection('UserNewMessage')
+            .doc(userEmail);
+        FirebaseFirestore.instance.runTransaction((transaction) async {
+          DocumentSnapshot snapshot = await transaction.get(userNewMessageDoc);
+          if (!snapshot.exists) {
+            // If the document does not exist, create it with notificationCount set to 1 and LastMessage set
+            transaction.set(userNewMessageDoc, {
+              'notificationCount': 1,
+              'email': userEmail,
+              'LastMessage': 'You: $messageText',
+            });
+          } else {
+            // If the document exists, increment the notificationCount field and update LastMessage
+            Map<String, dynamic>? data =
+                snapshot.data() as Map<String, dynamic>?;
+            int newCount = (data?['notificationCount'] ?? 0) + 1;
+            transaction.update(userNewMessageDoc, {
+              'notificationCount': newCount,
+              'LastMessage': 'You: $messageText',
+            });
+          }
+        }).then((_) {
+          print("UserNewMessage notification count updated successfully");
+        }).catchError((error) {
+          print("Failed to update UserNewMessage notification count: $error");
+        });
+
+        // Close the AdoptionForm details dialog first
+        Navigator.pop(context);
+        // Show the feedback dialog
+        _showDialog(context, 'Form status is $status');
+      }).catchError((error) {
+        print("Failed to send message to user: $error");
+        _showDialog(context, 'Failed to send message to user');
+      });
+    }).catchError((error) {
+      print("Failed to get animal name: $error");
+      _showDialog(context, 'Failed to get animal name');
+    });
+  }
+
+  void _showRejectedDialog(
+      BuildContext context, String userEmail, String petId) {
+    TextEditingController reasonController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+          title: Text(
+            'Reason for Rejection',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: TextField(
+            controller: reasonController,
+            decoration: InputDecoration(
+              hintText: 'Enter reason for rejection',
+              hintStyle: TextStyle(color: Colors.grey),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                String reason = reasonController.text;
+                if (reason.isNotEmpty) {
+                  Navigator.of(context, rootNavigator: true).pop();
+                  _processStatusUpdate(
+                      context, 'Rejected', userEmail, petId, reason);
+                } else {
+                  _showDialog(context, 'Please enter a reason for rejection');
+                }
+              },
+              child: Text(
+                'Submit',
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontSize: 18.0,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showDialog(BuildContext context, String message) {
@@ -725,13 +798,13 @@ class WebAdoptionRequestDialog extends StatelessWidget {
       },
     );
   }
-}
 
-String _formatAddress(String address) {
-  List<String> words = address.split(' ');
-  if (words.length > 4) {
-    return '${words.take(4).join(' ')}\n${words.skip(4).join(' ')}';
-  } else {
-    return address;
+  String _formatAddress(String address) {
+    List<String> words = address.split(' ');
+    if (words.length > 4) {
+      return '${words.take(4).join(' ')}\n${words.skip(4).join(' ')}';
+    } else {
+      return address;
+    }
   }
 }
