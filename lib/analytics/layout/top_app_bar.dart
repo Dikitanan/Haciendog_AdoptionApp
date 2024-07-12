@@ -28,6 +28,7 @@ class TopAppBar extends StatelessWidget {
             flex: 2,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 15),
+              margin: EdgeInsets.only(right: 150),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(25),
                 color: Colors.white,
@@ -40,13 +41,6 @@ class TopAppBar extends StatelessWidget {
                   border: InputBorder.none,
                 ),
               ),
-            ),
-          ),
-          Expanded(
-            child: _nameAndProfilePicture(
-              context,
-              "Emily Smith",
-              "https://image.freepik.com/free-photo/dreamy-girl-biting-sunglasses-looking-away-with-dreamy-face-purple-background_197531-7085.jpg",
             ),
           ),
         ],

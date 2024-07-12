@@ -15,7 +15,7 @@ class LatestTransactions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CategoryBox(
-      title: "Latest Transactions",
+      title: "Complete Adoptions",
       suffix: TextButton(
         child: Text(
           "See all",

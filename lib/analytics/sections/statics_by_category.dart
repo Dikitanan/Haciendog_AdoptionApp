@@ -1,6 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:mad/analytics/data/mock_data.dart';
 import 'package:mad/analytics/models/expense.dart';
 import 'package:mad/analytics/models/pie_data.dart';
 import 'package:mad/analytics/styles/styles.dart';
@@ -18,17 +18,62 @@ class _StaticsByCategoryState extends State<StaticsByCategory> {
   int touchedIndex = -1;
   final ScrollController _scrollController = ScrollController();
 
+  List<Expense> expenses = []; // List to hold expenses fetched from Firestore
+  int totalCat = 0;
+  int totalDog = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAnimalCollection();
+  }
+
+  Future<void> _fetchAnimalCollection() async {
+    try {
+      QuerySnapshot querySnapshot =
+          await FirebaseFirestore.instance.collection('Animal').get();
+
+      totalCat = 0;
+      totalDog = 0;
+
+      querySnapshot.docs.forEach((doc) {
+        if (doc['CatOrDog'] == 'Cat') {
+          totalCat++;
+        } else if (doc['CatOrDog'] == 'Dog') {
+          totalDog++;
+        }
+      });
+
+      setState(() {
+        expenses = [
+          Expense(
+            expenseName: 'Cat',
+            expensePercentage: totalCat / (totalCat + totalDog) * 100,
+            color: Colors.blue, // Example color
+          ),
+          Expense(
+            expenseName: 'Dog',
+            expensePercentage: totalDog / (totalCat + totalDog) * 100,
+            color: Colors.green, // Example color
+          ),
+        ];
+      });
+    } catch (e) {
+      print('Error fetching Animal collection: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(top: Styles.defaultPadding),
       child: CategoryBox(
         suffix: Container(),
-        title: "Statistics by category",
+        title: "Number of Cats and Dogs",
         children: [
           Expanded(
             child: _pieChart(
-              MockData.otherExpanses
+              expenses
                   .map(
                     (e) => PieData(value: e.expensePercentage, color: e.color),
                   )
@@ -36,14 +81,14 @@ class _StaticsByCategoryState extends State<StaticsByCategory> {
             ),
           ),
           Expanded(
-            child: _otherExpanses(MockData.otherExpanses),
+            child: _otherExpenses(expenses),
           ),
         ],
       ),
     );
   }
 
-  Widget _otherExpanses(List<Expense> otherExpenses) {
+  Widget _otherExpenses(List<Expense> expenses) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
       decoration: BoxDecoration(
@@ -53,8 +98,14 @@ class _StaticsByCategoryState extends State<StaticsByCategory> {
       child: ListView(
         controller: _scrollController,
         padding: const EdgeInsets.all(2),
-        children: otherExpenses
-            .map((Expense e) => ExpenseWidget(expense: e))
+        children: expenses
+            .map(
+              (Expense e) => ExpenseWidget(
+                expense: e,
+                totalCat: totalCat,
+                totalDog: totalDog,
+              ),
+            )
             .toList(),
       ),
     );
@@ -92,18 +143,8 @@ class _StaticsByCategoryState extends State<StaticsByCategory> {
                   )
                   .toList(),
               pieTouchData: PieTouchData(
-                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                setState(() {
-                  if (!event.isInterestedForInteractions ||
-                      pieTouchResponse == null ||
-                      pieTouchResponse.touchedSection == null) {
-                    touchedIndex = -1;
-                    return;
-                  }
-                  touchedIndex =
-                      pieTouchResponse.touchedSection!.touchedSectionIndex;
-                });
-              }),
+                touchCallback: (FlTouchEvent event, pieTouchResponse) {},
+              ),
               borderData: FlBorderData(
                 show: false,
               ),

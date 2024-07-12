@@ -3,10 +3,25 @@ import 'package:mad/analytics/models/expense.dart';
 
 class ExpenseWidget extends StatelessWidget {
   final Expense expense;
+  final int totalCat;
+  final int totalDog;
 
-  const ExpenseWidget({Key? key, required this.expense}) : super(key: key);
+  const ExpenseWidget({
+    Key? key,
+    required this.expense,
+    required this.totalCat,
+    required this.totalDog,
+  }) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
+    String countText = '';
+    if (expense.expenseName == 'Cat') {
+      countText = ' ($totalCat)';
+    } else if (expense.expenseName == 'Dog') {
+      countText = ' ($totalDog)';
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 18),
       child: Row(
@@ -22,7 +37,7 @@ class ExpenseWidget extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              "${expense.expenseName} - ${expense.expensePercentage.round()}%",
+              "${expense.expenseName} -$countText ${expense.expensePercentage.round()}%",
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
               ),

@@ -4,6 +4,7 @@ import 'package:mad/analytics/models/enums/transaction_type.dart';
 import 'package:mad/analytics/models/expense.dart';
 import 'package:mad/analytics/models/transaction.dart';
 import 'package:mad/analytics/styles/styles.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 
 class MockData {
   static BarChartGroupData makeGroupData(
@@ -71,19 +72,14 @@ class MockData {
     return [
       Expense(
         color: Styles.defaultBlueColor,
-        expenseName: "Other expenses",
-        expensePercentage: 50,
+        expenseName: "Dogs",
+        expensePercentage: 20,
       ),
       Expense(
         color: Styles.defaultRedColor,
-        expenseName: "Entertainment",
-        expensePercentage: 35,
+        expenseName: "Cats",
+        expensePercentage: 80,
       ),
-      Expense(
-        color: Styles.defaultYellowColor,
-        expenseName: "Investments",
-        expensePercentage: 15,
-      )
     ];
   }
 }
