@@ -30,8 +30,10 @@ class _StaticsByCategoryState extends State<StaticsByCategory> {
 
   Future<void> _fetchAnimalCollection() async {
     try {
-      QuerySnapshot querySnapshot =
-          await FirebaseFirestore.instance.collection('Animal').get();
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('Animal')
+          .where('Status', isNotEqualTo: 'Adopted')
+          .get();
 
       totalCat = 0;
       totalDog = 0;
