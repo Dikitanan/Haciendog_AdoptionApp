@@ -574,6 +574,88 @@ class WebAdoptionRequestDialog extends StatelessWidget {
       String animalStatus = '';
       if (status == 'Accepted') {
         animalStatus = 'Reserved';
+
+        // Reject all other adoption forms for the same petId
+        FirebaseFirestore.instance
+            .collection('AdoptionForms')
+            .where('petId', isEqualTo: petId)
+            .where('status', isEqualTo: 'Pending') // Only reject pending forms
+            .get()
+            .then((querySnapshot) {
+          querySnapshot.docs.forEach((doc) {
+            doc.reference.update({'status': 'Rejected'}).then((_) {
+              String otherUserEmail = doc.data()['email'];
+              String messageText =
+                  "Your Adoption form is rejected. Reason: The pet is already reserved.";
+              // Send message to other user
+              Map<String, dynamic> messageData = {
+                'receiverEmail': otherUserEmail,
+                'senderEmail': 'ivory@gmail.com',
+                'text': messageText,
+                'timestamp': FieldValue.serverTimestamp(),
+              };
+
+              FirebaseFirestore.instance
+                  .collection('admin_messages')
+                  .add(messageData)
+                  .then((_) {
+                print("Message sent to rejected user successfully");
+
+                // Add to Notifications collection
+                FirebaseFirestore.instance.collection('Notifications').add({
+                  'title': 'Adoption Update',
+                  'body': messageText,
+                  'timestamp': FieldValue.serverTimestamp(),
+                  'email': otherUserEmail,
+                  'isSeen': false,
+                }).then((_) {
+                  print("Notification added successfully for rejected user");
+                }).catchError((error) {
+                  print("Failed to add notification for rejected user: $error");
+                });
+
+                // Update UserNewMessage collection
+                DocumentReference userNewMessageDoc = FirebaseFirestore.instance
+                    .collection('UserNewMessage')
+                    .doc(otherUserEmail);
+                FirebaseFirestore.instance.runTransaction((transaction) async {
+                  DocumentSnapshot snapshot =
+                      await transaction.get(userNewMessageDoc);
+                  if (!snapshot.exists) {
+                    // If the document does not exist, create it with notificationCount set to 1 and LastMessage set
+                    transaction.set(userNewMessageDoc, {
+                      'notificationCount': 1,
+                      'email': otherUserEmail,
+                      'LastMessage': 'You: $messageText',
+                    });
+                  } else {
+                    // If the document exists, increment the notificationCount field and update LastMessage
+                    Map<String, dynamic>? data =
+                        snapshot.data() as Map<String, dynamic>?;
+                    int newCount = (data?['notificationCount'] ?? 0) + 1;
+                    transaction.update(userNewMessageDoc, {
+                      'notificationCount': newCount,
+                      'LastMessage': 'You: $messageText',
+                    });
+                  }
+                }).then((_) {
+                  print(
+                      "UserNewMessage notification count updated successfully for rejected user");
+                }).catchError((error) {
+                  print(
+                      "Failed to update UserNewMessage notification count for rejected user: $error");
+                });
+              }).catchError((error) {
+                print("Failed to send message to rejected user: $error");
+              });
+            }).catchError((error) {
+              print(
+                  "Failed to update status to Rejected for petId $petId: $error");
+            });
+          });
+        }).catchError((error) {
+          print("Failed to get other adoption forms for petId $petId: $error");
+        });
       } else if (status == 'Shipped') {
         animalStatus = 'Shipped';
       } else if (status == 'Adopted') {
