@@ -145,7 +145,7 @@ class _StaticsByCategoryState extends State<StaticsByCategory> {
                   )
                   .toList(),
               pieTouchData: PieTouchData(
-                touchCallback: (FlTouchEvent event, pieTouchResponse) {},
+                enabled: false, // Disable touch interactions
               ),
               borderData: FlBorderData(
                 show: false,
@@ -153,7 +153,6 @@ class _StaticsByCategoryState extends State<StaticsByCategory> {
               sectionsSpace: 0,
               centerSpaceRadius: 50,
             ),
-            swapAnimationDuration: const Duration(milliseconds: 150),
             swapAnimationCurve: Curves.linear,
           ),
         ],

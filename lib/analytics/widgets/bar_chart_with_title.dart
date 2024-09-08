@@ -48,7 +48,7 @@ class BarChartWithTitle extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
                     CurrencyText(
-                      currency: "\$",
+                      currency: "\Php",
                       amount: amount,
                     ),
                     const SizedBox(width: 8),

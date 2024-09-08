@@ -245,7 +245,7 @@ class _AdminDonationsState extends State<AdminDonations> {
                               .collection('Notifications')
                               .add({
                             'title': 'Donation',
-                            'body': 'Your Donation is not Valid',
+                            'body': 'Sorry, your Donation is not Valid',
                             'timestamp': FieldValue.serverTimestamp(),
                             'email': email,
                             'isSeen': false,

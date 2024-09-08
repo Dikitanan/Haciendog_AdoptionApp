@@ -97,7 +97,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                     ),
                     SizedBox(height: 35),
                     Text(
-                      'Personality:',
+                      'Behavior:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     TextField(
@@ -108,7 +108,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                       controller: personalityController,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(),
-                        hintText: 'Enter personality',
+                        hintText: 'Enter Behavior',
                       ),
                     ),
                     SizedBox(height: 35),

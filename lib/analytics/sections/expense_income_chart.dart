@@ -1,10 +1,79 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mad/analytics/styles/styles.dart';
 import 'package:mad/analytics/widgets/bar_chart_with_title.dart';
 
-class ExpenseIncomeCharts extends StatelessWidget {
+class ExpenseIncomeCharts extends StatefulWidget {
   const ExpenseIncomeCharts({Key? key}) : super(key: key);
+
+  @override
+  _ExpenseIncomeChartsState createState() => _ExpenseIncomeChartsState();
+}
+
+class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
+  int totalUsers = 0;
+  int totalVerifiedUsers = 0;
+  int bannedUsers = 0;
+  int pendingAdoptionRequests = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
+    _getPendingAdoptionRequestsStream().listen((count) {
+      setState(() {
+        pendingAdoptionRequests = count;
+      });
+    });
+  }
+
+  Stream<int> _getPendingAdoptionRequestsStream() {
+    return FirebaseFirestore.instance
+        .collection('AdoptionForms')
+        .where('status',
+            whereNotIn: ['Rejected', 'Adopted', 'Cancelled', 'Archived'])
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      // Fetch total users from UserEmails collection excluding banned users
+      QuerySnapshot userEmailsSnapshot = await FirebaseFirestore.instance
+          .collection('UserEmails')
+          .where('ban', isEqualTo: false) // Exclude banned users
+          .get();
+
+      setState(() {
+        totalUsers = userEmailsSnapshot.docs.length;
+      });
+
+      // Fetch banned users from UserEmails collection
+      QuerySnapshot bannedUsersSnapshot = await FirebaseFirestore.instance
+          .collection('UserEmails')
+          .where('ban', isEqualTo: true) // Only banned users
+          .get();
+
+      setState(() {
+        bannedUsers = bannedUsersSnapshot.docs.length;
+      });
+
+      // Fetch verified users from Profiles collection by matching emails
+      QuerySnapshot profilesSnapshot =
+          await FirebaseFirestore.instance.collection('Profiles').get();
+      List<String> verifiedEmails =
+          profilesSnapshot.docs.map((doc) => doc['email'].toString()).toList();
+
+      setState(() {
+        totalVerifiedUsers = userEmailsSnapshot.docs
+            .where((doc) => verifiedEmails.contains(doc['email']))
+            .length;
+      });
+    } catch (e) {
+      print('Error fetching data: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +100,7 @@ class ExpenseIncomeCharts extends StatelessWidget {
                       Icon(Icons.people, size: 30, color: Colors.blue),
                       SizedBox(width: 10),
                       Text(
-                        "Total Users: 10",
+                        "Total Users: $totalUsers",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -50,7 +119,26 @@ class ExpenseIncomeCharts extends StatelessWidget {
                       Icon(Icons.verified, size: 30, color: Colors.green),
                       SizedBox(width: 10),
                       Text(
-                        "Total Verified Users: 8",
+                        "Total Verified Users: $totalVerifiedUsers",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.block, size: 30, color: Colors.red),
+                      SizedBox(width: 10),
+                      Text(
+                        "Banned Users: $bannedUsers",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -70,7 +158,7 @@ class ExpenseIncomeCharts extends StatelessWidget {
                           size: 30, color: Colors.orange),
                       SizedBox(width: 10),
                       Text(
-                        "Pending Adoptions: 10",
+                        "Pending Adoptions: $pendingAdoptionRequests",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -90,7 +178,7 @@ class ExpenseIncomeCharts extends StatelessWidget {
         Flexible(
           child: BarChartWithTitle(
             title: "Total Donation",
-            amount: 1980,
+            amount: 100,
             barColor: Styles.defaultRedColor,
           ),
         ),

@@ -160,7 +160,8 @@ class _LeftSideBarState extends State<LeftSideBar> {
   Stream<int> _getPendingAdoptionRequestsStream() {
     return FirebaseFirestore.instance
         .collection('AdoptionForms')
-        .where('status', isEqualTo: 'Pending')
+        .where('status',
+            whereNotIn: ['Rejected', 'Adopted', 'Cancelled', 'Archived'])
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
   }
