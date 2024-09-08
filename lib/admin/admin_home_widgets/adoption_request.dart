@@ -567,7 +567,12 @@ class WebAdoptionRequestDialog extends StatelessWidget {
     FirebaseFirestore.instance
         .collection('AdoptionForms')
         .doc(documentId)
-        .update({'status': status}).then((_) {
+        .update({
+      'status': status,
+      'DateAdopted': status == 'Adopted'
+          ? FieldValue.serverTimestamp()
+          : FieldValue.delete()
+    }).then((_) {
       print("Status updated successfully");
 
       // Update the animal's status based on the adoption form status
