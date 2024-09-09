@@ -32,10 +32,10 @@ class UpgradeProSection extends StatelessWidget {
                       ),
                       children: [
                         const TextSpan(
-                          text: "Upgrade your account to ",
+                          text: "   ",
                         ),
                         TextSpan(
-                          text: "PRO+",
+                          text: "   ",
                           style: TextStyle(
                             color: Styles.defaultRedColor,
                           ),
@@ -55,17 +55,16 @@ class UpgradeProSection extends StatelessWidget {
                             color: Colors.black,
                           ),
                           children: [
-                            const TextSpan(text: "With a "),
+                            const TextSpan(text: "    "),
                             TextSpan(
-                              text: "PRO+ ",
+                              text: "    ",
                               style: TextStyle(
                                 color: Styles.defaultRedColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const TextSpan(
-                              text:
-                                  "account you get many additional and convenient features to control your finances.",
+                              text: "   ",
                             ),
                           ],
                         ),
