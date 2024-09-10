@@ -8,7 +8,7 @@ class TopAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(18.0),
+      padding: const EdgeInsets.all(12.0),
       child: Row(
         children: [
           Visibility(
@@ -20,25 +20,6 @@ class TopAppBar extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 26,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              margin: EdgeInsets.only(right: 150),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                color: Colors.white,
-              ),
-              child: const TextField(
-                decoration: InputDecoration(
-                  fillColor: Colors.white,
-                  hintText: "Search something...",
-                  icon: Icon(CupertinoIcons.search),
-                  border: InputBorder.none,
                 ),
               ),
             ),

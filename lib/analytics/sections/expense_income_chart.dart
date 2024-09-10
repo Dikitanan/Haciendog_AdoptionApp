@@ -16,16 +16,50 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
   int totalVerifiedUsers = 0;
   int bannedUsers = 0;
   int pendingAdoptionRequests = 0;
+  double totalDonationAmount = 0; // New variable to store total donations
 
   @override
   void initState() {
     super.initState();
     fetchUserData();
+    fetchTotalDonations(); // Fetch total donations
+
     _getPendingAdoptionRequestsStream().listen((count) {
       setState(() {
         pendingAdoptionRequests = count;
       });
     });
+  }
+
+  Future<void> fetchTotalDonations() async {
+    try {
+      // Fetch all donations from the Donations collection
+      QuerySnapshot donationsSnapshot = await FirebaseFirestore.instance
+          .collection('Donations')
+          .where('status', isEqualTo: 'Accepted')
+          .get();
+
+      double total = 0;
+
+      // Sum up the "amount" field safely, handling potential string or null values
+      for (var doc in donationsSnapshot.docs) {
+        var amountValue = doc['amount'];
+        if (amountValue != null) {
+          // Check if the value is a string and parse it to a double
+          double amount = amountValue is String
+              ? double.tryParse(amountValue) ?? 0
+              : amountValue.toDouble();
+          total += amount;
+        }
+      }
+
+      // Update the state with the total donation amount
+      setState(() {
+        totalDonationAmount = total;
+      });
+    } catch (e) {
+      print('Error fetching donation data: $e');
+    }
   }
 
   Stream<int> _getPendingAdoptionRequestsStream() {
@@ -178,7 +212,7 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
         Flexible(
           child: BarChartWithTitle(
             title: "Total Donation",
-            amount: 100,
+            amount: totalDonationAmount,
             barColor: Styles.defaultRedColor,
           ),
         ),

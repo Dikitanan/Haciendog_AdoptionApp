@@ -118,6 +118,8 @@ class _AdminDonationsState extends State<AdminDonations> {
     final username = donation['username'] ?? 'No username';
     final proofOfDonation = donation['proofOfDonation'] ?? '';
     final amount = donation['amount'] ?? '';
+    final DateOfDonation = donation['DateOfDonation'] ?? '';
+
     final status = donation['status'] ?? 'Pending';
 
     String imageUrl = '';
@@ -140,6 +142,7 @@ class _AdminDonationsState extends State<AdminDonations> {
               ),
             ],
           ),
+
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
@@ -148,6 +151,11 @@ class _AdminDonationsState extends State<AdminDonations> {
               Text('Message: $message'),
               Text('Username: $username'),
               Text('Amount: $amount'),
+              Text(
+                'Date: ${DateOfDonation.toDate().day}/${DateOfDonation.toDate().month}/${DateOfDonation.toDate().year} '
+                '${DateOfDonation.toDate().hour % 12}:${DateOfDonation.toDate().minute.toString().padLeft(2, '0')} '
+                '${DateOfDonation.toDate().hour >= 12 ? 'PM' : 'AM'}',
+              ),
               const SizedBox(height: 10),
               imageUrl.isNotEmpty
                   ? Container(

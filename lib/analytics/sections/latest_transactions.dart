@@ -89,7 +89,7 @@ class _LatestTransactionsState extends State<LatestTransactions> {
       title: "Complete Adoptions ($_totalAdoptions)",
       suffix: TextButton(
         child: Text(
-          "See all",
+          " ",
           style: TextStyle(
             color: Styles.defaultRedColor,
             fontWeight: FontWeight.w600,

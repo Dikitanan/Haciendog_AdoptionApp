@@ -30,7 +30,7 @@ class AppLayout extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 100, child: TopAppBar()),
+                  const SizedBox(height: 60, child: TopAppBar()),
                   Expanded(child: content),
                 ],
               ),

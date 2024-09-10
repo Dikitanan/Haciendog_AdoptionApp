@@ -325,7 +325,8 @@ class _DonatePageState extends State<DonatePage> {
         'message': _userMessage,
         'amount': _amount,
         'proofOfDonation': proofOfDonationUrl,
-        'status': 'Pending'
+        'status': 'Pending',
+        'DateOfDonation': Timestamp.now(), // Add the current date and time
       });
 
       setState(() {
