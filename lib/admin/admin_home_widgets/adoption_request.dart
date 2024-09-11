@@ -94,18 +94,31 @@ class _AdoptionListsState extends State<AdoptionLists> {
             );
           }
 
-          // Filter out 'Adopted' status if _selectedStatus is 'All'
+          // Filter out 'Adopted' and 'Rejected' statuses if _selectedStatus is 'All'
           var documents = _selectedStatus == 'All'
               ? snapshot.data!.docs
-                  .where((doc) => doc['status'] != 'Adopted')
+                  .where((doc) =>
+                      doc['status'] != 'Adopted' && doc['status'] != 'Rejected')
                   .toList()
               : snapshot.data!.docs;
 
-          // Sort the documents to bring 'Pending' status to the top
+          // Sort the documents to align with the order: Pending, Accepted, Shipped
           documents.sort((a, b) {
-            if (a['status'] == 'Pending' && b['status'] != 'Pending') return -1;
-            if (a['status'] != 'Pending' && b['status'] == 'Pending') return 1;
-            return 0;
+            // Define a custom order for the statuses
+            const statusOrder = {
+              'Pending': 0,
+              'Accepted': 1,
+              'Shipped': 2,
+            };
+
+            // Get the order value for each document's status
+            var statusA = statusOrder[a['status']] ??
+                3; // Default to 3 for any other status
+            var statusB = statusOrder[b['status']] ??
+                3; // Default to 3 for any other status
+
+            // Compare the two statuses based on the custom order
+            return statusA.compareTo(statusB);
           });
 
           return ListView(
