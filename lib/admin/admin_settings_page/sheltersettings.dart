@@ -269,8 +269,8 @@ class _ShelterSettingsFormState extends State<ShelterSettingsForm> {
                         return null;
                       },
                       decoration: InputDecoration(
-                        labelText: "Enter Phone Number",
-                        hintText: "Write your Phone Number",
+                        labelText: "Enter G-cash Number (If Applicable)",
+                        hintText: "Write your G-cash Number",
                         labelStyle:
                             TextStyle(color: Colors.black), // Text color
                         hintStyle:

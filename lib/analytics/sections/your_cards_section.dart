@@ -15,14 +15,15 @@ class CardsSection extends StatefulWidget {
 
 class _CardsSectionState extends State<CardsSection> {
   String? imageUrl;
+  String? phoneNumber;
 
   @override
   void initState() {
     super.initState();
-    _fetchImage();
+    _fetchData();
   }
 
-  Future<void> _fetchImage() async {
+  Future<void> _fetchData() async {
     try {
       // Fetch the first document from the ShelterSettings collection
       QuerySnapshot snapshot = await FirebaseFirestore.instance
@@ -33,10 +34,11 @@ class _CardsSectionState extends State<CardsSection> {
       if (snapshot.docs.isNotEmpty) {
         setState(() {
           imageUrl = snapshot.docs.first['Image1'];
+          phoneNumber = snapshot.docs.first['PhoneNumber'];
         });
       }
     } catch (e) {
-      print('Error fetching image: $e');
+      print('Error fetching data: $e');
     }
   }
 
@@ -60,7 +62,19 @@ class _CardsSectionState extends State<CardsSection> {
                 color: const Color.fromARGB(255, 0, 0, 0),
               ),
             ),
-            SizedBox(height: 10), // Space between the title and the image
+
+            //G-CASH NAME NEED TO ADD.
+            if (phoneNumber != null) ...[
+              SizedBox(height: 5), // Space between title and phone number
+              Text(
+                '$phoneNumber',
+                style: TextStyle(
+                    fontSize: 16,
+                    color: const Color.fromARGB(255, 0, 0, 0),
+                    fontWeight: FontWeight.bold),
+              ),
+            ],
+            SizedBox(height: 10), // Space between the title/phone and the image
             Container(
               height: 250,
               width: 300,

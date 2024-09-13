@@ -94,15 +94,17 @@ class _AdoptionListsState extends State<AdoptionLists> {
             );
           }
 
-          // Filter out 'Adopted' and 'Rejected' statuses if _selectedStatus is 'All'
+          // Filter out 'Adopted', 'Rejected', and 'Cancelled' statuses if _selectedStatus is 'All'
           var documents = _selectedStatus == 'All'
               ? snapshot.data!.docs
                   .where((doc) =>
-                      doc['status'] != 'Adopted' && doc['status'] != 'Rejected')
+                      doc['status'] != 'Adopted' &&
+                      doc['status'] != 'Rejected' &&
+                      doc['status'] != 'Cancelled')
                   .toList()
               : snapshot.data!.docs;
 
-          // Sort the documents to align with the order: Pending, Accepted, Shipped
+// Sort the documents to align with the order: Pending, Accepted, Shipped
           documents.sort((a, b) {
             // Define a custom order for the statuses
             const statusOrder = {
@@ -724,7 +726,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
       String messageText = status == 'Accepted'
           ? "We would like to inform you that your adoption form for $animalName is accepted."
           : (status == 'Pending'
-              ? "We would like to inform you that your adoption form for $animalName is cancelled."
+              ? "We would like to inform you that your cancelled adoption form for Animal: $animalName is now Pending again."
               : (status == 'Shipped'
                   ? "We would like to inform you that your pet $animalName is shipped."
                   : (status == 'Adopted'

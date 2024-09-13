@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum TransactionType { incoming, outgoing, unknown }
+enum TransactionType { incoming, outgoing, unknown, adoption }
 
 extension TransactionTypeExtensions on TransactionType {
   String get sign {

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mad/admin/report_generation/animal_list_pdf.dart';
 
 class AnimalList extends StatefulWidget {
   @override
@@ -24,6 +25,7 @@ class _AnimalListState extends State<AnimalList> {
   late TextEditingController pwdController;
   late TextEditingController catOrDogController;
   late TextEditingController statusController;
+  final PdfGenerator pdfGenerator = PdfGenerator();
 
   bool _imageUploaded = false;
   bool _isUploading = false; // Add this state variable
@@ -79,6 +81,26 @@ class _AnimalListState extends State<AnimalList> {
             title: const Text('Animal List'),
             centerTitle: true,
             titleSpacing: 0, // Set title spacing to 0
+            actions: <Widget>[
+              Tooltip(
+                message: 'Print Animal List',
+                child: IconButton(
+                  icon: Icon(Icons.print),
+                  onPressed: () {
+                    pdfGenerator.generatePdf(preview: true); // Preview PDF
+                  },
+                ),
+              ),
+              Tooltip(
+                message: 'Download Animal List',
+                child: IconButton(
+                  icon: Icon(Icons.download),
+                  onPressed: () {
+                    pdfGenerator.generatePdf(preview: false); // Preview PDF
+                  },
+                ),
+              ),
+            ],
           ),
           body: Container(
             decoration: BoxDecoration(
@@ -153,7 +175,7 @@ class _AnimalListState extends State<AnimalList> {
                                         Color(0xFFE96560)!), // Header row color
                                 dataRowHeight:
                                     120.0, // Adjust row height as needed
-                                columns: const [
+                                columns: [
                                   DataColumn(
                                     label: Center(
                                       child: Text(
