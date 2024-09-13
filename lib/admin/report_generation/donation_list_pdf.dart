@@ -21,28 +21,38 @@ class PdfGenerator {
             .asUint8List();
     final image = pw.MemoryImage(imageBytes);
 
-    // Fetch data from Firebase
-    final snapshot = await _firestore.collection('Animal').get();
+    final snapshot = await _firestore
+        .collection('Donations')
+        .where('status', isEqualTo: 'Accepted')
+        .get();
+
     final data = snapshot.docs.map((doc) => doc.data()).toList();
 
-    // Group data by Status
+    // Group data by status (in this case, only 'accepted')
     final groupedData = <String, List<Map<String, dynamic>>>{};
-    for (var animal in data) {
-      final status = animal['Status'] ?? 'Unknown';
+    for (var donation in data) {
+      final status = donation['status'] ?? 'unknown';
       if (!groupedData.containsKey(status)) {
         groupedData[status] = [];
       }
-      groupedData[status]!.add(animal);
+      groupedData[status]!.add(donation);
     }
 
-    // Generate pages for each status
+    // Generate pages for 'accepted' donations
     for (var status in groupedData.keys) {
-      final animals = groupedData[status]!;
+      final donations = groupedData[status]!;
 
-      // Split animals into chunks of 17
-      for (var i = 0; i < animals.length; i += 17) {
-        final chunk = animals.sublist(
-            i, (i + 17 < animals.length) ? i + 17 : animals.length);
+      // Split donations into chunks of 13
+      for (var i = 0; i < donations.length; i += 13) {
+        final chunk = donations.sublist(
+            i, (i + 13 < donations.length) ? i + 13 : donations.length);
+
+        // Calculate total amount for this chunk
+        final totalAmount = chunk.fold<double>(0, (sum, donation) {
+          final amountStr = donation['amount']?.toString() ?? '0';
+          final amount = double.tryParse(amountStr) ?? 0;
+          return sum + amount;
+        });
 
         // Add a new page for each chunk
         pdf.addPage(
@@ -59,12 +69,9 @@ class PdfGenerator {
                         width: 90,
                         child: pw.Image(image),
                       ),
-                      pw.Text('Animal Report',
+                      pw.Text('Donation Report',
                           style: pw.TextStyle(
                               fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Status: $status',
-                          style: pw.TextStyle(
-                              fontSize: 16, color: PdfColors.black)),
                     ],
                   ),
                   pw.SizedBox(height: 20),
@@ -75,12 +82,11 @@ class PdfGenerator {
                       border:
                           pw.TableBorder.all(width: 0.5, color: PdfColors.grey),
                       columnWidths: {
-                        0: pw.FlexColumnWidth(2),
-                        1: pw.FlexColumnWidth(1.5),
+                        0: pw.FlexColumnWidth(1.5),
+                        1: pw.FlexColumnWidth(2.3),
                         2: pw.FlexColumnWidth(2),
-                        3: pw.FlexColumnWidth(1.5),
-                        4: pw.FlexColumnWidth(1.5),
-                        5: pw.FlexColumnWidth(1.5),
+                        3: pw.FlexColumnWidth(1.3),
+                        4: pw.FlexColumnWidth(2.5),
                       },
                       children: [
                         // Header Row
@@ -92,58 +98,82 @@ class PdfGenerator {
                                 padding: pw.EdgeInsets.all(8.0),
                                 child: pw.Text('Name',
                                     style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold))),
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
-                                child: pw.Text('Species',
+                                child: pw.Text('Email',
                                     style: pw.TextStyle(
                                         fontWeight: pw.FontWeight.bold))),
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
-                                child: pw.Text('Breed',
+                                child: pw.Text('Date Of Donation',
                                     style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold))),
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
-                                child: pw.Text('Gender',
+                                child: pw.Text('Amount',
                                     style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold))),
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
-                                child: pw.Text('Health Status',
+                                child: pw.Text('Donor Message',
                                     style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold))),
-                            pw.Padding(
-                                padding: pw.EdgeInsets.all(8.0),
-                                child: pw.Text('Pet Status',
-                                    style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold))),
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
                           ],
                         ),
                         // Data Rows
-                        for (var animal in chunk)
+                        for (var donation in chunk)
                           pw.TableRow(
                             children: [
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['Name'] ?? '')),
+                                  child: pw.Text(donation['name'] ?? '',
+                                      style: pw.TextStyle(fontSize: 10))),
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['CatOrDog'] ?? '')),
+                                  child: pw.Text(donation['email'] ?? '',
+                                      style: pw.TextStyle(fontSize: 10))),
+                              pw.Padding(
+                                padding: pw.EdgeInsets.all(8.0),
+                                child: pw.Text(
+                                    donation['DateOfDonation'] != null
+                                        ? formatDonationDate(
+                                            donation['DateOfDonation'])
+                                        : 'Invalid Date',
+                                    style: pw.TextStyle(fontSize: 10)),
+                              ),
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['Breed'] ?? '')),
+                                  child: pw.Text(donation['amount'] ?? '',
+                                      style: pw.TextStyle(fontSize: 10))),
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['Gender'] ?? '')),
-                              pw.Padding(
-                                  padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['PWD'] ?? '')),
-                              pw.Padding(
-                                  padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['Status'] ?? '')),
+                                  child: pw.Text(donation['message'] ?? '',
+                                      style: pw.TextStyle(fontSize: 10))),
                             ],
                           ),
+                      ],
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                  // Total Amount Row
+                  pw.Padding(
+                    padding: pw.EdgeInsets.symmetric(horizontal: 20.0),
+                    child: pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.end,
+                      children: [
+                        pw.Text('TOTAL:',
+                            style:
+                                pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        pw.SizedBox(width: 13),
+                        pw.Text(
+                          'Php ${totalAmount.toStringAsFixed(2)}',
+                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                        ),
                       ],
                     ),
                   ),
@@ -186,5 +216,37 @@ class PdfGenerator {
 
     // Revoke the object URL after download or preview to free up resources
     html.Url.revokeObjectUrl(url);
+  }
+
+  String formatDonationDate(dynamic dateTime) {
+    if (dateTime == null || dateTime.toString().isEmpty) {
+      return 'Invalid Date'; // Return a default message if null or empty
+    }
+
+    try {
+      // Check if the input is a valid Firestore Timestamp and convert it
+      DateTime parsedDate;
+      if (dateTime is Timestamp) {
+        parsedDate = dateTime.toDate();
+      } else {
+        // Parse the date string into DateTime
+        parsedDate = DateTime.parse(dateTime.toString()).toLocal();
+      }
+
+      // Extract date components
+      final formattedDate = '${parsedDate.month.toString().padLeft(2, '0')}/'
+          '${parsedDate.day.toString().padLeft(2, '0')}/'
+          '${parsedDate.year}';
+
+      // Extract time components and format AM/PM
+      final hour = parsedDate.hour % 12 == 0 ? 12 : parsedDate.hour % 12;
+      final minute = parsedDate.minute.toString().padLeft(2, '0');
+      final period = parsedDate.hour >= 12 ? 'PM' : 'AM';
+
+      return '$formattedDate $hour:$minute $period';
+    } catch (e) {
+      // Handle any parsing error
+      return 'Invalid Date';
+    }
   }
 }

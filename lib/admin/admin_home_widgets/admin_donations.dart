@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:mad/admin/report_generation/donation_list_pdf.dart';
 
 class AdminDonations extends StatefulWidget {
   const AdminDonations({Key? key}) : super(key: key);
@@ -11,6 +12,7 @@ class AdminDonations extends StatefulWidget {
 
 class _AdminDonationsState extends State<AdminDonations> {
   String _selectedFilter = 'All';
+  final PdfGenerator pdfGenerator = PdfGenerator();
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +20,32 @@ class _AdminDonationsState extends State<AdminDonations> {
       appBar: AppBar(
         title: const Text('Donations'),
         actions: [
+          // Print Icon Button with Tooltip
+          Tooltip(
+            message: 'Print',
+            child: IconButton(
+              icon: const Icon(Icons.print),
+              onPressed: () {
+                // Add your print logic here
+                pdfGenerator.generatePdf(preview: true); // Preview PDF
+              },
+            ),
+          ),
+          // Download Icon Button with Tooltip
+          Tooltip(
+            message: 'Download',
+            child: IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: () {
+                // Add your download logic here
+                pdfGenerator.generatePdf(preview: false); // Preview PDF
+              },
+            ),
+          ),
+          SizedBox(
+            width: 20,
+          ),
+          // Dropdown Button
           DropdownButton<String>(
             value: _selectedFilter,
             onChanged: (String? newValue) {
