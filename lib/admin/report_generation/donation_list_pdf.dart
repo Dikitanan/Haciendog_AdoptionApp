@@ -1,6 +1,7 @@
 import 'dart:html' as html;
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
+// ignore: unused_import
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
@@ -209,8 +210,9 @@ class PdfGenerator {
       html.window.open(url, '_blank');
     } else {
       // Create a downloadable anchor element
+      // ignore: unused_local_variable
       final anchor = html.AnchorElement(href: url)
-        ..setAttribute("download", "generated_animal_report.pdf")
+        ..setAttribute("download", "generated_donation_report.pdf")
         ..click();
     }
 

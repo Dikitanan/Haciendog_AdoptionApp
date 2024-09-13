@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:mad/admin/report_generation/adoption_list_pdf.dart';
 import 'package:mad/analytics/data/mock_data.dart';
 import 'package:mad/analytics/models/enums/transaction_type.dart';
 import 'package:intl/intl.dart' as intl;
@@ -17,6 +18,8 @@ class LatestTransactions extends StatefulWidget {
 
 class _LatestTransactionsState extends State<LatestTransactions> {
   final ScrollController _scrollController = ScrollController();
+  final PdfGenerator pdfGenerator = PdfGenerator();
+
   int _totalAdoptions = 0;
   List<Map<String, dynamic>> _adoptionData = [];
 
@@ -87,15 +90,30 @@ class _LatestTransactionsState extends State<LatestTransactions> {
   Widget build(BuildContext context) {
     return CategoryBox(
       title: "Complete Adoptions ($_totalAdoptions)",
-      suffix: TextButton(
-        child: Text(
-          " ",
-          style: TextStyle(
-            color: Styles.defaultRedColor,
-            fontWeight: FontWeight.w600,
+      suffix: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Tooltip(
+            message: "Print",
+            child: IconButton(
+              icon: Icon(Icons.print, color: Styles.defaultRedColor),
+              onPressed: () {
+                // Implement print functionality here
+                pdfGenerator.generatePdf(preview: true); // Preview PDF
+              },
+            ),
           ),
-        ),
-        onPressed: () {},
+          Tooltip(
+            message: "Download",
+            child: IconButton(
+              icon: Icon(Icons.download, color: Styles.defaultRedColor),
+              onPressed: () {
+                // Implement download functionality here
+                pdfGenerator.generatePdf(preview: false); // Download PDF
+              },
+            ),
+          ),
+        ],
       ),
       children: [
         Expanded(
