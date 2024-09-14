@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mad/features/user_auth/presentation/pages/login_page.dart';
 import 'package:provider/provider.dart';
 
-// Define distinct types for each stream provider
 class MessageCount extends ChangeNotifier {
   final int count;
   MessageCount(this.count);
@@ -77,22 +78,157 @@ class _LeftSideBarState extends State<LeftSideBar> {
               ),
             ),
             Divider(),
-            for (var menu in _sortedMenus())
-              Container(
-                color: menu == _selectedMenu
-                    ? Color.fromARGB(255, 239, 152, 149)
-                        .withOpacity(0.3) // Color when selected
-                    : null,
-                child: ListTile(
-                  title: _buildMenuTitle(menu),
-                  leading: _getMenuIcon(menu),
-                  onTap: () {
-                    _updateSelectedMenu(menu);
-                  },
-                ),
-              ),
+            ..._buildMenuItems(),
           ],
         ),
+      ),
+    );
+  }
+
+  List<Widget> _buildMenuItems() {
+    List<Widget> menuItems = [];
+    for (var menu in _sortedMenus()) {
+      if (menu.toLowerCase() == 'settings') {
+        menuItems.add(_buildSettingsDropdown());
+      } else if (menu.toLowerCase() != 'account settings' &&
+          menu.toLowerCase() != 'shelter settings' &&
+          menu.toLowerCase() != 'user list' &&
+          menu.toLowerCase() != 'logout') {
+        menuItems.add(
+          Container(
+            color: menu == _selectedMenu
+                ? Color.fromARGB(255, 239, 152, 149)
+                    .withOpacity(0.3) // Color when selected
+                : null,
+            child: ListTile(
+              title: _buildMenuTitle(menu),
+              leading: _getMenuIcon(menu),
+              onTap: () {
+                if (menu == 'Logout') {
+                  _signOut(context);
+                } else {
+                  _updateSelectedMenu(menu);
+                }
+              },
+            ),
+          ),
+        );
+      }
+    }
+    return menuItems;
+  }
+
+  Widget _buildSettingsDropdown() {
+    return Container(
+      color: _selectedMenu == 'Settings'
+          ? Color.fromARGB(255, 239, 152, 149).withOpacity(0.3)
+          : null,
+      child: ExpansionTile(
+        title: Text(
+          'Settings',
+          style: TextStyle(
+            fontSize: 16,
+            color: _selectedMenu == 'Settings'
+                ? const Color.fromARGB(
+                    255, 255, 255, 255) // Text color when selected
+                : const Color.fromARGB(
+                    255, 255, 255, 255), // Default text color
+          ),
+        ),
+        leading: Icon(
+          Icons.settings,
+          color: Colors.grey[300],
+        ),
+        collapsedIconColor: Colors.white, // Arrow color when collapsed
+        shape: RoundedRectangleBorder(
+          side:
+              BorderSide(color: Colors.transparent), // Transparent border color
+        ),
+        children: <Widget>[
+          ListTile(
+            title: Text(
+              'Account Settings',
+              style: TextStyle(
+                fontSize: 16,
+                color: _selectedMenu == 'Account Settings'
+                    ? const Color.fromARGB(
+                        255, 255, 255, 255) // Text color when selected
+                    : const Color.fromARGB(
+                        255, 255, 255, 255), // Default text color
+              ),
+            ),
+            leading: Icon(
+              Icons.person,
+              color: Colors.grey[300],
+            ),
+            onTap: () {
+              _updateSelectedMenu('Account Settings');
+              widget.onMenuSelected('Account Settings');
+            },
+          ),
+          ListTile(
+            title: Text(
+              'Shelter Settings',
+              style: TextStyle(
+                fontSize: 16,
+                color: _selectedMenu == 'Shelter Settings'
+                    ? const Color.fromARGB(
+                        255, 255, 255, 255) // Text color when selected
+                    : const Color.fromARGB(
+                        255, 255, 255, 255), // Default text color
+              ),
+            ),
+            leading: Icon(
+              Icons.settings,
+              color: Colors.grey[300],
+            ),
+            onTap: () {
+              _updateSelectedMenu('Shelter Settings');
+              widget.onMenuSelected('Shelter Settings');
+            },
+          ),
+          ListTile(
+            title: Text(
+              'User List',
+              style: TextStyle(
+                fontSize: 16,
+                color: _selectedMenu == 'User List'
+                    ? const Color.fromARGB(
+                        255, 255, 255, 255) // Text color when selected
+                    : const Color.fromARGB(
+                        255, 255, 255, 255), // Default text color
+              ),
+            ),
+            leading: Icon(
+              Icons.people,
+              color: Colors.grey[300],
+            ),
+            onTap: () {
+              _updateSelectedMenu('User List');
+              widget.onMenuSelected('User List');
+            },
+          ),
+          ListTile(
+            title: Text(
+              'Logout',
+              style: TextStyle(
+                fontSize: 16,
+                color: _selectedMenu == 'Logout'
+                    ? const Color.fromARGB(
+                        255, 255, 255, 255) // Text color when selected
+                    : const Color.fromARGB(
+                        255, 255, 255, 255), // Default text color
+              ),
+            ),
+            leading: Icon(
+              Icons.logout,
+              color: Colors.grey[300],
+            ),
+            onTap: () {
+              _signOut(context);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -173,22 +309,58 @@ class _LeftSideBarState extends State<LeftSideBar> {
     widget.onMenuSelected(menu);
   }
 
+  Future<void> _signOut(BuildContext context) async {
+    bool confirmLogout = await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Confirm Logout'),
+              content: Text('Are you sure you want to log out?'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text('Logout'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    if (confirmLogout) {
+      await FirebaseAuth.instance.signOut();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    }
+  }
+
   List<String> _sortedMenus() {
     List<String> sortedMenus = [...widget.menus];
+    // Ensure only one 'Analytics' entry
     sortedMenus.remove('Analytics');
+    // Ensure 'Settings' and related items are properly handled
+    sortedMenus.remove('Settings');
+    sortedMenus.remove('Account Settings');
+    sortedMenus.remove('Shelter Settings');
+    sortedMenus.remove('User List');
+
+    // Add 'Analytics' at the start
     sortedMenus.insert(0, 'Analytics');
+    // Add 'Settings' at the end
+    sortedMenus.add('Settings');
+
     return sortedMenus;
   }
 
-  Widget? _getMenuIcon(String menu) {
+  Widget _getMenuIcon(String menu) {
     switch (menu.toLowerCase()) {
       case 'analytics':
-        return Container(
-          child: Icon(
-            Icons.analytics,
-            color: Colors.grey[300],
-          ),
-        );
+        return Icon(Icons.analytics, color: Colors.grey[300]);
       case 'blogs':
         return Icon(
           Icons.article,
@@ -215,17 +387,13 @@ class _LeftSideBarState extends State<LeftSideBar> {
           color: Colors.grey[300],
         );
       case 'messages':
-        return Icon(
-          Icons.message,
-          color: Colors.grey[300],
-        );
+        return Icon(Icons.message, color: Colors.grey[300]);
+      case 'adoption requests':
+        return Icon(Icons.pets, color: Colors.grey[300]);
       case 'settings':
-        return Icon(
-          Icons.settings,
-          color: Colors.grey[300],
-        );
+        return Icon(Icons.settings, color: Colors.grey[300]);
       default:
-        return null;
+        return Icon(Icons.help, color: Colors.grey[300]);
     }
   }
 }

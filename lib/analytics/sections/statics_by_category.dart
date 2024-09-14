@@ -51,12 +51,12 @@ class _StaticsByCategoryState extends State<StaticsByCategory> {
           Expense(
             expenseName: 'Cat',
             expensePercentage: totalCat / (totalCat + totalDog) * 100,
-            color: Colors.blue, // Example color
+            color: Color(0xFFE96560), // Example color
           ),
           Expense(
             expenseName: 'Dog',
             expensePercentage: totalDog / (totalCat + totalDog) * 100,
-            color: Colors.green, // Example color
+            color: Colors.grey, // Example color
           ),
         ];
       });
@@ -114,6 +114,8 @@ class _StaticsByCategoryState extends State<StaticsByCategory> {
   }
 
   Widget _pieChart(List<PieData> data) {
+    int totalSum = totalCat + totalDog; // Calculate the total sum
+
     return SizedBox(
       height: 180,
       child: Stack(
@@ -121,9 +123,7 @@ class _StaticsByCategoryState extends State<StaticsByCategory> {
           Align(
             alignment: Alignment.center,
             child: Text(
-              touchedIndex == -1
-                  ? "100%"
-                  : "${data[touchedIndex].value.toStringAsFixed(0)}%",
+              "Total: $totalSum", // Display "Total: " followed by the total sum
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
@@ -144,16 +144,12 @@ class _StaticsByCategoryState extends State<StaticsByCategory> {
                     ),
                   )
                   .toList(),
-              pieTouchData: PieTouchData(
-                enabled: false, // Disable touch interactions
-              ),
               borderData: FlBorderData(
                 show: false,
               ),
               sectionsSpace: 0,
               centerSpaceRadius: 50,
             ),
-            swapAnimationCurve: Curves.linear,
           ),
         ],
       ),

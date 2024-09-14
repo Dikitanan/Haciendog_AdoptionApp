@@ -131,7 +131,7 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.people, size: 30, color: Colors.blue),
+                      Icon(Icons.people, size: 30, color: Color(0xFFE96560)),
                       SizedBox(width: 10),
                       Text(
                         "Total Users: $totalUsers",
@@ -150,7 +150,7 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.verified, size: 30, color: Colors.green),
+                      Icon(Icons.verified, size: 30, color: Color(0xFFE96560)),
                       SizedBox(width: 10),
                       Text(
                         "Total Verified Users: $totalVerifiedUsers",
@@ -169,7 +169,7 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.block, size: 30, color: Colors.red),
+                      Icon(Icons.block, size: 30, color: Color(0xFFE96560)),
                       SizedBox(width: 10),
                       Text(
                         "Banned Users: $bannedUsers",
@@ -189,7 +189,7 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(Icons.pending_actions,
-                          size: 30, color: Colors.orange),
+                          size: 30, color: Color(0xFFE96560)),
                       SizedBox(width: 10),
                       Text(
                         "Pending Adoptions: $pendingAdoptionRequests",

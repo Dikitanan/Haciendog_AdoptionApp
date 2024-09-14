@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -23,6 +24,8 @@ class _PetProfileFormState extends State<PetProfileForm> {
   TextEditingController pwdController = TextEditingController();
   String gender = 'Male';
   String catOrDog = 'Cat';
+  String breed = '';
+  String health = '';
   bool isHearted = false;
   String status = 'Unadopted';
   String imageURL = '';
@@ -37,7 +40,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
           margin: EdgeInsets.symmetric(
             vertical: 25,
             horizontal: 25,
-          ), // Adjust width according to your preference
+          ),
           padding: EdgeInsets.symmetric(
             vertical: 20,
             horizontal: 50,
@@ -111,22 +114,9 @@ class _PetProfileFormState extends State<PetProfileForm> {
                         hintText: 'Enter Behavior',
                       ),
                     ),
-                    SizedBox(height: 35),
-                    Text(
-                      'Breed:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    TextField(
-                      controller: breedController,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Enter breed',
-                      ),
-                    ),
                     SizedBox(height: 20),
                     Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.start, // Change MainAxisAlignment
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,6 +159,10 @@ class _PetProfileFormState extends State<PetProfileForm> {
                               onChanged: (String? newValue) {
                                 setState(() {
                                   catOrDog = newValue!;
+                                  breed =
+                                      ''; // Clear breed selection when species changes
+                                  health =
+                                      ''; // Clear health status selection when species changes
                                 });
                               },
                               items: <String>[
@@ -187,14 +181,126 @@ class _PetProfileFormState extends State<PetProfileForm> {
                     ),
                     SizedBox(height: 35),
                     Text(
+                      'Breed:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Container(
+                      width: double.infinity, // Adjust the width as needed
+                      height: 60, // Adjust the height as needed
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                            color: Color.fromARGB(
+                                255, 56, 55, 59)), // Border color
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: breed.isEmpty ? null : breed,
+                          hint: Text('Select breed'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              breed = newValue ?? '';
+                            });
+                          },
+                          items: (catOrDog == 'Cat'
+                                  ? [
+                                      'Siamese',
+                                      'Persian',
+                                      'Maine Coon',
+                                      'Scottish Fold',
+                                      'British Shorthair',
+                                      'Sphynx',
+                                      'Bengal',
+                                      'Ragdoll',
+                                      'American Shorthair',
+                                      'Exotic Shorthair',
+                                      'Puspin'
+                                    ]
+                                  : [
+                                      'Labrador Retriever',
+                                      'Shih Tzu',
+                                      'Beagle',
+                                      'German Shepherd',
+                                      'Golden Retriever',
+                                      'Chihuahua',
+                                      'Siberian Husky',
+                                      'Pomeranian',
+                                      'Dachshund',
+                                      'Doberman Pinscher',
+                                      'Aspin'
+                                    ])
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          icon: Icon(Icons.arrow_drop_down,
+                              color: Colors.black), // Customize the arrow color
+                          iconSize: 24, // Customize the arrow size
+                          isExpanded:
+                              true, // Makes the dropdown button use the full width of its parent
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 35),
+                    Text(
                       'Health Status:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextField(
-                      controller: pwdController,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Enter Health status',
+                    Container(
+                      width: double.infinity, // Adjust the width as needed
+                      height: 60, // Adjust the height as needed
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                            color: Color.fromARGB(
+                                255, 56, 55, 59)), // Border color
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: health.isEmpty ? null : health,
+                          hint: Text('Select Health Status'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              health = newValue ?? '';
+                            });
+                          },
+                          items: (catOrDog == 'Cat'
+                                  ? [
+                                      'Healthy',
+                                      'Blindness',
+                                      'Deafness',
+                                      'Feline Lower Urinary Tract Diseases (FLUTD)',
+                                      'Chronic Kidney Disease (CKD)',
+                                      'Diabetes',
+                                      'Arthritis',
+                                      'Asthma',
+                                      'Hypertrophic Cardiomyopathy'
+                                    ]
+                                  : [
+                                      'Healthy',
+                                      'Blindness',
+                                      'Deafness',
+                                      'Hip Dysplasia',
+                                      'Elbow Dysplasia',
+                                      'Intervertebral Disc Disease (IVDD)',
+                                      'Arthritis',
+                                      'Paralysis',
+                                      'Cognitive Dysfunction Syndrome'
+                                    ])
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          icon: Icon(Icons.arrow_drop_down,
+                              color: Colors.black), // Customize the arrow color
+                          iconSize: 24, // Customize the arrow size
+                          isExpanded:
+                              true, // Makes the dropdown button use the full width of its parent
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                        ),
                       ),
                     ),
                   ],
@@ -229,8 +335,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                             ? Image.network(
                                 imageURL,
                                 fit: BoxFit.fill,
-                                width: double
-                                    .infinity, // Make the image fill the container width
+                                width: double.infinity,
                                 height: double.infinity,
                               )
                             : Center(child: Text('Enter Image')),
@@ -251,8 +356,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Container(
-                      height:
-                          200, // Adjust the height according to your preference
+                      height: 200,
                       child: TextField(
                         controller: descriptionController,
                         decoration: InputDecoration(
@@ -268,11 +372,11 @@ class _PetProfileFormState extends State<PetProfileForm> {
                         onPressed: isImageUploaded
                             ? () async {
                                 if (nameController.text.isEmpty ||
-                                    breedController.text.isEmpty ||
+                                    breed.isEmpty ||
                                     ageInShelterController.text.isEmpty ||
                                     descriptionController.text.isEmpty ||
                                     personalityController.text.isEmpty ||
-                                    pwdController.text.isEmpty ||
+                                    health.isEmpty ||
                                     imageURL.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -287,12 +391,12 @@ class _PetProfileFormState extends State<PetProfileForm> {
                                 String id = randomAlphaNumeric(10);
                                 Map<String, dynamic> petInfoMap = {
                                   'Name': nameController.text,
-                                  'Breed': breedController.text,
+                                  'Breed': breed,
                                   'AgeInShelter': ageInShelterController.text,
                                   'Description': descriptionController.text,
                                   'Personality': personalityController.text,
                                   'Gender': gender,
-                                  'PWD': pwdController.text,
+                                  'PWD': health,
                                   'CatOrDog': catOrDog,
                                   'IsHearted': isHearted,
                                   'Status': status,
@@ -320,26 +424,16 @@ class _PetProfileFormState extends State<PetProfileForm> {
                                   personalityController.clear();
                                   pwdController.clear();
                                   setState(() {
+                                    breed = '';
+                                    health = '';
                                     imageURL = '';
                                     isImageUploaded = false;
+                                    catOrDog = 'Cat';
                                   });
-                                }).catchError((error) {
-                                  Fluttertoast.showToast(
-                                      msg: "Failed to add pet profile: $error",
-                                      toastLength: Toast.LENGTH_SHORT,
-                                      gravity: ToastGravity.CENTER,
-                                      timeInSecForIosWeb: 1,
-                                      backgroundColor: Colors.red,
-                                      textColor: Colors.white,
-                                      fontSize: 16.0);
                                 });
                               }
                             : null,
-                        child: Text(
-                          'Add Pet Profile',
-                          style: TextStyle(
-                              fontSize: 20.0, fontWeight: FontWeight.bold),
-                        ),
+                        child: Text('Submit'),
                       ),
                     ),
                   ],

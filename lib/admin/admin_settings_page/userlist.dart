@@ -144,57 +144,67 @@ class _UserListsPageState extends State<UserListsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _fetchUsers(),
-      builder: (context, AsyncSnapshot<List<User>> snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else {
-          final users = snapshot.data;
-          if (users == null || users.isEmpty) {
-            return Center(
-              child: Text('No Users Yet'),
-            );
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'User List',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor:
+            Color.fromARGB(255, 235, 232, 232), // Customize the color if needed
+      ),
+      body: FutureBuilder(
+        future: _fetchUsers(),
+        builder: (context, AsyncSnapshot<List<User>> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
           } else {
-            return Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Color.fromARGB(255, 244, 217, 217),
-                    Colors.white,
-                  ],
+            final users = snapshot.data;
+            if (users == null || users.isEmpty) {
+              return Center(
+                child: Text('No Users Yet'),
+              );
+            } else {
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Color.fromARGB(255, 244, 217, 217),
+                      Colors.white,
+                    ],
+                  ),
                 ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ListView.builder(
-                  itemCount: users.length,
-                  itemBuilder: (context, index) {
-                    final user = users[index];
-                    return ListTile(
-                      title: Text(user.email),
-                      subtitle: Text(user.username),
-                      trailing: Icon(Icons.edit),
-                      leading: user.isBanned
-                          ? Chip(
-                              label: Text('Banned'),
-                              backgroundColor: Colors.red,
-                            )
-                          : null,
-                      onTap: () => _showEditProfileModal(
-                          context, user.email, user.isBanned),
-                    );
-                  },
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ListView.builder(
+                    itemCount: users.length,
+                    itemBuilder: (context, index) {
+                      final user = users[index];
+                      return ListTile(
+                        title: Text(user.email),
+                        subtitle: Text(user.username),
+                        trailing: Icon(Icons.edit),
+                        leading: user.isBanned
+                            ? Chip(
+                                label: Text('Banned'),
+                                backgroundColor: Colors.red,
+                              )
+                            : null,
+                        onTap: () => _showEditProfileModal(
+                            context, user.email, user.isBanned),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            );
+              );
+            }
           }
-        }
-      },
+        },
+      ),
     );
   }
 }

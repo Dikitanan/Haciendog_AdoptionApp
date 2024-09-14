@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class Styles {
-  static Color scaffoldBackgroundColor = const Color(0xFFe0efff);
+  static Color scaffoldBackgroundColor = Color.fromARGB(255, 246, 234, 234);
   static Color defaultRedColor = const Color(0xffff698a);
   static Color defaultYellowColor = const Color(0xFFE96560);
   static Color defaultBlueColor = const Color(0xff52beff);

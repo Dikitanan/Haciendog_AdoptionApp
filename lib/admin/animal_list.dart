@@ -26,6 +26,8 @@ class _AnimalListState extends State<AnimalList> {
   late TextEditingController catOrDogController;
   late TextEditingController statusController;
   final PdfGenerator pdfGenerator = PdfGenerator();
+  String selectedHealthStatus = 'Healthy'; // Default value
+  String catOrDog = 'Cat'; // Set this based on your logic
 
   bool _imageUploaded = false;
   bool _isUploading = false; // Add this state variable
@@ -45,6 +47,15 @@ class _AnimalListState extends State<AnimalList> {
     pwdController = TextEditingController();
     catOrDogController = TextEditingController();
     statusController = TextEditingController();
+  }
+
+  String truncateText(String text, int wordLimit) {
+    List<String> words = text.split(' ');
+    if (words.length <= wordLimit) {
+      return text;
+    } else {
+      return words.take(wordLimit).join(' ') + '...';
+    }
   }
 
   @override
@@ -124,7 +135,7 @@ class _AnimalListState extends State<AnimalList> {
                       child: TextField(
                         controller: _searchController,
                         decoration: InputDecoration(
-                          labelText: 'Search',
+                          labelText: 'Search Animal Name',
                           contentPadding:
                               const EdgeInsets.symmetric(horizontal: 16.0),
                           suffixIcon: IconButton(
@@ -330,7 +341,10 @@ class _AnimalListState extends State<AnimalList> {
                                     ),
                                     DataCell(
                                       Center(
-                                        child: Text(animal['PWD']),
+                                        child: Text(
+                                          truncateText(animal['PWD'], 2),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                     ),
                                     DataCell(
@@ -445,7 +459,7 @@ class _AnimalListState extends State<AnimalList> {
                                             height: 25,
                                             width: 100,
                                             child: const Center(
-                                              child: Text('Change Photo'),
+                                              child: Text('Photo'),
                                             ),
                                           ),
                                         ),
@@ -650,30 +664,70 @@ class _AnimalListState extends State<AnimalList> {
                         ],
                       ),
                       const SizedBox(height: 35),
-                      const Text(
-                        'PWD (Person With Disability) or not:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextField(
-                        controller: pwdController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Enter PWD status',
-                        ),
-                      ),
-                      const SizedBox(height: 35),
-                      const Text(
-                        'Status:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextField(
-                        controller: statusController,
-                        enabled:
-                            false, // Set enabled to false to disable the TextField
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Enter status',
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Health Status:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          DropdownButtonFormField<String>(
+                            value: selectedHealthStatus = animal['PWD'],
+                            items: (catOrDog == 'Cat'
+                                    ? [
+                                        'Healthy',
+                                        'Blindness',
+                                        'Deafness',
+                                        'Feline Lower Urinary Tract Diseases (FLUTD)',
+                                        'Chronic Kidney Disease (CKD)',
+                                        'Diabetes',
+                                        'Arthritis',
+                                        'Asthma',
+                                        'Hypertrophic Cardiomyopathy'
+                                      ]
+                                    : [
+                                        'Healthy',
+                                        'Blindness',
+                                        'Deafness',
+                                        'Hip Dysplasia',
+                                        'Elbow Dysplasia',
+                                        'Intervertebral Disc Disease (IVDD)',
+                                        'Arthritis',
+                                        'Paralysis',
+                                        'Cognitive Dysfunction Syndrome'
+                                      ])
+                                .map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                selectedHealthStatus = newValue!;
+                              });
+                            },
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Select Health Status',
+                            ),
+                          ),
+                          const SizedBox(height: 35),
+                          const Text(
+                            'Status:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          // Keeping the TextField for Status
+                          TextField(
+                            controller: statusController,
+                            enabled:
+                                false, // Set enabled to false to disable the TextField
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Enter status',
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 35),
                       const Text(
@@ -783,7 +837,10 @@ class _AnimalListState extends State<AnimalList> {
     String? personality = personalityController.text.isNotEmpty
         ? personalityController.text
         : null;
-    String? pwd = pwdController.text.isNotEmpty ? pwdController.text : null;
+    String? health = selectedHealthStatus.isNotEmpty
+        ? selectedHealthStatus
+        : null; // Use selectedHealthStatus
+
     String? catOrDog =
         catOrDogController.text.isNotEmpty ? catOrDogController.text : null;
     String? status =
@@ -797,7 +854,7 @@ class _AnimalListState extends State<AnimalList> {
     if (ageInShelter != null) updateData['AgeInShelter'] = ageInShelter;
     if (description != null) updateData['Description'] = description;
     if (personality != null) updateData['Personality'] = personality;
-    if (pwd != null) updateData['PWD'] = pwd;
+    if (health != null) updateData['PWD'] = health;
     if (catOrDog != null) updateData['CatOrDog'] = catOrDog;
     if (status != null) updateData['Status'] = status;
 
@@ -824,7 +881,6 @@ class _AnimalListState extends State<AnimalList> {
     ageInShelterController.clear();
     descriptionController.clear();
     personalityController.clear();
-    pwdController.clear();
     catOrDogController.clear();
     statusController.clear();
   }

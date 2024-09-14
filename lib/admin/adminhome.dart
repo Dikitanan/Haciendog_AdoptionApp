@@ -8,6 +8,9 @@ import 'package:mad/admin/admin_home_widgets/adoption_request.dart';
 import 'package:mad/admin/admin_home_widgets/blogsPart.dart';
 import 'package:mad/admin/admin_home_widgets/leftsidebar.dart';
 import 'package:mad/admin/admin_settings.dart';
+import 'package:mad/admin/admin_settings_page/accountsettings.dart';
+import 'package:mad/admin/admin_settings_page/sheltersettings.dart';
+import 'package:mad/admin/admin_settings_page/userlist.dart';
 import 'package:mad/admin/animal_list.dart';
 import 'package:mad/admin/pet_profile_form.dart';
 import 'package:mad/admin/post_provider.dart';
@@ -30,10 +33,11 @@ class _AdminHomeState extends State<AdminHome> {
   @override
   LikeState likeState = LikeState();
 
+  @override
   void initState() {
     super.initState();
     selectedMenu = 'Analytics';
-    middleContent = middleContent = Center(child: AdminAnalytics());
+    middleContent = Center(child: AdminAnalytics());
     getUserData();
   }
 
@@ -97,7 +101,9 @@ class _AdminHomeState extends State<AdminHome> {
                         'Donations',
                         'Adoption Requests',
                         'Messages',
-                        'Settings'
+                        'Account Settings',
+                        'Shelter Settings',
+                        'User List'
                       ],
                       onMenuSelected: (menu) {
                         setState(() {
@@ -117,8 +123,15 @@ class _AdminHomeState extends State<AdminHome> {
                             middleContent = AdoptionLists();
                           } else if (menu == 'Messages') {
                             middleContent = AdminSideMessage();
-                          } else if (menu == 'Settings') {
-                            middleContent = AdminSettingsForm();
+                          } else if (menu == 'Account Settings') {
+                            middleContent =
+                                AccountSettingsPage(); // New content for Account Settings
+                          } else if (menu == 'Shelter Settings') {
+                            middleContent =
+                                ShelterSettingsForm(); // New content for Shelter Settings
+                          } else if (menu == 'User List') {
+                            middleContent =
+                                UserListsPage(); // New content for User List
                           }
                         });
                       },
