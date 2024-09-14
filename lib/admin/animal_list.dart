@@ -260,11 +260,11 @@ class _AnimalListState extends State<AnimalList> {
                                   DataColumn(
                                     label: Center(
                                       child: Text(
-                                        'Cat or Dog',
+                                        'Species',
                                         style: TextStyle(color: Colors.white),
                                       ),
                                     ),
-                                    tooltip: 'Cat or Dog',
+                                    tooltip: 'Species',
                                     numeric: false,
                                   ),
                                   DataColumn(
@@ -598,6 +598,7 @@ class _AnimalListState extends State<AnimalList> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextField(
+                        enabled: false,
                         controller: breedController,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
@@ -639,7 +640,7 @@ class _AnimalListState extends State<AnimalList> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Cat or Dog:',
+                                'Species:',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               DropdownButton<String>(
