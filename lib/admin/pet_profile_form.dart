@@ -179,7 +179,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 35),
+                    SizedBox(height: 10),
                     Text(
                       'Breed:',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -356,7 +356,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Container(
-                      height: 200,
+                      height: 214,
                       child: TextField(
                         controller: descriptionController,
                         decoration: InputDecoration(

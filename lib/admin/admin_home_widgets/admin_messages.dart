@@ -287,29 +287,23 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
 
       messageController.clear();
 
-      // Add to 'Notifications' collection
-      await firestore.collection('Notifications').add({
-        'title': 'New Message',
-        'body': 'Admin has messaged you.',
-        'timestamp': Timestamp.now(),
-        'email': receiverEmail,
-        'isSeen': false,
-      });
-
       // Update 'UserNewMessage' collection
       DocumentReference userNewMessageDoc =
           firestore.collection('UserNewMessage').doc(receiverEmail);
       await firestore.runTransaction((transaction) async {
         DocumentSnapshot snapshot = await transaction.get(userNewMessageDoc);
         if (!snapshot.exists) {
-          // If the document does not exist, create it with notificationCount set to 1
-          transaction.set(userNewMessageDoc, {'notificationCount': 1});
+          // If the document does not exist, create it with ReceivedCount set to 1
+          transaction.set(userNewMessageDoc, {
+            'ReceivedCount': 1, // Initialize ReceivedCount
+          });
         } else {
-          // If the document exists, increment the notificationCount field
+          // If the document exists, increment only ReceivedCount
           Map<String, dynamic>? data = snapshot.data() as Map<String, dynamic>?;
-          int newCount = (data?['notificationCount'] ?? 0) + 1;
-          transaction
-              .update(userNewMessageDoc, {'notificationCount': newCount});
+          int newReceivedCount = (data?['ReceivedCount'] ?? 0) + 1;
+          transaction.update(userNewMessageDoc, {
+            'ReceivedCount': newReceivedCount, // Increment ReceivedCount
+          });
         }
       });
 
@@ -318,7 +312,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
           await firestore.collection('UserNewMessage').doc(receiverEmail).get();
 
       if (userMessageDoc.exists) {
-        // If document exists, update messageCount, LastMessage, and totalMessage
+        // If document exists, update LastMessage
         await firestore.collection('UserNewMessage').doc(receiverEmail).update({
           'LastMessage': 'You: $text', // Update LastMessage
         });
@@ -333,7 +327,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
           }
         }
       } else {
-        // If document doesn't exist, create a new one with messageCount, LastMessage, and totalMessage
+        // If document doesn't exist, create a new one with LastMessage
         await firestore.collection('UserNewMessage').doc(receiverEmail).set({
           'email': receiverEmail,
           'LastMessage': 'You: $text', // Prefix "You:" to the message
