@@ -16,7 +16,8 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
   int totalVerifiedUsers = 0;
   int bannedUsers = 0;
   int pendingAdoptionRequests = 0;
-  double totalDonationAmount = 0; // New variable to store total donations
+  double totalDonationAmount = 0; // Total donation amount
+  DateTimeRange? selectedDateRange; // Store selected date range
 
   @override
   void initState() {
@@ -31,9 +32,9 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
     });
   }
 
-  Future<void> fetchTotalDonations() async {
+  Future<void> fetchTotalDonations({DateTimeRange? range}) async {
     try {
-      // Fetch all donations from the Donations collection
+      // Fetch all donations with status 'Accepted'
       QuerySnapshot donationsSnapshot = await FirebaseFirestore.instance
           .collection('Donations')
           .where('status', isEqualTo: 'Accepted')
@@ -41,11 +42,25 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
 
       double total = 0;
 
-      // Sum up the "amount" field safely, handling potential string or null values
+      // Loop through each donation document
       for (var doc in donationsSnapshot.docs) {
+        // Get the DateOfDonation field as a Timestamp
+        Timestamp donationDate = doc['DateOfDonation'];
+
+        // If a date range is provided, filter donations in-memory
+        if (range != null) {
+          DateTime donationDateTime = donationDate.toDate();
+
+          // Check if the donation is within the selected date range
+          if (donationDateTime.isBefore(range.start) ||
+              donationDateTime.isAfter(range.end)) {
+            continue; // Skip donations outside the range
+          }
+        }
+
+        // Get the amount and add it to the total
         var amountValue = doc['amount'];
         if (amountValue != null) {
-          // Check if the value is a string and parse it to a double
           double amount = amountValue is String
               ? double.tryParse(amountValue) ?? 0
               : amountValue.toDouble();
@@ -53,12 +68,21 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
         }
       }
 
-      // Update the state with the total donation amount
+      // Update the totalDonationAmount state
       setState(() {
         totalDonationAmount = total;
       });
     } catch (e) {
       print('Error fetching donation data: $e');
+    }
+  }
+
+  void _handleDateRangeSelection(DateTimeRange? range) {
+    if (range != null) {
+      setState(() {
+        selectedDateRange = range;
+      });
+      fetchTotalDonations(range: range); // Fetch filtered data
     }
   }
 
@@ -214,6 +238,7 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
             title: "Total Donation",
             amount: totalDonationAmount,
             barColor: Styles.defaultRedColor,
+            onDateRangeSelected: _handleDateRangeSelection, // Pass the callback
           ),
         ),
       ],

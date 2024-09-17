@@ -12,6 +12,9 @@ class AdminDonations extends StatefulWidget {
 
 class _AdminDonationsState extends State<AdminDonations> {
   String _selectedFilter = 'All';
+  DateTime _startDate =
+      DateTime.now().subtract(Duration(days: 30)); // Default start date
+  DateTime _endDate = DateTime.now(); // Default end date
   final PdfGenerator pdfGenerator = PdfGenerator();
 
   @override
@@ -25,10 +28,7 @@ class _AdminDonationsState extends State<AdminDonations> {
             message: 'Print',
             child: IconButton(
               icon: const Icon(Icons.print),
-              onPressed: () {
-                // Add your print logic here
-                pdfGenerator.generatePdf(preview: true); // Preview PDF
-              },
+              onPressed: () => _handlePrintOrDownload(false),
             ),
           ),
           // Download Icon Button with Tooltip
@@ -36,9 +36,16 @@ class _AdminDonationsState extends State<AdminDonations> {
             message: 'Download',
             child: IconButton(
               icon: const Icon(Icons.download),
+              onPressed: () => _handlePrintOrDownload(true),
+            ),
+          ),
+          Tooltip(
+            message: 'Filter By Date',
+            child: IconButton(
+              icon: const Icon(Icons.calendar_today),
               onPressed: () {
                 // Add your download logic here
-                pdfGenerator.generatePdf(preview: false); // Preview PDF
+                _selectDateRange();
               },
             ),
           ),
@@ -63,6 +70,7 @@ class _AdminDonationsState extends State<AdminDonations> {
               );
             }).toList(),
           ),
+          // Date Range Picker Button
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -79,8 +87,17 @@ class _AdminDonationsState extends State<AdminDonations> {
           final donations = snapshot.data?.docs ?? [];
           final filteredDonations = donations.where((donation) {
             final status = donation['status'] ?? 'Pending';
-            if (_selectedFilter == 'All') return true;
-            return status == _selectedFilter;
+            final dateOfDonation =
+                (donation['DateOfDonation'] as Timestamp?)?.toDate();
+
+            if (dateOfDonation == null) return false;
+
+            if (_selectedFilter != 'All' && status != _selectedFilter) {
+              return false;
+            }
+
+            return dateOfDonation.isAfter(_startDate) &&
+                dateOfDonation.isBefore(_endDate);
           }).toList();
 
           // Sort the donations to place 'Pending' status at the top
@@ -138,6 +155,73 @@ class _AdminDonationsState extends State<AdminDonations> {
     );
   }
 
+  Future<void> _handlePrintOrDownload(bool isPrint) async {
+    final donationsSnapshot =
+        await FirebaseFirestore.instance.collection('Donations').get();
+
+    final donations = donationsSnapshot.docs;
+    final filteredDonations = donations.where((donation) {
+      final status = donation['status'] ?? 'Pending';
+      final dateOfDonation =
+          (donation['DateOfDonation'] as Timestamp?)?.toDate();
+
+      if (dateOfDonation == null) return false;
+
+      if (_selectedFilter != 'All' && status != _selectedFilter) {
+        return false;
+      }
+
+      return dateOfDonation.isAfter(_startDate) &&
+          dateOfDonation.isBefore(_endDate);
+    }).toList();
+
+    if (filteredDonations.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('No Donations'),
+            content: const Text(
+                'No donations available for the selected filter and date range.'),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    pdfGenerator.generatePdf(
+      preview: !isPrint,
+      startDate: _startDate,
+      endDate: _endDate,
+    );
+  }
+
+  Future<void> _selectDateRange() async {
+    final initialStartDate = _startDate;
+    final initialEndDate = _endDate;
+
+    final DateTimeRange? pickedDateRange = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      initialDateRange:
+          DateTimeRange(start: initialStartDate, end: initialEndDate),
+    );
+
+    if (pickedDateRange != null) {
+      setState(() {
+        _startDate = pickedDateRange.start;
+        _endDate = pickedDateRange.end;
+      });
+    }
+  }
+
   void _showDonationDetails(
       BuildContext context, DocumentSnapshot donation) async {
     final email = donation['email'] ?? 'No email';
@@ -146,7 +230,8 @@ class _AdminDonationsState extends State<AdminDonations> {
     final username = donation['username'] ?? 'No username';
     final proofOfDonation = donation['proofOfDonation'] ?? '';
     final amount = donation['amount'] ?? '';
-    final DateOfDonation = donation['DateOfDonation'] ?? '';
+    final DateOfDonation =
+        (donation['DateOfDonation'] as Timestamp?)?.toDate() ?? DateTime.now();
 
     final status = donation['status'] ?? 'Pending';
 
@@ -170,7 +255,6 @@ class _AdminDonationsState extends State<AdminDonations> {
               ),
             ],
           ),
-
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
@@ -180,9 +264,9 @@ class _AdminDonationsState extends State<AdminDonations> {
               Text('Username: $username'),
               Text('Amount: $amount'),
               Text(
-                'Date: ${DateOfDonation.toDate().day}/${DateOfDonation.toDate().month}/${DateOfDonation.toDate().year} '
-                '${DateOfDonation.toDate().hour % 12}:${DateOfDonation.toDate().minute.toString().padLeft(2, '0')} '
-                '${DateOfDonation.toDate().hour >= 12 ? 'PM' : 'AM'}',
+                'Date: ${DateOfDonation.day}/${DateOfDonation.month}/${DateOfDonation.year} '
+                '${DateOfDonation.hour % 12}:${DateOfDonation.minute.toString().padLeft(2, '0')} '
+                '${DateOfDonation.hour >= 12 ? 'PM' : 'AM'}',
               ),
               const SizedBox(height: 10),
               imageUrl.isNotEmpty
@@ -202,122 +286,31 @@ class _AdminDonationsState extends State<AdminDonations> {
           actions: status == 'Pending'
               ? [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
-                        onPressed: () async {
-                          // Function for accepting donation
-                          await FirebaseFirestore.instance
-                              .collection('Donations')
-                              .doc(donation.id)
-                              .update({'status': 'Accepted'});
-
-                          // Add to AdminBlogs Collection
-                          await FirebaseFirestore.instance
-                              .collection('AdminBlogs')
-                              .add({
-                            'title': 'New Donation!',
-                            'description':
-                                'Thank you $name for donating in our Shelter!',
-                            'imageURL':
-                                'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/thank_you_donation.jpg?alt=media&token=9c04c165-9260-4de3-9f8d-297474ccb7a5',
-                            'createdAt': FieldValue.serverTimestamp(),
-                            'heartCount': 0,
-                            'commentCount': 0,
-                            'userEmail': email,
-                            'profilePicture':
-                                'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/adminpic.jpg?alt=media&token=0fef831c-2c4e-4f4a-9979-e6fb5de3ef02',
-                            'username': 'Donation Bot',
-                          });
-
-                          // Add notification for accepted donation
-                          await FirebaseFirestore.instance
-                              .collection('Notifications')
-                              .add({
-                            'title': 'Donation',
-                            'body': 'Thank you for Donating!',
-                            'timestamp': FieldValue.serverTimestamp(),
-                            'email': email,
-                            'isSeen': false,
-                          });
-
-                          // Update UserNewMessage collection
-                          DocumentReference userNewMessageDoc =
-                              FirebaseFirestore.instance
-                                  .collection('UserNewMessage')
-                                  .doc(email);
-                          await FirebaseFirestore.instance
-                              .runTransaction((transaction) async {
-                            DocumentSnapshot snapshot =
-                                await transaction.get(userNewMessageDoc);
-                            if (!snapshot.exists) {
-                              transaction.set(
-                                  userNewMessageDoc, {'notificationCount': 1});
-                            } else {
-                              Map<String, dynamic>? data =
-                                  snapshot.data() as Map<String, dynamic>?;
-                              int newCount =
-                                  (data?['notificationCount'] ?? 0) + 1;
-                              transaction.update(userNewMessageDoc,
-                                  {'notificationCount': newCount});
-                            }
-                          });
-
-                          Navigator.of(context)
-                              .pop(); // Close dialog after updating
+                      TextButton(
+                        child: const Text('Accept'),
+                        onPressed: () {
+                          donation.reference.update({'status': 'Accepted'});
+                          Navigator.of(context).pop();
                         },
-                        icon: Icon(Icons.check, color: Colors.green),
                       ),
-                      IconButton(
-                        onPressed: () async {
-                          // Function for rejecting donation
-                          await FirebaseFirestore.instance
-                              .collection('Donations')
-                              .doc(donation.id)
-                              .update({'status': 'Rejected'});
-
-                          // Add notification for rejected donation
-                          await FirebaseFirestore.instance
-                              .collection('Notifications')
-                              .add({
-                            'title': 'Donation',
-                            'body': 'Sorry, your Donation is not Valid',
-                            'timestamp': FieldValue.serverTimestamp(),
-                            'email': email,
-                            'isSeen': false,
-                          });
-
-                          // Update UserNewMessage collection
-                          DocumentReference userNewMessageDoc =
-                              FirebaseFirestore.instance
-                                  .collection('UserNewMessage')
-                                  .doc(email);
-                          await FirebaseFirestore.instance
-                              .runTransaction((transaction) async {
-                            DocumentSnapshot snapshot =
-                                await transaction.get(userNewMessageDoc);
-                            if (!snapshot.exists) {
-                              transaction.set(
-                                  userNewMessageDoc, {'notificationCount': 1});
-                            } else {
-                              Map<String, dynamic>? data =
-                                  snapshot.data() as Map<String, dynamic>?;
-                              int newCount =
-                                  (data?['notificationCount'] ?? 0) + 1;
-                              transaction.update(userNewMessageDoc,
-                                  {'notificationCount': newCount});
-                            }
-                          });
-
-                          Navigator.of(context)
-                              .pop(); // Close dialog after updating
+                      TextButton(
+                        child: const Text('Reject'),
+                        onPressed: () {
+                          donation.reference.update({'status': 'Rejected'});
+                          Navigator.of(context).pop();
                         },
-                        icon: Icon(Icons.close, color: Colors.red),
                       ),
                     ],
-                  )
+                  ),
                 ]
-              : [], // Empty list if status is not "Pending"
+              : [
+                  TextButton(
+                    child: const Text('Close'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
         );
       },
     );

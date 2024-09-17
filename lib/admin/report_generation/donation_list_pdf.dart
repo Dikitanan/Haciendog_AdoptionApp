@@ -1,7 +1,6 @@
 import 'dart:html' as html;
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// ignore: unused_import
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
@@ -10,7 +9,11 @@ import 'package:pdf/widgets.dart' as pw;
 class PdfGenerator {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> generatePdf({bool preview = false}) async {
+  Future<void> generatePdf({
+    required DateTime startDate,
+    required DateTime endDate,
+    bool preview = false,
+  }) async {
     final pdf = pw.Document();
     const double pageWidth = 595.27; // A4 width in points
     const double pageHeight = 841.89; // A4 height in points
@@ -22,6 +25,7 @@ class PdfGenerator {
             .asUint8List();
     final image = pw.MemoryImage(imageBytes);
 
+    // Query to fetch donations with status 'Accepted'
     final snapshot = await _firestore
         .collection('Donations')
         .where('status', isEqualTo: 'Accepted')
@@ -29,15 +33,28 @@ class PdfGenerator {
 
     final data = snapshot.docs.map((doc) => doc.data()).toList();
 
-    // Group data by status (in this case, only 'accepted')
-    final groupedData = <String, List<Map<String, dynamic>>>{};
-    for (var donation in data) {
-      final status = donation['status'] ?? 'unknown';
-      if (!groupedData.containsKey(status)) {
-        groupedData[status] = [];
+    // Filter data by date range
+    final filteredData = data.where((donation) {
+      final dateOfDonation = donation['DateOfDonation'];
+      if (dateOfDonation == null) return false;
+
+      DateTime donationDate;
+      if (dateOfDonation is Timestamp) {
+        donationDate = dateOfDonation.toDate();
+      } else {
+        try {
+          donationDate = DateTime.parse(dateOfDonation.toString()).toLocal();
+        } catch (_) {
+          return false;
+        }
       }
-      groupedData[status]!.add(donation);
-    }
+
+      return donationDate.isAfter(startDate) && donationDate.isBefore(endDate);
+    }).toList();
+
+    // Group filtered data by status (in this case, only 'accepted')
+    final groupedData = <String, List<Map<String, dynamic>>>{};
+    groupedData['Accepted'] = filteredData;
 
     // Generate pages for 'accepted' donations
     for (var status in groupedData.keys) {
@@ -231,23 +248,16 @@ class PdfGenerator {
       if (dateTime is Timestamp) {
         parsedDate = dateTime.toDate();
       } else {
-        // Parse the date string into DateTime
         parsedDate = DateTime.parse(dateTime.toString()).toLocal();
       }
 
-      // Extract date components
-      final formattedDate = '${parsedDate.month.toString().padLeft(2, '0')}/'
-          '${parsedDate.day.toString().padLeft(2, '0')}/'
-          '${parsedDate.year}';
+      // Format the date into MM/DD/YYYY HH:MM AM/PM format
+      final formattedDate =
+          '${parsedDate.month.toString().padLeft(2, '0')}/${parsedDate.day.toString().padLeft(2, '0')}/${parsedDate.year} ${parsedDate.hour % 12}:${parsedDate.minute.toString().padLeft(2, '0')} ${parsedDate.hour >= 12 ? 'PM' : 'AM'}';
 
-      // Extract time components and format AM/PM
-      final hour = parsedDate.hour % 12 == 0 ? 12 : parsedDate.hour % 12;
-      final minute = parsedDate.minute.toString().padLeft(2, '0');
-      final period = parsedDate.hour >= 12 ? 'PM' : 'AM';
-
-      return '$formattedDate $hour:$minute $period';
+      return formattedDate;
     } catch (e) {
-      // Handle any parsing error
+      // Return default message in case of any exception
       return 'Invalid Date';
     }
   }
