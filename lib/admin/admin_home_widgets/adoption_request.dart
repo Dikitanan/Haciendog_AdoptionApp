@@ -200,7 +200,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
       backgroundColor: Colors.transparent,
       child: Container(
         width: 550,
-        height: 700,
+        height: 650,
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -235,154 +235,150 @@ class WebAdoptionRequestDialog extends StatelessWidget {
             ),
             SizedBox(height: 10),
             SingleChildScrollView(
-              child: Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.only(right: 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.person, color: Colors.grey),
-                                SizedBox(width: 5),
-                                Text('Name: ${document['name']}',
-                                    style: TextStyle(fontSize: 16)),
-                              ],
-                            ),
-                            SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Icon(Icons.work, color: Colors.grey),
-                                SizedBox(width: 5),
-                                Text('Occupation: ${document['occupation']}',
-                                    style: TextStyle(fontSize: 16)),
-                              ],
-                            ),
-                            SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Icon(Icons.cake, color: Colors.grey),
-                                SizedBox(width: 5),
-                                Text('Age: ${document['age']}',
-                                    style: TextStyle(fontSize: 16)),
-                              ],
-                            ),
-                            SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Icon(Icons.location_on, color: Colors.grey),
-                                SizedBox(width: 5),
-                                Flexible(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.only(right: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.person, color: Colors.grey),
+                              SizedBox(width: 5),
+                              Text('Name: ${document['name']}',
+                                  style: TextStyle(fontSize: 16)),
+                            ],
+                          ),
+                          SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Icon(Icons.work, color: Colors.grey),
+                              SizedBox(width: 5),
+                              Text('Occupation: ${document['occupation']}',
+                                  style: TextStyle(fontSize: 16)),
+                            ],
+                          ),
+                          SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Icon(Icons.cake, color: Colors.grey),
+                              SizedBox(width: 5),
+                              Text('Age: ${document['age']}',
+                                  style: TextStyle(fontSize: 16)),
+                            ],
+                          ),
+                          SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Icon(Icons.location_on, color: Colors.grey),
+                              SizedBox(width: 5),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (document['address'] != null)
+                                      Text(
+                                        'Address:',
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                    SizedBox(height: 2),
+                                    if (document['address'] != null)
+                                      Text(
+                                        _formatAddress(document['address']),
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Icon(Icons.email, color: Colors.grey),
+                              SizedBox(width: 5),
+                              Flexible(
+                                child: RichText(
+                                  text: TextSpan(
                                     children: [
-                                      if (document['address'] != null)
-                                        Text(
-                                          'Address:',
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                      SizedBox(height: 2),
-                                      if (document['address'] != null)
-                                        Text(
-                                          _formatAddress(document['address']),
-                                          style: TextStyle(fontSize: 16),
+                                      TextSpan(
+                                        text: 'Email: ',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            color: Color(0xFF5B5A5D)),
+                                      ),
+                                      TextSpan(
+                                        text: document['email'].length > 12
+                                            ? document['email'].substring(0, 12)
+                                            : document['email'],
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            color: Color(0xFF5B5A5D)),
+                                      ),
+                                      if (document['email'].length > 12)
+                                        TextSpan(
+                                          text:
+                                              '\n${document['email'].substring(12)}',
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              color: Color(0xFF5B5A5D)),
                                         ),
                                     ],
                                   ),
                                 ),
-                              ],
-                            ),
-                            SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Icon(Icons.email, color: Colors.grey),
-                                SizedBox(width: 5),
-                                Flexible(
-                                  child: RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: 'Email: ',
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              color: Color(0xFF5B5A5D)),
-                                        ),
-                                        TextSpan(
-                                          text: document['email'].length > 12
-                                              ? document['email']
-                                                  .substring(0, 12)
-                                              : document['email'],
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              color: Color(0xFF5B5A5D)),
-                                        ),
-                                        if (document['email'].length > 12)
-                                          TextSpan(
-                                            text:
-                                                '\n${document['email'].substring(12)}',
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                color: Color(0xFF5B5A5D)),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Icon(Icons.info, color: Colors.grey),
-                                SizedBox(width: 5),
-                                Text('Status: ${document['status']}',
-                                    style: TextStyle(fontSize: 16)),
-                              ],
-                            ),
-                            SizedBox(height: 10),
-                            Text('Reason for Adopting:',
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 5),
-                            Text(document['selfDescription'],
-                                style: TextStyle(fontSize: 14)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 20),
-                    Container(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Proof of Capability',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
+                              ),
+                            ],
                           ),
                           SizedBox(height: 5),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Container(
-                              width: 200,
-                              height: 200,
-                              child: Image.network(
-                                document['proofOfCapabilityURL'],
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                          Row(
+                            children: [
+                              Icon(Icons.info, color: Colors.grey),
+                              SizedBox(width: 5),
+                              Text('Status: ${document['status']}',
+                                  style: TextStyle(fontSize: 16)),
+                            ],
                           ),
+                          SizedBox(height: 10),
+                          Text('Reason for Adopting:',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          SizedBox(height: 5),
+                          Text(document['selfDescription'],
+                              style: TextStyle(fontSize: 14)),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  SizedBox(width: 20),
+                  Container(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Proof of Capability',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            width: 200,
+                            height: 200,
+                            child: Image.network(
+                              document['proofOfCapabilityURL'],
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 40),

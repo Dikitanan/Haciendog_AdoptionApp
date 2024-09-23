@@ -36,6 +36,134 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  Future<void> _showForgotPasswordDialog() {
+    TextEditingController emailController = TextEditingController();
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Forgot Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(hintText: "Email"),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Submit'),
+              onPressed: () async {
+                String email = emailController.text.trim();
+                // Check if inputs are not empty
+                if (email.isNotEmpty) {
+                  await _handleForgotPassword(email);
+                  // Optionally close the dialog only on success
+                } else {
+                  _showErrorDialog1(
+                      'Please enter both email and favorite word.');
+                }
+              },
+            ),
+          ],
+        );
+      },
+    ).whenComplete(() {
+      // Dispose controllers when dialog is closed
+      emailController.dispose();
+    });
+  }
+
+  Future<void> _handleForgotPassword(String email) async {
+    try {
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('UserEmails')
+          .where('email', isEqualTo: email)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        // If the email and favorite word match, send a password reset email
+        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+        Navigator.of(context).pop();
+
+        _showDialog1(
+            'Success', 'A password reset email has been sent to $email.');
+      } else {
+        Navigator.of(context).pop();
+
+        _showErrorDialog1('Email or favorite word is incorrect.');
+      }
+    } catch (e) {
+      Navigator.of(context).pop();
+
+      print('Error handling forgot password: $e');
+      _showErrorDialog1('Error: ${e.toString()}');
+    }
+  }
+
+  void _showDialog1(String title, String message) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPasswordDialog(String password) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Your Password'),
+          content: Text(password),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showErrorDialog1(String message) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget content = Container(
@@ -65,13 +193,18 @@ class _LoginPageState extends State<LoginPage> {
                   Container(
                     margin: EdgeInsets.only(top: 10),
                     alignment: Alignment.centerRight,
-                    child: Text("Forgot Password?"),
+                    child: GestureDetector(
+                      onTap: () {
+                        _showForgotPasswordDialog();
+                      },
+                      child: Text("Forgot Password?"),
+                    ),
                   ),
                   Expanded(
                     child: Padding(
                       padding: kIsWeb
                           ? const EdgeInsets.all(8.0)
-                          : const EdgeInsets.fromLTRB(0, 0, 0, 200),
+                          : const EdgeInsets.fromLTRB(0, 0, 0, 150),
                       child: Center(
                         child: _isLoading
                             ? CircularProgressIndicator()
@@ -82,34 +215,6 @@ class _LoginPageState extends State<LoginPage> {
                                 btnText: "LOGIN",
                               ),
                       ),
-                    ),
-                  ),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: "Don't have an account? ",
-                          style: TextStyle(color: Colors.black),
-                        ),
-                        WidgetSpan(
-                          alignment: PlaceholderAlignment.baseline,
-                          baseline: TextBaseline.alphabetic,
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SignUpPage(),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              "Register",
-                              style: TextStyle(color: orangeColors),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ],

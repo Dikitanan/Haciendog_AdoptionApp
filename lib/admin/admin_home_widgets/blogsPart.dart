@@ -44,7 +44,7 @@ class _MiddlePartState extends State<MiddlePart>
                 });
               },
               tooltip: 'See Blogs Menu',
-              child: Icon(Icons.add),
+              child: Icon(Icons.settings),
             ),
     );
   }

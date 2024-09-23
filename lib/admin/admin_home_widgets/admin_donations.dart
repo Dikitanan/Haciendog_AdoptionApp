@@ -232,13 +232,49 @@ class _AdminDonationsState extends State<AdminDonations> {
     final amount = donation['amount'] ?? '';
     final DateOfDonation =
         (donation['DateOfDonation'] as Timestamp?)?.toDate() ?? DateTime.now();
-
     final status = donation['status'] ?? 'Pending';
 
     String imageUrl = '';
     if (proofOfDonation.isNotEmpty) {
       imageUrl =
           await FirebaseStorage.instance.ref(proofOfDonation).getDownloadURL();
+    }
+
+    // Function to add notification to the Notifications collection
+    Future<void> _addNotification(String body) async {
+      await FirebaseFirestore.instance.collection('Notifications').add({
+        'body': body,
+        'email': email,
+        'isSeen': false,
+        'timestamp': Timestamp.now(),
+        'title': 'Donation Update',
+      });
+    }
+
+    // Function to update or add a document in UserNewMessage collection
+    Future<void> _updateUserNewMessage() async {
+      final userMessageRef = FirebaseFirestore.instance
+          .collection('UserNewMessage')
+          .where('email', isEqualTo: email);
+
+      final snapshot = await userMessageRef.get();
+
+      if (snapshot.docs.isNotEmpty) {
+        // If a document with the email exists, update the notificationCount
+        final doc = snapshot.docs.first;
+        await doc.reference.update({
+          'notificationCount': FieldValue.increment(1),
+        });
+      } else {
+        // If no document exists, create a new one
+        await FirebaseFirestore.instance.collection('UserNewMessage').add({
+          'notificationCount': 1,
+          'LastMessage': ' ',
+          'email': email,
+          'messageCount': 0,
+          'totalMessage': 0,
+        });
+      }
     }
 
     showDialog(
@@ -290,15 +326,40 @@ class _AdminDonationsState extends State<AdminDonations> {
                     children: [
                       TextButton(
                         child: const Text('Accept'),
-                        onPressed: () {
-                          donation.reference.update({'status': 'Accepted'});
+                        onPressed: () async {
+                          await donation.reference
+                              .update({'status': 'Accepted'});
+                          await _addNotification(
+                              'Thank you for your Donation!');
+                          await _updateUserNewMessage();
+
+                          // Add to AdminBlogs Collection
+                          await FirebaseFirestore.instance
+                              .collection('AdminBlogs')
+                              .add({
+                            'title': 'New Donation!',
+                            'description':
+                                'Thank you $name for donating in our Shelter!',
+                            'imageURL':
+                                'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/thank_you_donation.jpg?alt=media&token=9c04c165-9260-4de3-9f8d-297474ccb7a5',
+                            'createdAt': FieldValue.serverTimestamp(),
+                            'heartCount': 0,
+                            'commentCount': 0,
+                            'userEmail': email,
+                            'profilePicture':
+                                'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/adminpic.jpg?alt=media&token=0fef831c-2c1f-451c-970e-9d264d8adbc5',
+                          });
                           Navigator.of(context).pop();
                         },
                       ),
                       TextButton(
                         child: const Text('Reject'),
-                        onPressed: () {
-                          donation.reference.update({'status': 'Rejected'});
+                        onPressed: () async {
+                          await donation.reference
+                              .update({'status': 'Rejected'});
+                          await _addNotification(
+                              'Your donation has been rejected. Reason: Invalid Donation');
+                          await _updateUserNewMessage();
                           Navigator.of(context).pop();
                         },
                       ),
