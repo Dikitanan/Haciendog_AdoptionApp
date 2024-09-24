@@ -267,7 +267,10 @@ class _AdminDonationsState extends State<AdminDonations> {
         });
       } else {
         // If no document exists, create a new one
-        await FirebaseFirestore.instance.collection('UserNewMessage').add({
+        await FirebaseFirestore.instance
+            .collection('UserNewMessage')
+            .doc(email)
+            .set({
           'notificationCount': 1,
           'LastMessage': ' ',
           'email': email,
@@ -337,6 +340,7 @@ class _AdminDonationsState extends State<AdminDonations> {
                           await FirebaseFirestore.instance
                               .collection('AdminBlogs')
                               .add({
+                            'username': 'Donation Bot',
                             'title': 'New Donation!',
                             'description':
                                 'Thank you $name for donating in our Shelter!',

@@ -25,6 +25,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
   String gender = 'Male';
   String catOrDog = 'Cat';
   String breed = '';
+  String shots = '';
   String health = '';
   bool isHearted = false;
   String status = 'Unadopted';
@@ -73,7 +74,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                       ),
                     ),
                     SizedBox(
-                      height: 35,
+                      height: 25,
                     ),
                     Text(
                       'Pet Name:',
@@ -86,7 +87,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                         hintText: 'Enter pet name',
                       ),
                     ),
-                    SizedBox(height: 35),
+                    SizedBox(height: 25),
                     Text(
                       'Age in Shelter:',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -98,7 +99,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                         hintText: 'Enter age in shelter',
                       ),
                     ),
-                    SizedBox(height: 35),
+                    SizedBox(height: 25),
                     Text(
                       'Behavior:',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -163,6 +164,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                                       ''; // Clear breed selection when species changes
                                   health =
                                       ''; // Clear health status selection when species changes
+                                  shots = '';
                                 });
                               },
                               items: <String>[
@@ -190,7 +192,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                       decoration: BoxDecoration(
                         border: Border.all(
                             color: Color.fromARGB(
-                                255, 56, 55, 59)), // Border color
+                                255, 174, 174, 174)), // Border color
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
@@ -243,7 +245,69 @@ class _PetProfileFormState extends State<PetProfileForm> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 35),
+                    SizedBox(height: 10),
+                    Text(
+                      'Vaccine Shots Taken:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Container(
+                      width: double.infinity, // Adjust the width as needed
+                      height: 60, // Adjust the height as needed
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                            color: Color.fromARGB(
+                                255, 174, 174, 174)), // Border color
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: shots.isEmpty ? null : shots,
+                          hint: Text('Select Vaccine Shots'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              shots = newValue ?? '';
+                            });
+                          },
+                          items: (catOrDog == 'Cat'
+                                  ? [
+                                      'None',
+                                      'FVRCP (Feline Viral Rhinotracheitis, Calicivirus, Panleukopenia)',
+                                      'Rabies Vaccine',
+                                      'FeLV Vaccine (Feline Leukemia Virus)',
+                                      'FIV Vaccine (Feline Immunodeficiency Virus)',
+                                      'FVRCP and Rabies Vaccine',
+                                      'FVRCP, Rabies, and FeLV Vaccine',
+                                      'FVRCP, Rabies, FeLV, and FIV Vaccine',
+                                    ]
+                                  : [
+                                      'None',
+                                      'DHPP/DAPP (Distemper, Adenovirus/Hepatitis, Parvovirus, Parainfluenza)',
+                                      'Rabies Vaccine',
+                                      'Leptospirosis Vaccine',
+                                      'Bordetella Vaccine',
+                                      'Lyme Disease Vaccine',
+                                      'Canine Influenza Vaccine',
+                                      'DHPP/DAPP and Rabies Vaccine',
+                                      'DHPP/DAPP, Rabies, and Leptospirosis Vaccine',
+                                      'DHPP/DAPP, Rabies, Leptospirosis, and Bordetella Vaccine',
+                                      'DHPP/DAPP, Rabies, Leptospirosis, Bordetella, and Lyme Disease Vaccine',
+                                      'DHPP/DAPP, Rabies, Leptospirosis, Bordetella, Lyme Disease, Canine Influenza Vaccine',
+                                    ])
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          icon: Icon(Icons.arrow_drop_down,
+                              color: Colors.black), // Customize the arrow color
+                          iconSize: 24, // Customize the arrow size
+                          isExpanded:
+                              true, // Makes the dropdown button use the full width of its parent
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
                     Text(
                       'Health Status:',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -254,7 +318,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                       decoration: BoxDecoration(
                         border: Border.all(
                             color: Color.fromARGB(
-                                255, 56, 55, 59)), // Border color
+                                255, 174, 174, 174)), // Border color
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
@@ -303,6 +367,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                         ),
                       ),
                     ),
+                    SizedBox(height: 25),
                   ],
                 ),
               ),
@@ -322,14 +387,14 @@ class _PetProfileFormState extends State<PetProfileForm> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     SizedBox(
-                      height: 35,
+                      height: 10,
                     ),
                     Center(
                       child: Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey),
                         ),
-                        height: 210,
+                        height: 270,
                         width: 500,
                         child: isImageUploaded
                             ? Image.network(
@@ -350,13 +415,13 @@ class _PetProfileFormState extends State<PetProfileForm> {
                         });
                       },
                     ),
-                    SizedBox(height: 45),
+                    SizedBox(height: 30),
                     Text(
                       'Description:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Container(
-                      height: 214,
+                      height: 227,
                       child: TextField(
                         controller: descriptionController,
                         decoration: InputDecoration(
@@ -377,6 +442,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                                     descriptionController.text.isEmpty ||
                                     personalityController.text.isEmpty ||
                                     health.isEmpty ||
+                                    shots.isEmpty ||
                                     imageURL.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -396,6 +462,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                                   'Description': descriptionController.text,
                                   'Personality': personalityController.text,
                                   'Gender': gender,
+                                  'ShotTaken': shots,
                                   'PWD': health,
                                   'CatOrDog': catOrDog,
                                   'IsHearted': isHearted,
@@ -426,6 +493,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                                   setState(() {
                                     breed = '';
                                     health = '';
+                                    shots = '';
                                     imageURL = '';
                                     isImageUploaded = false;
                                     catOrDog = 'Cat';

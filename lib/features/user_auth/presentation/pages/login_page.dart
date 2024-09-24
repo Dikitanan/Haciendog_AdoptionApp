@@ -63,8 +63,7 @@ class _LoginPageState extends State<LoginPage> {
                   await _handleForgotPassword(email);
                   // Optionally close the dialog only on success
                 } else {
-                  _showErrorDialog1(
-                      'Please enter both email and favorite word.');
+                  _showErrorDialog1('Please enter a valid email.');
                 }
               },
             ),

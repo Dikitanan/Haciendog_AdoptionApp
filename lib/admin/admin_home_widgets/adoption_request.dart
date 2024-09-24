@@ -187,11 +187,19 @@ class _AdoptionListsState extends State<AdoptionLists> {
   }
 }
 
-class WebAdoptionRequestDialog extends StatelessWidget {
+class WebAdoptionRequestDialog extends StatefulWidget {
   final QueryDocumentSnapshot<Object?> document;
 
   const WebAdoptionRequestDialog({Key? key, required this.document})
       : super(key: key);
+
+  @override
+  State<WebAdoptionRequestDialog> createState() =>
+      _WebAdoptionRequestDialogState();
+}
+
+class _WebAdoptionRequestDialogState extends State<WebAdoptionRequestDialog> {
+  Size? _imageSize;
 
   @override
   Widget build(BuildContext context) {
@@ -199,8 +207,8 @@ class WebAdoptionRequestDialog extends StatelessWidget {
       insetPadding: EdgeInsets.symmetric(horizontal: 50),
       backgroundColor: Colors.transparent,
       child: Container(
-        width: 550,
-        height: 650,
+        width: 760,
+        height: 680,
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -220,11 +228,13 @@ class WebAdoptionRequestDialog extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Adoption Request Details',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                Center(
+                  child: Text(
+                    'Adoption Request Details',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -247,7 +257,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                             children: [
                               Icon(Icons.person, color: Colors.grey),
                               SizedBox(width: 5),
-                              Text('Name: ${document['name']}',
+                              Text('Name: ${widget.document['name']}',
                                   style: TextStyle(fontSize: 16)),
                             ],
                           ),
@@ -256,7 +266,8 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                             children: [
                               Icon(Icons.work, color: Colors.grey),
                               SizedBox(width: 5),
-                              Text('Occupation: ${document['occupation']}',
+                              Text(
+                                  'Occupation: ${widget.document['occupation']}',
                                   style: TextStyle(fontSize: 16)),
                             ],
                           ),
@@ -265,7 +276,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                             children: [
                               Icon(Icons.cake, color: Colors.grey),
                               SizedBox(width: 5),
-                              Text('Age: ${document['age']}',
+                              Text('Age: ${widget.document['age']}',
                                   style: TextStyle(fontSize: 16)),
                             ],
                           ),
@@ -278,15 +289,16 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    if (document['address'] != null)
+                                    if (widget.document['address'] != null)
                                       Text(
                                         'Address:',
                                         style: TextStyle(fontSize: 16),
                                       ),
                                     SizedBox(height: 2),
-                                    if (document['address'] != null)
+                                    if (widget.document['address'] != null)
                                       Text(
-                                        _formatAddress(document['address']),
+                                        _formatAddress(
+                                            widget.document['address']),
                                         style: TextStyle(fontSize: 16),
                                       ),
                                   ],
@@ -310,17 +322,19 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                                             color: Color(0xFF5B5A5D)),
                                       ),
                                       TextSpan(
-                                        text: document['email'].length > 12
-                                            ? document['email'].substring(0, 12)
-                                            : document['email'],
+                                        text:
+                                            widget.document['email'].length > 12
+                                                ? widget.document['email']
+                                                    .substring(0, 12)
+                                                : widget.document['email'],
                                         style: TextStyle(
                                             fontSize: 16,
                                             color: Color(0xFF5B5A5D)),
                                       ),
-                                      if (document['email'].length > 12)
+                                      if (widget.document['email'].length > 12)
                                         TextSpan(
                                           text:
-                                              '\n${document['email'].substring(12)}',
+                                              '\n${widget.document['email'].substring(12)}',
                                           style: TextStyle(
                                               fontSize: 16,
                                               color: Color(0xFF5B5A5D)),
@@ -336,7 +350,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                             children: [
                               Icon(Icons.info, color: Colors.grey),
                               SizedBox(width: 5),
-                              Text('Status: ${document['status']}',
+                              Text('Status: ${widget.document['status']}',
                                   style: TextStyle(fontSize: 16)),
                             ],
                           ),
@@ -345,7 +359,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold)),
                           SizedBox(height: 5),
-                          Text(document['selfDescription'],
+                          Text(widget.document['selfDescription'],
                               style: TextStyle(fontSize: 14)),
                         ],
                       ),
@@ -353,27 +367,91 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                   ),
                   SizedBox(width: 20),
                   Container(
-                    child: Column(
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Proof of Capability',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            width: 200,
-                            height: 200,
-                            child: Image.network(
-                              document['proofOfCapabilityURL'],
-                              fit: BoxFit.cover,
+                        Column(
+                          children: [
+                            Text(
+                              'Proof of Capability',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
+                            SizedBox(height: 5),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                width: 200,
+                                height: 200,
+                                child: Image.network(
+                                  widget.document['proofOfCapabilityURL'],
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              'Pet Profile',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 5),
+                            Container(
+                              width: 200,
+                              height: 200,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.5),
+                                    spreadRadius: 2,
+                                    blurRadius: 7,
+                                    offset: Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: FutureBuilder<DocumentSnapshot>(
+                                  future: FirebaseFirestore.instance
+                                      .collection('Animal')
+                                      .doc(widget.document['petId'])
+                                      .get(),
+                                  builder: (BuildContext context,
+                                      AsyncSnapshot<DocumentSnapshot>
+                                          animalSnapshot) {
+                                    if (animalSnapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return Center(
+                                          child: CircularProgressIndicator());
+                                    }
+                                    if (animalSnapshot.hasError ||
+                                        !animalSnapshot.hasData ||
+                                        !animalSnapshot.data!.exists) {
+                                      return Text('Animal image not found',
+                                          style: TextStyle(fontSize: 18));
+                                    }
+                                    var animalData = animalSnapshot.data!;
+                                    return Image.network(
+                                      animalData['Image'],
+                                      fit: BoxFit.cover,
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -381,7 +459,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: 40),
+            SizedBox(height: 20),
             Text(
               'Animal Details',
               style: TextStyle(
@@ -399,7 +477,7 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                       child: FutureBuilder<DocumentSnapshot>(
                         future: FirebaseFirestore.instance
                             .collection('Animal')
-                            .doc(document['petId'])
+                            .doc(widget.document['petId'])
                             .get(),
                         builder: (BuildContext context,
                             AsyncSnapshot<DocumentSnapshot> animalSnapshot) {
@@ -445,121 +523,163 @@ class WebAdoptionRequestDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(width: 20),
-                  Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 2,
-                          blurRadius: 7,
-                          offset: Offset(0, 3),
+                  Column(
+                    children: [
+                      Text(
+                        'Valid Id',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: FutureBuilder<DocumentSnapshot>(
-                        future: FirebaseFirestore.instance
-                            .collection('Animal')
-                            .doc(document['petId'])
-                            .get(),
-                        builder: (BuildContext context,
-                            AsyncSnapshot<DocumentSnapshot> animalSnapshot) {
-                          if (animalSnapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          }
-                          if (animalSnapshot.hasError ||
-                              !animalSnapshot.hasData ||
-                              !animalSnapshot.data!.exists) {
-                            return Text('Animal image not found',
-                                style: TextStyle(fontSize: 18));
-                          }
-                          var animalData = animalSnapshot.data!;
-                          return Image.network(
-                            animalData['Image'],
-                            fit: BoxFit.cover,
-                          );
-                        },
                       ),
-                    ),
+                      SizedBox(height: 5),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          width: 250,
+                          height: 150,
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors
+                                .click, // Change the cursor to indicate it's clickable
+                            child: GestureDetector(
+                              onTap: () {
+                                // Load image to get its size
+                                final imageUrl = ((widget.document.data()
+                                            as Map<String, dynamic>)[
+                                        'validIdURL'] ??
+                                    'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/notvalidid.jpg?alt=media&token=bb9d5413-3352-4798-ba50-e52e16e9fe70');
+
+                                // Create an ImageStream to fetch image dimensions
+                                ImageStream stream = NetworkImage(imageUrl)
+                                    .resolve(ImageConfiguration());
+                                ImageStreamListener listener;
+
+                                listener = ImageStreamListener(
+                                    (ImageInfo info, bool sync) {
+                                  // Once the image is loaded, set the size and show the dialog
+                                  if (_imageSize == null) {
+                                    setState(() {
+                                      _imageSize = Size(
+                                          info.image.width.toDouble(),
+                                          info.image.height.toDouble());
+                                    });
+                                  }
+                                  // Remove the listener to prevent memory leaks
+                                });
+
+                                stream.addListener(listener);
+
+                                // Show the dialog with the larger image after a slight delay to allow size retrieval
+                                Future.delayed(Duration(milliseconds: 100), () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return Dialog(
+                                        child: Container(
+                                          width: _imageSize != null
+                                              ? _imageSize!.width
+                                              : 300, // Default width if size not available
+                                          height: _imageSize != null
+                                              ? _imageSize!.height
+                                              : 400, // Default height if size not available
+                                          child: Image.network(
+                                            imageUrl,
+                                            fit: BoxFit
+                                                .contain, // Maintain aspect ratio
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                });
+                              },
+                              child: Image.network(
+                                ((widget.document.data() as Map<String,
+                                        dynamic>)['validIdURL'] ??
+                                    'https://firebasestorage.googleapis.com/v0/b/mads-df824.appspot.com/o/notvalidid.jpg?alt=media&token=bb9d5413-3352-4798-ba50-e52e16e9fe70'),
+                                fit: BoxFit.fill,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  SizedBox(
+                    width: 90,
+                  )
                 ],
               ),
             ),
             SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: document['status'] != 'Archived'
+              children: widget.document['status'] != 'Archived'
                   ? [
-                      if (document['status'] == 'Pending')
+                      if (widget.document['status'] == 'Pending')
                         ElevatedButton(
                           onPressed: () {
                             _updateAdoptionStatus(
                               context,
-                              document.id,
+                              widget.document.id,
                               'Rejected',
-                              document['email'], // Pass user's email
-                              document['petId'], // Pass pet ID
+                              widget.document['email'], // Pass user's email
+                              widget.document['petId'], // Pass pet ID
                             );
                           },
                           child: Text('Decline'),
                         ),
-                      if (document['status'] == 'Pending')
+                      if (widget.document['status'] == 'Pending')
                         ElevatedButton(
                           onPressed: () {
                             _updateAdoptionStatus(
                               context,
-                              document.id,
+                              widget.document.id,
                               'Accepted',
-                              document['email'], // Pass user's email
-                              document['petId'], // Pass pet ID
+                              widget.document['email'], // Pass user's email
+                              widget.document['petId'], // Pass pet ID
                             );
                           },
                           child: Text('Accept'),
                         ),
-                      if (document['status'] == 'Accepted')
+                      if (widget.document['status'] == 'Accepted')
                         ElevatedButton(
                           onPressed: () {
                             _updateAdoptionStatus(
                               context,
-                              document.id,
+                              widget.document.id,
                               'Shipped',
-                              document['email'], // Pass user's email
-                              document['petId'], // Pass pet ID
+                              widget.document['email'], // Pass user's email
+                              widget.document['petId'], // Pass pet ID
                             );
                           },
                           child: Text('Ship'),
                         ),
-                      if (document['status'] == 'Cancelled') Container(),
-                      if (document['status'] == 'Shipped')
+                      if (widget.document['status'] == 'Cancelled') Container(),
+                      if (widget.document['status'] == 'Shipped')
                         ElevatedButton(
                           onPressed: () {
                             _updateAdoptionStatus(
                               context,
-                              document.id,
+                              widget.document.id,
                               'Adopted',
-                              document['email'], // Pass user's email
-                              document['petId'], // Pass pet ID
+                              widget.document['email'], // Pass user's email
+                              widget.document['petId'], // Pass pet ID
                             );
                           },
                           child: Text('Done'),
                         ),
-                      if (document['status'] != 'Pending' &&
-                          document['status'] != 'Adopted' &&
-                          document['status'] != 'Cancelled')
+                      if (widget.document['status'] != 'Pending' &&
+                          widget.document['status'] != 'Adopted' &&
+                          widget.document['status'] != 'Cancelled')
                         ElevatedButton(
                           onPressed: () {
                             _updateAdoptionStatus(
                               context,
-                              document.id,
+                              widget.document.id,
                               'Pending',
-                              document['email'],
-                              document['petId'],
+                              widget.document['email'],
+                              widget.document['petId'],
                             );
                           },
                           child: Text('Cancel'),

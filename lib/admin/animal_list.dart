@@ -27,6 +27,8 @@ class _AnimalListState extends State<AnimalList> {
   late TextEditingController statusController;
   final PdfGenerator pdfGenerator = PdfGenerator();
   String selectedHealthStatus = 'Healthy'; // Default value
+  String selectedVaccineShot = 'None'; // Default value
+
   String catOrDog = 'Cat'; // Set this based on your logic
 
   bool _imageUploaded = false;
@@ -715,6 +717,58 @@ class _AnimalListState extends State<AnimalList> {
                           ),
                           const SizedBox(height: 35),
                           const Text(
+                            'Vaccine Shots Taken:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          DropdownButtonFormField<String>(
+                            value: animal['ShotTaken'] ??
+                                'None', // Use null-aware operator to provide default
+                            items: (catOrDog == 'Cat'
+                                    ? [
+                                        'None',
+                                        'FVRCP (Feline Viral Rhinotracheitis, Calicivirus, Panleukopenia)',
+                                        'Rabies Vaccine',
+                                        'FeLV Vaccine (Feline Leukemia Virus)',
+                                        'FIV Vaccine (Feline Immunodeficiency Virus)',
+                                        'FVRCP and Rabies Vaccine',
+                                        'FVRCP, Rabies, and FeLV Vaccine',
+                                        'FVRCP, Rabies, FeLV, and FIV Vaccine',
+                                      ]
+                                    : [
+                                        'None',
+                                        'DHPP/DAPP (Distemper, Adenovirus/Hepatitis, Parvovirus, Parainfluenza)',
+                                        'Rabies Vaccine',
+                                        'Leptospirosis Vaccine',
+                                        'Bordetella Vaccine',
+                                        'Lyme Disease Vaccine',
+                                        'Canine Influenza Vaccine',
+                                        'DHPP/DAPP and Rabies Vaccine',
+                                        'DHPP/DAPP, Rabies, and Leptospirosis Vaccine',
+                                        'DHPP/DAPP, Rabies, Leptospirosis, and Bordetella Vaccine',
+                                        'DHPP/DAPP, Rabies, Leptospirosis, Bordetella, and Lyme Disease Vaccine',
+                                        'DHPP/DAPP, Rabies, Leptospirosis, Bordetella, Lyme Disease, Canine Influenza Vaccine',
+                                      ])
+                                .map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                selectedVaccineShot = newValue!;
+                              });
+                            },
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Select Vaccine Shots Taken',
+                            ),
+                            style: const TextStyle(
+                              fontSize: 12, // Set your desired font size here
+                            ),
+                          ),
+                          const SizedBox(height: 35),
+                          const Text(
                             'Status:',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
@@ -841,6 +895,9 @@ class _AnimalListState extends State<AnimalList> {
     String? health = selectedHealthStatus.isNotEmpty
         ? selectedHealthStatus
         : null; // Use selectedHealthStatus
+    String? shots = selectedVaccineShot.isNotEmpty
+        ? selectedVaccineShot
+        : null; // Use selectedHealthStatus
 
     String? catOrDog =
         catOrDogController.text.isNotEmpty ? catOrDogController.text : null;
@@ -856,6 +913,7 @@ class _AnimalListState extends State<AnimalList> {
     if (description != null) updateData['Description'] = description;
     if (personality != null) updateData['Personality'] = personality;
     if (health != null) updateData['PWD'] = health;
+    if (shots != null) updateData['ShotTaken'] = shots;
     if (catOrDog != null) updateData['CatOrDog'] = catOrDog;
     if (status != null) updateData['Status'] = status;
 
