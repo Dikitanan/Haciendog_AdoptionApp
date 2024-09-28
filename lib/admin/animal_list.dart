@@ -16,6 +16,8 @@ class AnimalList extends StatefulWidget {
 
 class _AnimalListState extends State<AnimalList> {
   late TextEditingController _searchController;
+  String _selectedFilter = 'All'; // State variable for the filter
+
   late Timer _debounce;
   late TextEditingController nameController;
   late TextEditingController breedController;
@@ -33,6 +35,66 @@ class _AnimalListState extends State<AnimalList> {
 
   bool _imageUploaded = false;
   bool _isUploading = false; // Add this state variable
+
+  String calculateUpdatedAgeInShelter(
+      String currentAgeInShelter, Timestamp dateCreated) {
+    // Calculate the time difference
+    DateTime createdDate = dateCreated.toDate();
+    Duration difference = DateTime.now().difference(createdDate);
+
+    // Parse the current age in shelter
+    int currentYears = 0;
+    int currentMonths = 0;
+    int currentDays = 0;
+
+    if (currentAgeInShelter.contains('year')) {
+      currentYears += int.parse(currentAgeInShelter.split(' ')[0]);
+    }
+    if (currentAgeInShelter.contains('month')) {
+      currentMonths += int.parse(currentAgeInShelter.split(' ')[0]);
+    }
+    if (currentAgeInShelter.contains('day')) {
+      currentDays += int.parse(currentAgeInShelter.split(' ')[0]);
+    }
+
+    // Update the years based on full years passed
+    if (difference.inDays >= 365) {
+      int yearsToAdd = difference.inDays ~/ 365; // Calculate full years to add
+      currentYears += yearsToAdd;
+    }
+
+    // Update the months based on full months passed
+    if (difference.inDays >= 30) {
+      int monthsToAdd =
+          (difference.inDays % 365) ~/ 30; // Calculate remaining full months
+      if (currentYears == 0) {
+        // Only add months if no full years
+        currentMonths += monthsToAdd;
+      }
+    }
+
+    // Update the days based on the remaining days
+    if (currentYears == 0 && currentMonths == 0) {
+      currentDays +=
+          difference.inDays; // Add all days if there are no years or months
+    }
+
+    // Construct the result string
+    String result = '';
+    if (currentYears > 0) {
+      result += '$currentYears year${currentYears > 1 ? 's' : ''}';
+    }
+    if (currentMonths > 0) {
+      result += (result.isNotEmpty ? ' ' : '') +
+          '$currentMonths month${currentMonths > 1 ? 's' : ''}';
+    }
+    if (currentDays > 0) {
+      result += (result.isNotEmpty ? ' ' : '') +
+          '$currentDays day${currentDays > 1 ? 's' : ''}';
+    }
+
+    return result.isNotEmpty ? result : '0 days';
+  }
 
   @override
   void initState() {
@@ -68,24 +130,29 @@ class _AnimalListState extends State<AnimalList> {
       stream: FirebaseFirestore.instance.collection('Animal').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(
-            child: Text('Error: ${snapshot.error}'),
-          );
+          return Center(child: Text('Error: ${snapshot.error}'));
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.data == null || snapshot.data!.docs.isEmpty) {
-          return const Center(
-            child: Text('No data available'),
-          );
+          return const Center(child: Text('No data available'));
         }
 
         List<DocumentSnapshot> animals = snapshot.data!.docs;
+
+        // Filter based on selected filter
+        if (_selectedFilter == 'Cat') {
+          animals =
+              animals.where((animal) => animal['CatOrDog'] == 'Cat').toList();
+        } else if (_selectedFilter == 'Dog') {
+          animals =
+              animals.where((animal) => animal['CatOrDog'] == 'Dog').toList();
+        }
+
+        // Sort animals by dateCreated
         animals.sort((a, b) => (b['dateCreated'] as Timestamp)
             .compareTo(a['dateCreated'] as Timestamp));
 
@@ -93,14 +160,15 @@ class _AnimalListState extends State<AnimalList> {
           appBar: AppBar(
             title: const Text('Animal List'),
             centerTitle: true,
-            titleSpacing: 0, // Set title spacing to 0
+            titleSpacing: 0,
             actions: <Widget>[
               Tooltip(
                 message: 'Print Animal List',
                 child: IconButton(
                   icon: Icon(Icons.print),
                   onPressed: () {
-                    pdfGenerator.generatePdf(preview: true); // Preview PDF
+                    pdfGenerator.generatePdf(
+                        preview: true, filter: _selectedFilter);
                   },
                 ),
               ),
@@ -109,8 +177,34 @@ class _AnimalListState extends State<AnimalList> {
                 child: IconButton(
                   icon: Icon(Icons.download),
                   onPressed: () {
-                    pdfGenerator.generatePdf(preview: false); // Preview PDF
+                    pdfGenerator.generatePdf(
+                        preview: false, filter: _selectedFilter);
                   },
+                ),
+              ),
+              // Dropdown filter
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: DropdownButton<String>(
+                  value: _selectedFilter,
+                  icon: const Icon(Icons.filter_list,
+                      color: Color.fromARGB(255, 0, 0, 0)),
+                  dropdownColor: const Color.fromARGB(255, 255, 255, 255),
+                  underline: SizedBox(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedFilter = newValue!;
+                    });
+                  },
+                  items: <String>['All', 'Cat', 'Dog']
+                      .map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value,
+                          style: const TextStyle(
+                              color: Color.fromARGB(255, 0, 0, 0))),
+                    );
+                  }).toList(),
                 ),
               ),
             ],
@@ -262,11 +356,11 @@ class _AnimalListState extends State<AnimalList> {
                                   DataColumn(
                                     label: Center(
                                       child: Text(
-                                        'Species',
+                                        'Cat or Dog',
                                         style: TextStyle(color: Colors.white),
                                       ),
                                     ),
-                                    tooltip: 'Species',
+                                    tooltip: 'Cat or Dog',
                                     numeric: false,
                                   ),
                                   DataColumn(
@@ -328,7 +422,10 @@ class _AnimalListState extends State<AnimalList> {
                                     ),
                                     DataCell(
                                       Center(
-                                        child: Text(animal['AgeInShelter']),
+                                        child: Text(
+                                            calculateUpdatedAgeInShelter(
+                                                animal['AgeInShelter'],
+                                                animal['dateCreated'])),
                                       ),
                                     ),
                                     DataCell(
@@ -576,6 +673,7 @@ class _AnimalListState extends State<AnimalList> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextField(
+                        enabled: false,
                         controller: ageInShelterController,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
@@ -642,7 +740,7 @@ class _AnimalListState extends State<AnimalList> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Species:',
+                                'Cat or Dog:',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               DropdownButton<String>(

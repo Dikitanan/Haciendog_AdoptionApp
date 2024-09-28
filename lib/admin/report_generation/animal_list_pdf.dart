@@ -9,8 +9,8 @@ import 'package:pdf/widgets.dart' as pw;
 
 class PdfGenerator {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  Future<void> generatePdf({bool preview = false}) async {
+  Future<void> generatePdf(
+      {bool preview = false, String filter = 'All'}) async {
     final pdf = pw.Document();
     const double pageWidth = 595.27; // A4 width in points
     const double pageHeight = 841.89; // A4 height in points
@@ -26,9 +26,18 @@ class PdfGenerator {
     final snapshot = await _firestore.collection('Animal').get();
     final data = snapshot.docs.map((doc) => doc.data()).toList();
 
-    // Group data by Status
+    // Filter data based on the selected filter
+    List<Map<String, dynamic>> filteredData;
+    if (filter == 'All') {
+      filteredData = data;
+    } else {
+      filteredData =
+          data.where((animal) => animal['CatOrDog'] == filter).toList();
+    }
+
+    // Group filtered data by Status
     final groupedData = <String, List<Map<String, dynamic>>>{};
-    for (var animal in data) {
+    for (var animal in filteredData) {
       final status = animal['Status'] ?? 'Unknown';
       if (!groupedData.containsKey(status)) {
         groupedData[status] = [];
@@ -62,7 +71,7 @@ class PdfGenerator {
                       ),
                       pw.Text('Animal Report',
                           style: pw.TextStyle(
-                              fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                              fontSize: 22, fontWeight: pw.FontWeight.bold)),
                       pw.Text('Status: $status',
                           style: pw.TextStyle(
                               fontSize: 16, color: PdfColors.black)),
@@ -93,32 +102,38 @@ class PdfGenerator {
                                 padding: pw.EdgeInsets.all(8.0),
                                 child: pw.Text('Name',
                                     style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold))),
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
-                                child: pw.Text('Species',
+                                child: pw.Text('Cat or Dog',
                                     style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold))),
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
                                 child: pw.Text('Breed',
                                     style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold))),
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
                                 child: pw.Text('Gender',
                                     style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold))),
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
                                 child: pw.Text('Health Status',
                                     style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold))),
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
                                 child: pw.Text('Pet Status',
                                     style: pw.TextStyle(
-                                        fontWeight: pw.FontWeight.bold))),
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
                           ],
                         ),
                         // Data Rows
@@ -127,22 +142,28 @@ class PdfGenerator {
                             children: [
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['Name'] ?? '')),
+                                  child: pw.Text(animal['Name'] ?? '',
+                                      style: pw.TextStyle(fontSize: 9))),
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['CatOrDog'] ?? '')),
+                                  child: pw.Text(animal['CatOrDog'] ?? '',
+                                      style: pw.TextStyle(fontSize: 9))),
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['Breed'] ?? '')),
+                                  child: pw.Text(animal['Breed'] ?? '',
+                                      style: pw.TextStyle(fontSize: 9))),
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['Gender'] ?? '')),
+                                  child: pw.Text(animal['Gender'] ?? '',
+                                      style: pw.TextStyle(fontSize: 9))),
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['PWD'] ?? '')),
+                                  child: pw.Text(animal['PWD'] ?? '',
+                                      style: pw.TextStyle(fontSize: 9))),
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['Status'] ?? '')),
+                                  child: pw.Text(animal['Status'] ?? '',
+                                      style: pw.TextStyle(fontSize: 9))),
                             ],
                           ),
                       ],
@@ -158,6 +179,26 @@ class PdfGenerator {
                           pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
                     ),
                   ),
+                  pw.SizedBox(height: 25),
+                  // Signature line
+                  pw.Container(
+                    width: 200,
+                    child: pw.DecoratedBox(
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border(
+                          bottom:
+                              pw.BorderSide(width: 1, color: PdfColors.black),
+                        ),
+                      ),
+                      child: pw.Padding(
+                        padding: pw.EdgeInsets.only(bottom: 5.0),
+                        child: pw.Text('', style: pw.TextStyle(fontSize: 10)),
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(height: 5),
+                  // Printed name
+                  pw.Text('Prepared By', style: pw.TextStyle(fontSize: 10)),
                 ],
               );
             },
@@ -169,24 +210,19 @@ class PdfGenerator {
     // Generate PDF in byte format
     Uint8List pdfBytes = await pdf.save();
 
-    // Create a blob from the Uint8List bytes
+    // Create a blob from the byte data
     final blob = html.Blob([pdfBytes], 'application/pdf');
-
-    // Create a URL from the blob
     final url = html.Url.createObjectUrlFromBlob(blob);
 
     if (preview) {
-      // Open the PDF in a new tab for preview
-      html.window.open(url, '_blank');
+      // Open PDF in a new window for preview
+      html.window.open(url, 'Preview');
     } else {
-      // Create a downloadable anchor element
-      // ignore: unused_local_variable
-      final anchor = html.AnchorElement(href: url)
-        ..setAttribute("download", "generated_animalList_report.pdf")
-        ..click();
+      // Trigger download
+      final anchor = html.AnchorElement(href: url);
+      anchor.download = 'animal_report.pdf';
+      anchor.click();
+      html.Url.revokeObjectUrl(url);
     }
-
-    // Revoke the object URL after download or preview to free up resources
-    html.Url.revokeObjectUrl(url);
   }
 }

@@ -35,10 +35,8 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
   Future<void> fetchTotalDonations({DateTimeRange? range}) async {
     try {
       // Fetch all donations with status 'Accepted'
-      QuerySnapshot donationsSnapshot = await FirebaseFirestore.instance
-          .collection('Donations')
-          .where('status', isEqualTo: 'Accepted')
-          .get();
+      QuerySnapshot donationsSnapshot =
+          await FirebaseFirestore.instance.collection('Donations').get();
 
       double total = 0;
 

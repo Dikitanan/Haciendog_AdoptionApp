@@ -92,12 +92,77 @@ class _PetProfileFormState extends State<PetProfileForm> {
                       'Age in Shelter:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextField(
+                    TextFormField(
                       controller: ageInShelterController,
+                      readOnly: true, // Prevents the user from manually typing
                       decoration: InputDecoration(
                         border: OutlineInputBorder(),
-                        hintText: 'Enter age in shelter',
+                        hintText: 'Select Date and Time',
                       ),
+                      onTap: () async {
+                        // Show the Date Picker with a title
+                        DateTime? selectedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2000), // Set the earliest date
+                          lastDate: DateTime.now(), // Set the latest date
+                          builder: (BuildContext context, Widget? child) {
+                            return SimpleDialog(
+                              title: Text(
+                                  'Select when the Pet Arrived at the Shelter?'),
+                              children: <Widget>[
+                                SizedBox(
+                                  // Use SizedBox to give the date picker a size
+                                  child: child,
+                                  width: 300, // Adjust width as needed
+                                  height: 400, // Adjust height as needed
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (selectedDate != null) {
+                          // Show the Time Picker with a title
+                          TimeOfDay? selectedTime = await showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay.now(),
+                            builder: (BuildContext context, Widget? child) {
+                              return SimpleDialog(
+                                title: Text(
+                                    'Select when the Pet Arrived at the Shelter?'),
+                                children: <Widget>[
+                                  SizedBox(
+                                    // Use SizedBox to give the time picker a size
+                                    child: child,
+                                    width: 300, // Adjust width as needed
+                                    height: 400, // Adjust height as needed
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+
+                          if (selectedTime != null) {
+                            // Combine selected date and time into a single DateTime object
+                            DateTime finalDateTime = DateTime(
+                              selectedDate.year,
+                              selectedDate.month,
+                              selectedDate.day,
+                              selectedTime.hour,
+                              selectedTime.minute,
+                            );
+
+                            // Calculate the difference between now and the selected date-time
+                            DateTime now = DateTime.now();
+                            String timePassed =
+                                calculateExactDifference(finalDateTime, now);
+
+                            // Update the text field with the exact difference
+                            ageInShelterController.text = timePassed;
+                          }
+                        }
+                      },
                     ),
                     SizedBox(height: 25),
                     Text(
@@ -152,7 +217,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Species:',
+                              'Canine or Feline:',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             DropdownButton<String>(
@@ -372,7 +437,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                 ),
               ),
               SizedBox(
-                width: 50,
+                width: 100,
               ),
               Expanded(
                 flex: 1,
@@ -590,4 +655,45 @@ class _UploadImageToFirebaseState extends State<UploadImageToFirebase> {
       ),
     );
   }
+}
+
+// Function to calculate and format the exact difference
+String calculateExactDifference(DateTime startDate, DateTime endDate) {
+  int years = endDate.year - startDate.year;
+  int months = endDate.month - startDate.month;
+  int days = endDate.day - startDate.day;
+  int hours = endDate.hour - startDate.hour;
+  int minutes = endDate.minute - startDate.minute;
+
+  // Handle cases where months, days, hours, or minutes might go negative
+  if (minutes < 0) {
+    minutes += 60;
+    hours -= 1;
+  }
+  if (hours < 0) {
+    hours += 24;
+    days -= 1;
+  }
+  if (days < 0) {
+    final previousMonth = DateTime(endDate.year, endDate.month, 0);
+    days += previousMonth.day;
+    months -= 1;
+  }
+  if (months < 0) {
+    months += 12;
+    years -= 1;
+  }
+
+  // Determine the largest unit of time that has passed
+  if (years > 0) {
+    return '$years year${years > 1 ? 's' : ''}';
+  } else if (months > 0) {
+    return '$months month${months > 1 ? 's' : ''}';
+  } else if (days > 0) {
+    return '$days day${days > 1 ? 's' : ''}';
+  } else if (hours > 0) {
+    return '$hours hour${hours > 1 ? 's' : ''}';
+  }
+
+  return 'Just now'; // If no time has passed
 }

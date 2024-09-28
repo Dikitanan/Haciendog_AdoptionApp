@@ -79,8 +79,9 @@ class UpgradeProSection extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Align(
-                alignment: Alignment.centerRight,
-                child: Image.asset("assets/astranaut.png"),
+                alignment: Alignment.centerLeft,
+                child: Image.asset(
+                    "assets/icons/haciendoglogo-removebg-preview.png"),
               ),
             ),
           ),

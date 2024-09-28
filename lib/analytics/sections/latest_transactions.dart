@@ -92,28 +92,7 @@ class _LatestTransactionsState extends State<LatestTransactions> {
       title: "Complete Adoptions ($_totalAdoptions)",
       suffix: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Tooltip(
-            message: "Print",
-            child: IconButton(
-              icon: Icon(Icons.print, color: Styles.defaultRedColor),
-              onPressed: () {
-                // Implement print functionality here
-                pdfGenerator.generatePdf(preview: true); // Preview PDF
-              },
-            ),
-          ),
-          Tooltip(
-            message: "Download",
-            child: IconButton(
-              icon: Icon(Icons.download, color: Styles.defaultRedColor),
-              onPressed: () {
-                // Implement download functionality here
-                pdfGenerator.generatePdf(preview: false); // Download PDF
-              },
-            ),
-          ),
-        ],
+        children: [],
       ),
       children: [
         Expanded(
@@ -160,11 +139,12 @@ class _LatestTransactionsState extends State<LatestTransactions> {
                     ),
                     Expanded(
                       child: Text(
-                        intl.DateFormat.MMMd().add_jm().format(
-                              (data['DateAdopted'] as Timestamp).toDate(),
-                            ),
+                        'Date Adopted: ${intl.DateFormat.MMMd().add_jm().format((data['DateAdopted'] as Timestamp).toDate())}',
                         textAlign: TextAlign.center,
                       ),
+                    ),
+                    SizedBox(
+                      width: 50,
                     ),
                     Visibility(
                       visible: !Responsive.isMobile(context),

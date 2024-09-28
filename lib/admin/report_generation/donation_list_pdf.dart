@@ -26,10 +26,7 @@ class PdfGenerator {
     final image = pw.MemoryImage(imageBytes);
 
     // Query to fetch donations with status 'Accepted'
-    final snapshot = await _firestore
-        .collection('Donations')
-        .where('status', isEqualTo: 'Accepted')
-        .get();
+    final snapshot = await _firestore.collection('Donations').get();
 
     final data = snapshot.docs.map((doc) => doc.data()).toList();
 
@@ -89,7 +86,7 @@ class PdfGenerator {
                       ),
                       pw.Text('Donation Report',
                           style: pw.TextStyle(
-                              fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                              fontSize: 22, fontWeight: pw.FontWeight.bold)),
                     ],
                   ),
                   pw.SizedBox(height: 20),
@@ -205,6 +202,26 @@ class PdfGenerator {
                           pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
                     ),
                   ),
+                  pw.SizedBox(height: 25),
+                  // Signature line
+                  pw.Container(
+                    width: 200,
+                    child: pw.DecoratedBox(
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border(
+                          bottom:
+                              pw.BorderSide(width: 1, color: PdfColors.black),
+                        ),
+                      ),
+                      child: pw.Padding(
+                        padding: pw.EdgeInsets.only(bottom: 5.0),
+                        child: pw.Text('', style: pw.TextStyle(fontSize: 10)),
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(height: 5),
+                  // Printed name
+                  pw.Text('Prepared By', style: pw.TextStyle(fontSize: 10)),
                 ],
               );
             },

@@ -49,28 +49,10 @@ class _AdminDonationsState extends State<AdminDonations> {
               },
             ),
           ),
-          SizedBox(
+          const SizedBox(
             width: 20,
           ),
           // Dropdown Button
-          DropdownButton<String>(
-            value: _selectedFilter,
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                setState(() {
-                  _selectedFilter = newValue;
-                });
-              }
-            },
-            items: <String>['All', 'Pending', 'Accepted', 'Rejected']
-                .map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-          ),
-          // Date Range Picker Button
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -86,15 +68,11 @@ class _AdminDonationsState extends State<AdminDonations> {
 
           final donations = snapshot.data?.docs ?? [];
           final filteredDonations = donations.where((donation) {
-            final status = donation['status'] ?? 'Pending';
             final dateOfDonation =
                 (donation['DateOfDonation'] as Timestamp?)?.toDate();
 
+            // Check if the dateOfDonation is within the selected date range
             if (dateOfDonation == null) return false;
-
-            if (_selectedFilter != 'All' && status != _selectedFilter) {
-              return false;
-            }
 
             return dateOfDonation.isAfter(_startDate) &&
                 dateOfDonation.isBefore(_endDate);
@@ -124,28 +102,12 @@ class _AdminDonationsState extends State<AdminDonations> {
             itemBuilder: (context, index) {
               final donation = filteredDonations[index];
               final name = donation['name'] ?? 'Unknown';
-              final status = donation['status'] ?? 'Pending';
-
-              Color statusColor;
-              switch (status) {
-                case 'Accepted':
-                  statusColor = Colors.green;
-                  break;
-                case 'Rejected':
-                  statusColor = Colors.red;
-                  break;
-                case 'Pending':
-                default:
-                  statusColor = Colors.blue;
-                  break;
-              }
+              final amount = donation['amount']?.toString() ??
+                  '0'; // Convert amount to string
 
               return ListTile(
                 title: Text(name),
-                trailing: Text(
-                  status,
-                  style: TextStyle(color: statusColor),
-                ),
+                trailing: Text('Php $amount'), // Add "Php" before the amount
                 onTap: () => _showDonationDetails(context, donation),
               );
             },
@@ -322,7 +284,9 @@ class _AdminDonationsState extends State<AdminDonations> {
                   : const Text('No proof of donation provided'),
             ],
           ),
-          actions: status == 'Pending'
+          actions: status == 'Pending' &&
+                  status == 'Accepted' &&
+                  status == 'Rejected'
               ? [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

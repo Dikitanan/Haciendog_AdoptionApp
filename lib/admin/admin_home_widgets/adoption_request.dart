@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
+import 'package:mad/admin/report_generation/adoption_list_pdf.dart';
 
 class AdoptionLists extends StatefulWidget {
   @override
@@ -9,7 +10,48 @@ class AdoptionLists extends StatefulWidget {
 }
 
 class _AdoptionListsState extends State<AdoptionLists> {
+  final PdfGenerator pdfGenerator = PdfGenerator();
+
   String _selectedStatus = 'All';
+  DateTime? _startDate = DateTime.now().subtract(
+      Duration(days: 90)); // Default to 7 days before the current date and time
+  DateTime? _endDate = DateTime.now(); // Default to the current date and time
+
+  Future<void> fetchOldestAdoptionForm() async {
+    try {
+      // Fetch all documents from AdoptionForms collection (or limit to a certain number if necessary)
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('AdoptionForms')
+          .get(); // No 'orderBy' to avoid indexing
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Initialize the oldestDate as null
+        DateTime? oldestDate;
+
+        // Loop through all documents to find the oldest 'dateCreated'
+        for (var doc in querySnapshot.docs) {
+          Timestamp dateCreatedTimestamp = doc['dateCreated'];
+          DateTime docDate = dateCreatedTimestamp.toDate();
+
+          // Compare and find the oldest date
+          if (oldestDate == null || docDate.isBefore(oldestDate)) {
+            oldestDate = docDate;
+          }
+        }
+
+        // Set the oldest date to _startDate, or fallback if no date is found
+        _startDate = oldestDate ?? DateTime.now().subtract(Duration(days: 90));
+      } else {
+        // No documents found, use a fallback start date (90 days before today)
+        _startDate = DateTime.now().subtract(Duration(days: 90));
+      }
+    } catch (e) {
+      print('Error fetching documents: $e');
+      // If there's an error, set a fallback start date (90 days before today)
+      _startDate = DateTime.now().subtract(Duration(days: 90));
+    }
+  }
+
   Stream<Map<String, int>> statusCountsStream = (() {
     return FirebaseFirestore.instance
         .collection('AdoptionForms')
@@ -35,12 +77,74 @@ class _AdoptionListsState extends State<AdoptionLists> {
     });
   })();
 
+  // Function to show date picker and set the selected range
+  Future<void> _selectDateRange(BuildContext context) async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      initialDateRange: _startDate != null && _endDate != null
+          ? DateTimeRange(start: _startDate!, end: _endDate!)
+          : null,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _startDate = picked.start;
+        _endDate = picked.end;
+      });
+    }
+  }
+
+  // Firestore query builder without date filtering
+  Stream<QuerySnapshot> _buildQuery() {
+    Query query = FirebaseFirestore.instance.collection('AdoptionForms');
+
+    if (_selectedStatus != 'All') {
+      query = query.where('status', isEqualTo: _selectedStatus);
+    } else {
+      query = query.where('status', isNotEqualTo: 'Archived');
+    }
+
+    return query.snapshots();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Adoption Requests'),
         actions: [
+          Tooltip(
+            message: 'Print',
+            child: IconButton(
+              icon: const Icon(Icons.print),
+              onPressed: () => pdfGenerator.generatePdf(
+                  status: _selectedStatus,
+                  startDate: _startDate!,
+                  endDate: _endDate!,
+                  preview: true),
+            ),
+          ),
+          Tooltip(
+            message: 'Download',
+            child: IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: () => pdfGenerator.generatePdf(
+                  status: _selectedStatus,
+                  startDate: _startDate!,
+                  endDate: _endDate!,
+                  preview: false),
+            ),
+          ),
+          Tooltip(
+            message: 'Filter By Date',
+            child: IconButton(
+              icon: const Icon(Icons.calendar_today),
+              onPressed: () => _selectDateRange(context),
+            ),
+          ),
+          SizedBox(width: 15),
           StreamBuilder<Map<String, int>>(
             stream: statusCountsStream,
             builder: (context, snapshot) {
@@ -78,15 +182,7 @@ class _AdoptionListsState extends State<AdoptionLists> {
         ],
       ),
       body: StreamBuilder(
-        stream: _selectedStatus == 'All'
-            ? FirebaseFirestore.instance
-                .collection('AdoptionForms')
-                .where('status', isNotEqualTo: 'Archived')
-                .snapshots()
-            : FirebaseFirestore.instance
-                .collection('AdoptionForms')
-                .where('status', isEqualTo: _selectedStatus)
-                .snapshots(),
+        stream: _buildQuery(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (!snapshot.hasData) {
             return Center(
@@ -94,32 +190,40 @@ class _AdoptionListsState extends State<AdoptionLists> {
             );
           }
 
-          // Filter out 'Adopted', 'Rejected', and 'Cancelled' statuses if _selectedStatus is 'All'
-          var documents = _selectedStatus == 'All'
-              ? snapshot.data!.docs
-                  .where((doc) =>
-                      doc['status'] != 'Adopted' &&
-                      doc['status'] != 'Rejected' &&
-                      doc['status'] != 'Cancelled')
-                  .toList()
-              : snapshot.data!.docs;
+          // Filter documents in-memory based on selected date range and status
+          var documents = snapshot.data!.docs.where((doc) {
+            // Check if dateCreated is within the selected range
+            DateTime dateCreated = (doc['dateCreated'] as Timestamp).toDate();
+            bool isWithinDateRange = _startDate != null && _endDate != null
+                ? dateCreated
+                        .isAfter(_startDate!.subtract(Duration(days: 1))) &&
+                    dateCreated.isBefore(_endDate!.add(Duration(days: 1)))
+                : true; // If no date range is selected, include all
 
-// Sort the documents to align with the order: Pending, Accepted, Shipped
+            // Exclude certain statuses if 'All' is selected and no date range is set
+            if (_selectedStatus == 'All' &&
+                _startDate == null &&
+                _endDate == null) {
+              return isWithinDateRange &&
+                  doc['status'] != 'Rejected' &&
+                  doc['status'] != 'Cancelled' &&
+                  doc['status'] != 'Adopted';
+            }
+
+            return isWithinDateRange;
+          }).toList();
+
+          // Sort the documents to align with the order: Pending, Accepted, Shipped
           documents.sort((a, b) {
-            // Define a custom order for the statuses
             const statusOrder = {
               'Pending': 0,
               'Accepted': 1,
               'Shipped': 2,
             };
 
-            // Get the order value for each document's status
-            var statusA = statusOrder[a['status']] ??
-                3; // Default to 3 for any other status
-            var statusB = statusOrder[b['status']] ??
-                3; // Default to 3 for any other status
+            var statusA = statusOrder[a['status']] ?? 3;
+            var statusB = statusOrder[b['status']] ?? 3;
 
-            // Compare the two statuses based on the custom order
             return statusA.compareTo(statusB);
           });
 
@@ -170,7 +274,6 @@ class _AdoptionListsState extends State<AdoptionLists> {
                   ),
                 ),
                 onTap: () {
-                  // Display detailed adoption request form as a dialog
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
