@@ -217,7 +217,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Canine or Feline:',
+                              'Cat or Dog:',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             DropdownButton<String>(
