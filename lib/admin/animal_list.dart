@@ -57,26 +57,27 @@ class _AnimalListState extends State<AnimalList> {
       currentDays += int.parse(currentAgeInShelter.split(' ')[0]);
     }
 
+    // Total elapsed time in days
+    int totalElapsedDays = difference.inDays;
+
     // Update the years based on full years passed
-    if (difference.inDays >= 365) {
-      int yearsToAdd = difference.inDays ~/ 365; // Calculate full years to add
+    int yearsToAdd = totalElapsedDays ~/ 365;
+    if (yearsToAdd > 0) {
       currentYears += yearsToAdd;
+      return '$currentYears year${currentYears > 1 ? 's' : ''}'; // Return immediately if years are updated
     }
 
     // Update the months based on full months passed
-    if (difference.inDays >= 30) {
-      int monthsToAdd =
-          (difference.inDays % 365) ~/ 30; // Calculate remaining full months
-      if (currentYears == 0) {
-        // Only add months if no full years
-        currentMonths += monthsToAdd;
-      }
+    int monthsToAdd = (totalElapsedDays % 365) ~/ 30;
+    if (monthsToAdd > 0 && currentYears == 0) {
+      currentMonths += monthsToAdd;
+      return '$currentMonths month${currentMonths > 1 ? 's' : ''}'; // Return immediately if months are updated
     }
 
-    // Update the days based on the remaining days
+    // If we only have days to consider
     if (currentYears == 0 && currentMonths == 0) {
       currentDays +=
-          difference.inDays; // Add all days if there are no years or months
+          totalElapsedDays; // Add all days if there are no years or months
     }
 
     // Construct the result string
@@ -326,11 +327,11 @@ class _AnimalListState extends State<AnimalList> {
                                   DataColumn(
                                     label: Center(
                                       child: Text(
-                                        'Personality',
+                                        'Behavior',
                                         style: TextStyle(color: Colors.white),
                                       ),
                                     ),
-                                    tooltip: 'Personality',
+                                    tooltip: 'Behavior',
                                     numeric: false,
                                   ),
                                   DataColumn(

@@ -54,7 +54,7 @@ class _AdminHomeState extends State<AdminHome> {
         final userData = querySnapshot.docs.first.data();
         setState(() {
           userName = userData['username'];
-          userProfilePicture = userData['profilePicture'];
+          userProfilePicture = userData['profilePicture'] ?? '';
           isLoading = false;
         });
       }

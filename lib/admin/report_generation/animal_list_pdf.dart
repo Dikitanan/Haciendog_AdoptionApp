@@ -9,6 +9,67 @@ import 'package:pdf/widgets.dart' as pw;
 
 class PdfGenerator {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String calculateUpdatedAgeInShelter(
+      String currentAgeInShelter, Timestamp dateCreated) {
+    // Calculate the time difference
+    DateTime createdDate = dateCreated.toDate();
+    Duration difference = DateTime.now().difference(createdDate);
+
+    // Parse the current age in shelter
+    int currentYears = 0;
+    int currentMonths = 0;
+    int currentDays = 0;
+
+    if (currentAgeInShelter.contains('year')) {
+      currentYears += int.parse(currentAgeInShelter.split(' ')[0]);
+    }
+    if (currentAgeInShelter.contains('month')) {
+      currentMonths += int.parse(currentAgeInShelter.split(' ')[0]);
+    }
+    if (currentAgeInShelter.contains('day')) {
+      currentDays += int.parse(currentAgeInShelter.split(' ')[0]);
+    }
+
+    // Total elapsed time in days
+    int totalElapsedDays = difference.inDays;
+
+    // Update the years based on full years passed
+    int yearsToAdd = totalElapsedDays ~/ 365;
+    if (yearsToAdd > 0) {
+      currentYears += yearsToAdd;
+      return '$currentYears year${currentYears > 1 ? 's' : ''}'; // Return immediately if years are updated
+    }
+
+    // Update the months based on full months passed
+    int monthsToAdd = (totalElapsedDays % 365) ~/ 30;
+    if (monthsToAdd > 0 && currentYears == 0) {
+      currentMonths += monthsToAdd;
+      return '$currentMonths month${currentMonths > 1 ? 's' : ''}'; // Return immediately if months are updated
+    }
+
+    // If we only have days to consider
+    if (currentYears == 0 && currentMonths == 0) {
+      currentDays +=
+          totalElapsedDays; // Add all days if there are no years or months
+    }
+
+    // Construct the result string
+    String result = '';
+    if (currentYears > 0) {
+      result += '$currentYears year${currentYears > 1 ? 's' : ''}';
+    }
+    if (currentMonths > 0) {
+      result += (result.isNotEmpty ? ' ' : '') +
+          '$currentMonths month${currentMonths > 1 ? 's' : ''}';
+    }
+    if (currentDays > 0) {
+      result += (result.isNotEmpty ? ' ' : '') +
+          '$currentDays day${currentDays > 1 ? 's' : ''}';
+    }
+
+    return result.isNotEmpty ? result : '0 days';
+  }
+
   Future<void> generatePdf(
       {bool preview = false, String filter = 'All'}) async {
     final pdf = pw.Document();
@@ -25,6 +86,9 @@ class PdfGenerator {
     // Fetch data from Firebase
     final snapshot = await _firestore.collection('Animal').get();
     final data = snapshot.docs.map((doc) => doc.data()).toList();
+
+    data.sort((a, b) => (b['dateCreated'] as Timestamp)
+        .compareTo(a['dateCreated'] as Timestamp));
 
     // Filter data based on the selected filter
     List<Map<String, dynamic>> filteredData;
@@ -106,13 +170,19 @@ class PdfGenerator {
                                         fontSize: 10))),
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
-                                child: pw.Text('Cat or Dog',
+                                child: pw.Text('Breed',
                                     style: pw.TextStyle(
                                         fontWeight: pw.FontWeight.bold,
                                         fontSize: 10))),
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
-                                child: pw.Text('Breed',
+                                child: pw.Text('Age in Shelter',
+                                    style: pw.TextStyle(
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
+                            pw.Padding(
+                                padding: pw.EdgeInsets.all(8.0),
+                                child: pw.Text('Behavior',
                                     style: pw.TextStyle(
                                         fontWeight: pw.FontWeight.bold,
                                         fontSize: 10))),
@@ -125,6 +195,12 @@ class PdfGenerator {
                             pw.Padding(
                                 padding: pw.EdgeInsets.all(8.0),
                                 child: pw.Text('Health Status',
+                                    style: pw.TextStyle(
+                                        fontWeight: pw.FontWeight.bold,
+                                        fontSize: 10))),
+                            pw.Padding(
+                                padding: pw.EdgeInsets.all(8.0),
+                                child: pw.Text('Cat or Dog',
                                     style: pw.TextStyle(
                                         fontWeight: pw.FontWeight.bold,
                                         fontSize: 10))),
@@ -146,11 +222,22 @@ class PdfGenerator {
                                       style: pw.TextStyle(fontSize: 9))),
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['CatOrDog'] ?? '',
+                                  child: pw.Text(animal['Breed'] ?? '',
                                       style: pw.TextStyle(fontSize: 9))),
                               pw.Padding(
+                                padding: pw.EdgeInsets.all(8.0),
+                                child: pw.Text(
+                                  calculateUpdatedAgeInShelter(
+                                    animal['AgeInShelter'] ?? '',
+                                    animal[
+                                        'dateCreated'], // Ensure this is a Timestamp
+                                  ),
+                                  style: pw.TextStyle(fontSize: 9),
+                                ),
+                              ),
+                              pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
-                                  child: pw.Text(animal['Breed'] ?? '',
+                                  child: pw.Text(animal['Personality'] ?? '',
                                       style: pw.TextStyle(fontSize: 9))),
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
@@ -159,6 +246,10 @@ class PdfGenerator {
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
                                   child: pw.Text(animal['PWD'] ?? '',
+                                      style: pw.TextStyle(fontSize: 9))),
+                              pw.Padding(
+                                  padding: pw.EdgeInsets.all(8.0),
+                                  child: pw.Text(animal['CatOrDog'] ?? '',
                                       style: pw.TextStyle(fontSize: 9))),
                               pw.Padding(
                                   padding: pw.EdgeInsets.all(8.0),
