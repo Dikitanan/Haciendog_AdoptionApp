@@ -269,17 +269,6 @@ class _LoginPageState extends State<LoginPage> {
     String password = _passwordController.text;
 
     try {
-      // Check if the user's account is banned
-      bool isBanned = await _checkUserBan(email);
-      if (isBanned) {
-        // Show modal indicating account is banned
-        _showBannedModal();
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
       // Sign in the user
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -292,6 +281,31 @@ class _LoginPageState extends State<LoginPage> {
 
       if (user != null) {
         print("User signed in successfully");
+
+        // Check if the email belongs to an Admin or Staff
+        bool isAdminOrStaff = await _checkIfAdminOrStaff(email);
+        if (!isAdminOrStaff) {
+          // Show dialog for non-authorized users
+          _showNonAuthorizedDialog();
+          FirebaseAuth.instance
+              .signOut(); // Immediately sign out non-authorized users
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+
+        // Check if the user's account is banned
+        bool isBanned = await _checkUserBan(email);
+        if (isBanned) {
+          // Show modal indicating account is banned
+          _showBannedModal();
+          FirebaseAuth.instance.signOut(); // Immediately sign out banned users
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
 
         // Navigate to the appropriate page after sign-in
         if (kIsWeb) {
@@ -312,12 +326,12 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       print("Error signing in: $e");
-      // Handle sign-in errors here
 
-      // Display error message
+      // Display error message (e.g., incorrect credentials)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error: $e"),
+          content: Text(
+              "Error: Invalid credentials. Please check your email and password."),
           backgroundColor: Colors.red,
         ),
       );
@@ -326,6 +340,68 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = false;
       });
     }
+  }
+
+// Function to check if the email has Admin or Staff role
+  Future<bool> _checkIfAdminOrStaff(String email) async {
+    try {
+      print("Checking role for: $email");
+
+      // Query the collection for the document with the matching email
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('UserEmails')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Get the first document that matches the query
+        DocumentSnapshot userDoc = querySnapshot.docs.first;
+        print("Document found: ${userDoc.data()}");
+
+        // Cast the data to Map<String, dynamic> for accessing fields
+        Map<String, dynamic>? userData =
+            userDoc.data() as Map<String, dynamic>?;
+
+        if (userData != null && userData.containsKey('role')) {
+          String role = userData['role'];
+          print("User role: $role");
+
+          // Allow both Admin and Staff to log in
+          return role == 'Admin' || role == 'Staff';
+        } else {
+          print("Role field does not exist or is null");
+          return false;
+        }
+      } else {
+        print("No document found for this email");
+        return false;
+      }
+    } catch (e) {
+      print("Error checking user role: $e");
+      return false;
+    }
+  }
+
+// Function to show non-authorized login dialog
+  void _showNonAuthorizedDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Access Denied"),
+          content: Text("Please login using an Admin or Staff account."),
+          actions: [
+            TextButton(
+              child: Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<bool> _checkUserBan(String email) async {
