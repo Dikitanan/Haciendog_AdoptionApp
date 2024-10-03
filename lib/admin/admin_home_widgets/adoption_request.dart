@@ -993,15 +993,19 @@ class _WebAdoptionRequestDialogState extends State<WebAdoptionRequestDialog> {
               'notificationCount': 1,
               'email': userEmail,
               'LastMessage': 'You: $messageText',
+              'ReceivedCount': 1,
             });
           } else {
             // If the document exists, increment the notificationCount field and update LastMessage
             Map<String, dynamic>? data =
                 snapshot.data() as Map<String, dynamic>?;
             int newCount = (data?['notificationCount'] ?? 0) + 1;
+            int newCount1 = (data?['ReceivedCount'] ?? 0) + 1;
+
             transaction.update(userNewMessageDoc, {
               'notificationCount': newCount,
               'LastMessage': 'You: $messageText',
+              'ReceivedCount': newCount1,
             });
           }
         }).then((_) {

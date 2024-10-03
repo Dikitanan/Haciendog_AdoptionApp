@@ -131,8 +131,16 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
     }
   }
 
+  double _getResponsiveFontSize(double maxWidth) {
+    // Adjust the font size based on the screen width with a maximum limit of 20
+    return (maxWidth / 40)
+        .clamp(12, 20); // Minimum font size of 12 and maximum of 20
+  }
+
   @override
   Widget build(BuildContext context) {
+    double maxWidth = MediaQuery.of(context).size.width;
+
     return Row(
       children: [
         SizedBox(width: 15),
@@ -158,7 +166,7 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
                       Text(
                         "Total Users: $totalUsers",
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: _getResponsiveFontSize(maxWidth),
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
@@ -177,7 +185,7 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
                       Text(
                         "Total Verified Users: $totalVerifiedUsers",
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: _getResponsiveFontSize(maxWidth),
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
@@ -196,7 +204,7 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
                       Text(
                         "Banned Users: $bannedUsers",
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: _getResponsiveFontSize(maxWidth),
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
@@ -216,7 +224,7 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
                       Text(
                         "Pending Adoptions: $pendingAdoptionRequests",
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: _getResponsiveFontSize(maxWidth),
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),

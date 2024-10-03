@@ -31,7 +31,9 @@ class _PetProfileFormState extends State<PetProfileForm> {
   String status = 'Unadopted';
   String imageURL = '';
   bool isImageUploaded = false;
-
+  String customBreed = '';
+  bool isCustomBreedSelected =
+      false; // To track if custom breed option is selected
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -253,7 +255,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                     ),
                     Container(
                       width: double.infinity, // Adjust the width as needed
-                      height: 60, // Adjust the height as needed
+                      height: 60, // Fixed height for the dropdown
                       decoration: BoxDecoration(
                         border: Border.all(
                             color: Color.fromARGB(
@@ -261,11 +263,21 @@ class _PetProfileFormState extends State<PetProfileForm> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: breed.isEmpty ? null : breed,
+                          value: isCustomBreedSelected
+                              ? null
+                              : (breed.isEmpty ? null : breed),
                           hint: Text('Select breed'),
                           onChanged: (String? newValue) {
                             setState(() {
-                              breed = newValue ?? '';
+                              if (newValue == 'Other') {
+                                isCustomBreedSelected =
+                                    true; // Show the custom breed input
+                                breed = ''; // Clear selected breed
+                              } else {
+                                isCustomBreedSelected =
+                                    false; // Hide custom input
+                                breed = newValue ?? '';
+                              }
                             });
                           },
                           items: (catOrDog == 'Cat'
@@ -280,7 +292,8 @@ class _PetProfileFormState extends State<PetProfileForm> {
                                       'Ragdoll',
                                       'American Shorthair',
                                       'Exotic Shorthair',
-                                      'Puspin'
+                                      'Puspin',
+                                      'Other' // Option to enter custom breed
                                     ]
                                   : [
                                       'Labrador Retriever',
@@ -293,7 +306,8 @@ class _PetProfileFormState extends State<PetProfileForm> {
                                       'Pomeranian',
                                       'Dachshund',
                                       'Doberman Pinscher',
-                                      'Aspin'
+                                      'Aspin',
+                                      'Other' // Option to enter custom breed
                                     ])
                               .map<DropdownMenuItem<String>>((String value) {
                             return DropdownMenuItem<String>(
@@ -310,6 +324,25 @@ class _PetProfileFormState extends State<PetProfileForm> {
                         ),
                       ),
                     ),
+                    // Show TextField for custom breed input if selected
+                    if (isCustomBreedSelected)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 8.0),
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Enter custom breed',
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              customBreed = value;
+                              breed =
+                                  customBreed; // Update breed with custom input
+                            });
+                          },
+                        ),
+                      ),
                     SizedBox(height: 10),
                     Text(
                       'Vaccine Shots Taken:',
@@ -502,7 +535,10 @@ class _PetProfileFormState extends State<PetProfileForm> {
                         onPressed: isImageUploaded
                             ? () async {
                                 if (nameController.text.isEmpty ||
-                                    breed.isEmpty ||
+                                    (isCustomBreedSelected
+                                        ? customBreed.isEmpty
+                                        : breed
+                                            .isEmpty) || // Check for custom breed
                                     ageInShelterController.text.isEmpty ||
                                     descriptionController.text.isEmpty ||
                                     personalityController.text.isEmpty ||
@@ -522,7 +558,9 @@ class _PetProfileFormState extends State<PetProfileForm> {
                                 String id = randomAlphaNumeric(10);
                                 Map<String, dynamic> petInfoMap = {
                                   'Name': nameController.text,
-                                  'Breed': breed,
+                                  'Breed': isCustomBreedSelected
+                                      ? customBreed
+                                      : breed, // Use custom breed if selected
                                   'AgeInShelter': ageInShelterController.text,
                                   'Description': descriptionController.text,
                                   'Personality': personalityController.text,
@@ -550,18 +588,20 @@ class _PetProfileFormState extends State<PetProfileForm> {
 
                                   // Clear fields and image URL after successful addition
                                   nameController.clear();
-                                  breedController.clear();
                                   ageInShelterController.clear();
                                   descriptionController.clear();
                                   personalityController.clear();
                                   pwdController.clear();
                                   setState(() {
-                                    breed = '';
+                                    breed = ''; // Reset breed selection
+                                    customBreed = ''; // Reset custom breed
                                     health = '';
                                     shots = '';
                                     imageURL = '';
                                     isImageUploaded = false;
                                     catOrDog = 'Cat';
+                                    isCustomBreedSelected =
+                                        false; // Reset custom breed selection
                                   });
                                 });
                               }

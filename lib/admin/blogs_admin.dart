@@ -324,8 +324,14 @@ class _BlogsAdminState extends State<BlogsAdmin> {
                 borderRadius: BorderRadius.circular(16.0),
               ),
               child: Container(
-                width: MediaQuery.of(context).size.width * 0.32,
-                height: MediaQuery.of(context).size.height * 0.85,
+                width: MediaQuery.of(context).size.width < 1200
+                    ? MediaQuery.of(context).size.width * 0.60
+                    : 500, // Fixed width for larger screens
+                height: MediaQuery.of(context).size.width < 1200
+                    ? MediaQuery.of(context).size.height *
+                        0.90 // 85% height for overall screens < 1200px
+                    : 700, // Fixed height for larger screens
+
                 child: ListView(
                   children: [
                     // Profile and Time Ago
@@ -978,6 +984,7 @@ class _BlogsAdminState extends State<BlogsAdmin> {
 
     // Truncate title if it exceeds six words
     title = truncateTitle(title, 6);
+    double screenWidth = MediaQuery.of(context).size.width;
 
     return Container(
       decoration: BoxDecoration(
@@ -1005,10 +1012,12 @@ class _BlogsAdminState extends State<BlogsAdmin> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
+                  // Show title only if screen width is 1200 pixels or more
+                  if (screenWidth >= 1200)
+                    Text(
+                      title,
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
                   Row(
                     children: [
                       Icon(Icons.favorite, color: Colors.white),

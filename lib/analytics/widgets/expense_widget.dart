@@ -43,7 +43,6 @@ class ExpenseWidget extends StatelessWidget {
               ),
             ),
           ),
-          const Icon(Icons.chevron_right),
         ],
       ),
     );

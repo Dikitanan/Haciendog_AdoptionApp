@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mad/admin/admin_dashboard.dart';
 import 'package:mad/features/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
+import 'package:mad/features/user_auth/presentation/pages/mobilelandingpage.dart';
 import 'package:mad/features/user_auth/presentation/pages/sign_up_page.dart';
 import 'package:mad/screens/root_app.dart';
 
@@ -165,7 +166,11 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = Container(
+    // Get the screen width using MediaQuery
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    // Widget for the login form
+    Widget loginContent = Container(
       padding: EdgeInsets.only(bottom: 5),
       child: Column(
         children: <Widget>[
@@ -224,19 +229,27 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
 
+    // If it's a web screen, center the login content
     if (kIsWeb) {
-      content = Center(
+      loginContent = Center(
         child: Container(
           width: 600,
           padding: EdgeInsets.all(16),
-          child: content,
+          child: loginContent,
         ),
       );
     }
 
+    // Define the landing page widget
+    Widget landingPage = Center(child: LandingPageMobile());
+
+    // Check if the screen size is small (mobile size)
+    bool isMobile = screenWidth <= 600;
+
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 218, 197, 196),
-      body: content,
+      // Show landing page if mobile, otherwise show login form
+      body: isMobile ? landingPage : loginContent,
     );
   }
 
@@ -269,6 +282,17 @@ class _LoginPageState extends State<LoginPage> {
     String password = _passwordController.text;
 
     try {
+      // First, check if the email belongs to an Admin or Staff
+      bool isAdminOrStaff = await _checkIfAdminOrStaff(email);
+      if (!isAdminOrStaff) {
+        // Show dialog for non-authorized users
+        _showNonAuthorizedDialog();
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
       // Sign in the user
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -281,19 +305,6 @@ class _LoginPageState extends State<LoginPage> {
 
       if (user != null) {
         print("User signed in successfully");
-
-        // Check if the email belongs to an Admin or Staff
-        bool isAdminOrStaff = await _checkIfAdminOrStaff(email);
-        if (!isAdminOrStaff) {
-          // Show dialog for non-authorized users
-          _showNonAuthorizedDialog();
-          FirebaseAuth.instance
-              .signOut(); // Immediately sign out non-authorized users
-          setState(() {
-            _isLoading = false;
-          });
-          return;
-        }
 
         // Check if the user's account is banned
         bool isBanned = await _checkUserBan(email);

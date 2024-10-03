@@ -16,6 +16,14 @@ class _AdminDonationsState extends State<AdminDonations> {
       DateTime.now().subtract(Duration(days: 30)); // Default start date
   DateTime _endDate = DateTime.now(); // Default end date
   final PdfGenerator pdfGenerator = PdfGenerator();
+  String? _selectedModeOfPayment = 'All'; // Track the selected mode of payment
+  final List<String> _paymentModes = [
+    'All',
+    'G-Cash',
+    'PayMaya',
+    'PayPal',
+    'Cash'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -43,16 +51,30 @@ class _AdminDonationsState extends State<AdminDonations> {
             message: 'Filter By Date',
             child: IconButton(
               icon: const Icon(Icons.calendar_today),
-              onPressed: () {
-                // Add your download logic here
-                _selectDateRange();
+              onPressed: _selectDateRange,
+            ),
+          ),
+          // Dropdown for mode of payment filter
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: DropdownButton<String>(
+              value: _selectedModeOfPayment,
+              hint: const Text('Filter by Mode'),
+              items: _paymentModes.map((mode) {
+                return DropdownMenuItem<String>(
+                  value: mode,
+                  child: Text(mode),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedModeOfPayment =
+                      value; // Update the selected payment mode
+                });
               },
             ),
           ),
-          const SizedBox(
-            width: 20,
-          ),
-          // Dropdown Button
+          const SizedBox(width: 20),
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -67,15 +89,28 @@ class _AdminDonationsState extends State<AdminDonations> {
           }
 
           final donations = snapshot.data?.docs ?? [];
+
+          // Filter donations based on date range and selected mode of payment
           final filteredDonations = donations.where((donation) {
             final dateOfDonation =
                 (donation['DateOfDonation'] as Timestamp?)?.toDate();
+            final modeOfPayment = donation['modeOfPayment'] ?? 'Unknown';
 
-            // Check if the dateOfDonation is within the selected date range
-            if (dateOfDonation == null) return false;
+            // Check date filter
+            final isWithinDateRange = _startDate != null && _endDate != null
+                ? dateOfDonation != null &&
+                    dateOfDonation.isAfter(_startDate!) &&
+                    dateOfDonation.isBefore(_endDate!)
+                : true; // If no date range is selected, include all
 
-            return dateOfDonation.isAfter(_startDate) &&
-                dateOfDonation.isBefore(_endDate);
+            // Check payment mode filter
+            final isPaymentModeMatched = _selectedModeOfPayment == 'All'
+                ? true // If 'All' is selected, include all payments
+                : (_selectedModeOfPayment != null
+                    ? modeOfPayment == _selectedModeOfPayment
+                    : true); // If no payment mode is selected, include all
+
+            return isWithinDateRange && isPaymentModeMatched;
           }).toList();
 
           // Sort the donations to place 'Pending' status at the top
@@ -87,8 +122,6 @@ class _AdminDonationsState extends State<AdminDonations> {
             } else if (statusA != 'Pending' && statusB == 'Pending') {
               return 1; // Move 'Pending' status to the top
             } else {
-              // If both statuses are the same or both are not 'Pending',
-              // maintain their order
               return 0;
             }
           });
@@ -161,6 +194,8 @@ class _AdminDonationsState extends State<AdminDonations> {
       preview: !isPrint,
       startDate: _startDate,
       endDate: _endDate,
+      selectedModeOfPayment:
+          _selectedModeOfPayment!, // Include the selected mode of payment
     );
   }
 
@@ -284,15 +319,13 @@ class _AdminDonationsState extends State<AdminDonations> {
                   : const Text('No proof of donation provided'),
             ],
           ),
-          actions: status == 'Pending' &&
-                  status == 'Accepted' &&
-                  status == 'Rejected'
+          actions: status == 'Pending'
               ? [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       TextButton(
-                        child: const Text('Accept'),
+                        child: const Text('Thank Donor'),
                         onPressed: () async {
                           await donation.reference
                               .update({'status': 'Accepted'});
@@ -321,20 +354,20 @@ class _AdminDonationsState extends State<AdminDonations> {
                         },
                       ),
                       TextButton(
-                        child: const Text('Reject'),
-                        onPressed: () async {
-                          await donation.reference
-                              .update({'status': 'Rejected'});
-                          await _addNotification(
-                              'Your donation has been rejected. Reason: Invalid Donation');
-                          await _updateUserNewMessage();
-                          Navigator.of(context).pop();
-                        },
+                        child: const Text('Close'),
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
                   ),
                 ]
               : [
+                  TextButton(
+                    child: const Text(
+                      'Already Thanked',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    onPressed: () async {},
+                  ),
                   TextButton(
                     child: const Text('Close'),
                     onPressed: () => Navigator.of(context).pop(),

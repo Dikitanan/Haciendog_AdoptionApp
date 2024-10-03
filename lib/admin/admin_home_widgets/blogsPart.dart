@@ -62,9 +62,12 @@ class _MiddlePartState extends State<MiddlePart>
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 130),
+        padding: MediaQuery.of(context).size.width < 1200
+            ? EdgeInsets.zero // No padding for screens less than 1200px
+            : const EdgeInsets.symmetric(
+                horizontal: 130), // Padding for larger screens
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 100),
+          margin: EdgeInsets.symmetric(horizontal: 50),
           height: 1000,
           decoration: BoxDecoration(
             gradient: LinearGradient(

@@ -17,6 +17,8 @@ class AnimalList extends StatefulWidget {
 class _AnimalListState extends State<AnimalList> {
   late TextEditingController _searchController;
   String _selectedFilter = 'All'; // State variable for the filter
+  bool isCustomBreedSelected =
+      false; // To track if custom breed option is selected
 
   late Timer _debounce;
   late TextEditingController nameController;
@@ -35,6 +37,46 @@ class _AnimalListState extends State<AnimalList> {
 
   bool _imageUploaded = false;
   bool _isUploading = false; // Add this state variable
+
+  String calculateExactDifference(DateTime startDate, DateTime endDate) {
+    int years = endDate.year - startDate.year;
+    int months = endDate.month - startDate.month;
+    int days = endDate.day - startDate.day;
+    int hours = endDate.hour - startDate.hour;
+    int minutes = endDate.minute - startDate.minute;
+
+    // Handle cases where months, days, hours, or minutes might go negative
+    if (minutes < 0) {
+      minutes += 60;
+      hours -= 1;
+    }
+    if (hours < 0) {
+      hours += 24;
+      days -= 1;
+    }
+    if (days < 0) {
+      final previousMonth = DateTime(endDate.year, endDate.month, 0);
+      days += previousMonth.day;
+      months -= 1;
+    }
+    if (months < 0) {
+      months += 12;
+      years -= 1;
+    }
+
+    // Determine the largest unit of time that has passed
+    if (years > 0) {
+      return '$years year${years > 1 ? 's' : ''}';
+    } else if (months > 0) {
+      return '$months month${months > 1 ? 's' : ''}';
+    } else if (days > 0) {
+      return '$days day${days > 1 ? 's' : ''}';
+    } else if (hours > 0) {
+      return '$hours hour${hours > 1 ? 's' : ''}';
+    }
+
+    return 'Just now'; // If no time has passed
+  }
 
   String calculateUpdatedAgeInShelter(
       String currentAgeInShelter, Timestamp dateCreated) {
@@ -542,6 +584,9 @@ class _AnimalListState extends State<AnimalList> {
                                                                               _updateAnimalDetails(animal);
                                                                               // Close the modal
                                                                               Navigator.pop(context);
+                                                                              setState(() {
+                                                                                _imageUploaded = false;
+                                                                              });
                                                                             }
                                                                           : null,
                                                                   child: const Text(
@@ -669,17 +714,89 @@ class _AnimalListState extends State<AnimalList> {
                         ),
                       ),
                       const SizedBox(height: 35),
-                      const Text(
-                        'Age in Shelter:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextField(
-                        enabled: false,
-                        controller: ageInShelterController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Enter age in shelter',
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment
+                            .start, // Align label to the start
+                        children: [
+                          Text(
+                            'Age in Shelter:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextFormField(
+                            controller: ageInShelterController,
+                            readOnly:
+                                true, // Prevents the user from manually typing
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Select Date and Time',
+                            ),
+                            onTap: () async {
+                              // Show the Date Picker with a title
+                              DateTime? selectedDate = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate:
+                                    DateTime(2000), // Set the earliest date
+                                lastDate: DateTime.now(), // Set the latest date
+                                builder: (BuildContext context, Widget? child) {
+                                  return SimpleDialog(
+                                    title: Text(
+                                        'Select when the Pet Arrived at the Shelter?'),
+                                    children: <Widget>[
+                                      SizedBox(
+                                        child: child,
+                                        width: 300, // Adjust width as needed
+                                        height: 400, // Adjust height as needed
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              if (selectedDate != null) {
+                                // Show the Time Picker with a title
+                                TimeOfDay? selectedTime = await showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay.now(),
+                                  builder:
+                                      (BuildContext context, Widget? child) {
+                                    return SimpleDialog(
+                                      title: Text(
+                                          'Select when the Pet Arrived at the Shelter?'),
+                                      children: <Widget>[
+                                        SizedBox(
+                                          child: child,
+                                          width: 300, // Adjust width as needed
+                                          height:
+                                              400, // Adjust height as needed
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+
+                                if (selectedTime != null) {
+                                  // Combine selected date and time into a single DateTime object
+                                  DateTime finalDateTime = DateTime(
+                                    selectedDate.year,
+                                    selectedDate.month,
+                                    selectedDate.day,
+                                    selectedTime.hour,
+                                    selectedTime.minute,
+                                  );
+
+                                  // Calculate the difference between now and the selected date-time
+                                  DateTime now = DateTime.now();
+                                  String timePassed = calculateExactDifference(
+                                      finalDateTime, now);
+
+                                  // Update the text field with the exact difference
+                                  ageInShelterController.text = timePassed;
+                                }
+                              }
+                            },
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 35),
                       const Text(
@@ -694,17 +811,134 @@ class _AnimalListState extends State<AnimalList> {
                         ),
                       ),
                       const SizedBox(height: 35),
-                      const Text(
-                        'Breed:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextField(
-                        enabled: false,
-                        controller: breedController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'Enter breed',
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Breed:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Container(
+                            width: double.infinity,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: Color.fromARGB(255, 174, 174, 174)),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: isCustomBreedSelected
+                                    ? null
+                                    : (breedController.text.isEmpty
+                                        ? null
+                                        : breedController.text),
+                                hint: Text('Select breed'),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    if (newValue == 'Other') {
+                                      isCustomBreedSelected =
+                                          true; // Show the custom breed input
+                                      breedController
+                                          .clear(); // Clear selected breed
+                                    } else {
+                                      isCustomBreedSelected =
+                                          false; // Hide custom input
+                                      breedController.text = newValue ?? '';
+                                    }
+                                  });
+                                },
+                                items: [
+                                  ...((catOrDog == 'Cat')
+                                      ? [
+                                          'Siamese',
+                                          'Persian',
+                                          'Maine Coon',
+                                          'Scottish Fold',
+                                          'British Shorthair',
+                                          'Sphynx',
+                                          'Bengal',
+                                          'Ragdoll',
+                                          'American Shorthair',
+                                          'Exotic Shorthair',
+                                          'Puspin',
+                                          'Other' // Option to enter custom breed
+                                        ]
+                                      : [
+                                          'Labrador Retriever',
+                                          'Shih Tzu',
+                                          'Beagle',
+                                          'German Shepherd',
+                                          'Golden Retriever',
+                                          'Chihuahua',
+                                          'Siberian Husky',
+                                          'Pomeranian',
+                                          'Dachshund',
+                                          'Doberman Pinscher',
+                                          'Aspin',
+                                          'Other' // Option to enter custom breed
+                                        ]),
+                                  // Add the custom breed if it is not already in the dropdown
+                                  if (isCustomBreedSelected ||
+                                      ![
+                                            'Siamese',
+                                            'Persian',
+                                            'Maine Coon',
+                                            'Scottish Fold',
+                                            'British Shorthair',
+                                            'Sphynx',
+                                            'Bengal',
+                                            'Ragdoll',
+                                            'American Shorthair',
+                                            'Exotic Shorthair',
+                                            'Puspin',
+                                            'Labrador Retriever',
+                                            'Shih Tzu',
+                                            'Beagle',
+                                            'German Shepherd',
+                                            'Golden Retriever',
+                                            'Chihuahua',
+                                            'Siberian Husky',
+                                            'Pomeranian',
+                                            'Dachshund',
+                                            'Doberman Pinscher',
+                                            'Aspin'
+                                          ].contains(breedController.text) &&
+                                          breedController.text.isNotEmpty)
+                                    breedController.text // Add the custom breed
+                                ].map<DropdownMenuItem<String>>((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  );
+                                }).toList(),
+                                icon: Icon(Icons.arrow_drop_down,
+                                    color: Colors.black),
+                                iconSize: 24,
+                                isExpanded: true,
+                                padding: EdgeInsets.symmetric(horizontal: 12),
+                              ),
+                            ),
+                          ),
+                          // Show TextField for custom breed input if selected
+                          if (isCustomBreedSelected)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12.0, vertical: 8.0),
+                              child: TextField(
+                                controller: breedController,
+                                decoration: InputDecoration(
+                                  hintText: 'Enter custom breed',
+                                  border: OutlineInputBorder(),
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    // Always set isCustomBreedSelected to true when typing in the TextField
+                                    isCustomBreedSelected = true;
+                                  });
+                                },
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 20),
                       Row(

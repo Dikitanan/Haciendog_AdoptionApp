@@ -180,7 +180,7 @@ class _ShelterSettingsFormState extends State<ShelterSettingsForm> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(45, 0, 0, 0),
                 child: Text(
-                  "Upload G-Cash QR Code",
+                  "Upload QR Code",
                   style: Theme.of(context).textTheme.headline6,
                 ),
               ),
@@ -190,7 +190,11 @@ class _ShelterSettingsFormState extends State<ShelterSettingsForm> {
                 children: [
                   for (int i = 0; i < 3; i++)
                     Tooltip(
-                      message: 'UPLOAD IMAGE',
+                      message: i == 0
+                          ? 'UPLOAD IMAGE (G-Cash)'
+                          : i == 1
+                              ? 'UPLOAD IMAGE (PayMaya)'
+                              : 'UPLOAD IMAGE (PayPal)',
                       child: InkWell(
                         onTap: () => _pickImage(i),
                         child: Container(

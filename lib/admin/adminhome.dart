@@ -30,7 +30,6 @@ class _AdminHomeState extends State<AdminHome> {
   late String? userProfilePicture;
   bool isLoading = true;
 
-  @override
   LikeState likeState = LikeState();
 
   @override
@@ -72,25 +71,29 @@ class _AdminHomeState extends State<AdminHome> {
           style: TextStyle(color: Colors.white),
         ),
         bottomOpacity: 100,
+        leading: Builder(
+          builder: (context) {
+            final width = MediaQuery.of(context).size.width;
+            if (width < 1200) {
+              return IconButton(
+                icon: Icon(Icons.menu),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                },
+              );
+            } else {
+              return Container();
+            }
+          },
+        ),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Color.fromARGB(255, 244, 217, 217),
-                    Colors.white,
-                  ],
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  children: [
-                    LeftSideBar(
+      drawer: isLoading
+          ? null
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < 1200) {
+                  return Drawer(
+                    child: LeftSideBar(
                       userName: userName,
                       userProfilePicture: userProfilePicture,
                       menus: [
@@ -101,48 +104,104 @@ class _AdminHomeState extends State<AdminHome> {
                         'Donations',
                         'Adoption Requests',
                         'Messages',
-                        'Account Settings',
-                        'Shelter Settings',
-                        'User List'
+                        'Settings' // Single Settings menu for small screens
                       ],
                       onMenuSelected: (menu) {
                         setState(() {
                           selectedMenu = menu;
-                          // Update middleContent based on selected menu
-                          if (menu == 'Analytics') {
-                            middleContent = AdminAnalytics();
-                          } else if (menu == 'Blogs') {
-                            middleContent = MiddlePart(likeState: likeState);
-                          } else if (menu == 'Add Pet') {
-                            middleContent = PetProfileForm();
-                          } else if (menu == 'Animal List') {
-                            middleContent = AnimalList();
-                          } else if (menu == 'Donations') {
-                            middleContent = AdminDonations();
-                          } else if (menu == 'Adoption Requests') {
-                            middleContent = AdoptionLists();
-                          } else if (menu == 'Messages') {
-                            middleContent = AdminSideMessage();
-                          } else if (menu == 'Account Settings') {
-                            middleContent =
-                                AccountSettingsPage(); // New content for Account Settings
-                          } else if (menu == 'Shelter Settings') {
-                            middleContent =
-                                ShelterSettingsForm(); // New content for Shelter Settings
-                          } else if (menu == 'User List') {
-                            middleContent =
-                                UserListsPage(); // New content for User List
-                          }
+                          Navigator.pop(context); // Close drawer on selection
+                          updateMiddleContent(menu);
                         });
                       },
                     ),
-                    SizedBox(width: 20),
-                    Expanded(child: middleContent),
-                    SizedBox(width: 20),
-                  ],
-                ),
-              ),
+                  );
+                } else {
+                  return Container();
+                }
+              },
+            ),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth >= 1200) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Color.fromARGB(255, 244, 217, 217),
+                          Colors.white,
+                        ],
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        children: [
+                          LeftSideBar(
+                            userName: userName,
+                            userProfilePicture: userProfilePicture,
+                            menus: [
+                              'Analytics',
+                              'Blogs',
+                              'Add Pet',
+                              'Animal List',
+                              'Donations',
+                              'Adoption Requests',
+                              'Messages',
+                              'Account Settings',
+                              'Shelter Settings',
+                              'User List'
+                            ],
+                            onMenuSelected: (menu) {
+                              setState(() {
+                                selectedMenu = menu;
+                                updateMiddleContent(menu);
+                              });
+                            },
+                          ),
+                          SizedBox(width: 20),
+                          Expanded(child: middleContent),
+                          SizedBox(width: 20),
+                        ],
+                      ),
+                    ),
+                  );
+                } else {
+                  // Show AdminSettingsForm for small screens when "Settings" is selected
+                  return middleContent;
+                }
+              },
             ),
     );
+  }
+
+  void updateMiddleContent(String menu) {
+    if (menu == 'Analytics') {
+      middleContent = AdminAnalytics();
+    } else if (menu == 'Blogs') {
+      middleContent = MiddlePart(likeState: likeState);
+    } else if (menu == 'Add Pet') {
+      middleContent = PetProfileForm();
+    } else if (menu == 'Animal List') {
+      middleContent = AnimalList();
+    } else if (menu == 'Donations') {
+      middleContent = AdminDonations();
+    } else if (menu == 'Adoption Requests') {
+      middleContent = AdoptionLists();
+    } else if (menu == 'Messages') {
+      middleContent = AdminSideMessage();
+    } else if (menu == 'Settings') {
+      // Show AdminSettingsForm when "Settings" is selected on smaller screens
+      middleContent = AdminSettingsForm();
+    } else if (menu == 'Account Settings') {
+      middleContent = AccountSettingsPage();
+    } else if (menu == 'Shelter Settings') {
+      middleContent = ShelterSettingsForm();
+    } else if (menu == 'User List') {
+      middleContent = UserListsPage();
+    }
   }
 }

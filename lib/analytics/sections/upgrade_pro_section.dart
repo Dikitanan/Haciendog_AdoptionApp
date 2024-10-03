@@ -86,21 +86,7 @@ class UpgradeProSection extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                height: 50,
-                width: 50,
-                child: IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: () {},
-                ),
-              ),
-            ),
+            child: Container(),
           ),
         ],
       ),
