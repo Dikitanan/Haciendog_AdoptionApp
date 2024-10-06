@@ -199,9 +199,9 @@ class _LandingPageMobileState extends State<LandingPageMobile> {
                   // Download Button
                   ElevatedButton(
                     onPressed: () {
-                      // Open the Google Drive link in a new tab
+                      // Open the Google Drive link to auto-download the file
                       html.window.open(
-                        'https://drive.google.com/drive/folders/1HeyETutdjY4CSkq5DL5TdCG2qwdqz5zO?usp=drive_link',
+                        'https://drive.google.com/uc?export=download&id=1F8u_smsGAED9lNZSvn4H2e7YD3Qv4KcS',
                         '_blank',
                       );
                     },

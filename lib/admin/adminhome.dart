@@ -5,6 +5,7 @@ import 'package:mad/admin/admin_home_widgets/admin_analytics.dart';
 import 'package:mad/admin/admin_home_widgets/admin_donations.dart';
 import 'package:mad/admin/admin_home_widgets/admin_messages.dart';
 import 'package:mad/admin/admin_home_widgets/adoption_request.dart';
+import 'package:mad/admin/admin_home_widgets/animal_rescue.dart';
 import 'package:mad/admin/admin_home_widgets/blogsPart.dart';
 import 'package:mad/admin/admin_home_widgets/leftsidebar.dart';
 import 'package:mad/admin/admin_settings.dart';
@@ -102,6 +103,7 @@ class _AdminHomeState extends State<AdminHome> {
                         'Add Pet',
                         'Animal List',
                         'Donations',
+                        'Animal Rescue',
                         'Adoption Requests',
                         'Messages',
                         'Settings' // Single Settings menu for small screens
@@ -149,6 +151,7 @@ class _AdminHomeState extends State<AdminHome> {
                               'Add Pet',
                               'Animal List',
                               'Donations',
+                              'Animal Rescue',
                               'Adoption Requests',
                               'Messages',
                               'Account Settings',
@@ -179,6 +182,47 @@ class _AdminHomeState extends State<AdminHome> {
   }
 
   void updateMiddleContent(String menu) {
+    // Check screen size
+    final width = MediaQuery.of(context).size.width;
+
+    // For small screens, push a new route
+    if (width < 1200) {
+      if (menu == 'Account Settings') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AccountSettingsPage(),
+          ),
+        );
+      } else if (menu == 'Shelter Settings') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ShelterSettingsForm(),
+          ),
+        );
+      } else if (menu == 'User List') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => UserListsPage(),
+          ),
+        );
+      } else {
+        // If it's not Account Settings, Shelter Settings, or User List, just change the middleContent
+        setState(() {
+          _setMiddleContent(menu);
+        });
+      }
+    } else {
+      // For larger screens (1200 or more), update the middle content as usual
+      setState(() {
+        _setMiddleContent(menu);
+      });
+    }
+  }
+
+  void _setMiddleContent(String menu) {
     if (menu == 'Analytics') {
       middleContent = AdminAnalytics();
     } else if (menu == 'Blogs') {
@@ -189,12 +233,13 @@ class _AdminHomeState extends State<AdminHome> {
       middleContent = AnimalList();
     } else if (menu == 'Donations') {
       middleContent = AdminDonations();
+    } else if (menu == 'Animal Rescue') {
+      middleContent = AnimalRescue();
     } else if (menu == 'Adoption Requests') {
       middleContent = AdoptionLists();
     } else if (menu == 'Messages') {
       middleContent = AdminSideMessage();
     } else if (menu == 'Settings') {
-      // Show AdminSettingsForm when "Settings" is selected on smaller screens
       middleContent = AdminSettingsForm();
     } else if (menu == 'Account Settings') {
       middleContent = AccountSettingsPage();

@@ -381,6 +381,11 @@ class _LeftSideBarState extends State<LeftSideBar> {
           Icons.attach_money,
           color: Colors.grey[300],
         );
+      case 'animal rescue':
+        return Icon(
+          Icons.health_and_safety,
+          color: Colors.grey[300],
+        );
       case 'adoption requests':
         return Icon(
           Icons.pets,

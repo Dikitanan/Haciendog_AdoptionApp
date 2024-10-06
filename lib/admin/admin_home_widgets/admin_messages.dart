@@ -40,6 +40,7 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
     setState(() {
       isLoadingMessages = true;
     });
+
     await Firebase.initializeApp();
     FirebaseFirestore firestore = FirebaseFirestore.instance;
 
@@ -54,34 +55,36 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
           .where((email) => email != "ivory@gmail.com")
           .toList();
 
-      // Fetch usernames from 'Profiles' collection using the emails
-      userProfiles = [];
-      for (String email in userEmails) {
+      // Fetch profiles for all user emails in parallel
+      List<Future<void>> profileFutures = userEmails.map((email) async {
         QuerySnapshot profileSnapshot = await firestore
             .collection('Profiles')
             .where('email', isEqualTo: email)
             .get();
         if (profileSnapshot.docs.isNotEmpty) {
           var profileDoc = profileSnapshot.docs.first;
-
           String? firstName = profileDoc['firstName'] as String?;
           String? lastName = profileDoc['lastName'] as String?;
           String username = '$firstName $lastName';
+
           userProfiles.add({
             'username': username,
             'email': email,
           });
         }
-      }
+      }).toList();
 
-      // Fetch message counts for each user
-      await fetchUserMessageCounts();
+      // Wait for all profile fetching to complete
+      await Future.wait(profileFutures);
 
-      // Fetch total message count for each user from 'UserNewMessage' collection
-      await fetchUserTotalMessages();
+      // Fetch message counts and total messages in parallel
+      await Future.wait([
+        fetchUserMessageCounts(),
+        fetchUserTotalMessages(),
+      ]);
 
-      // Fetch 'UserNewMessage' collection and check for 'LastMessage' field
-      for (var userProfile in userProfiles) {
+      // Fetch last messages for each user
+      List<Future<void>> messageFutures = userProfiles.map((userProfile) async {
         QuerySnapshot newMessageSnapshot = await firestore
             .collection('UserNewMessage')
             .where('email', isEqualTo: userProfile['email'])
@@ -90,33 +93,30 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
           var messageDoc = newMessageSnapshot.docs.first;
           var messageData =
               messageDoc.data() as Map<String, dynamic>; // Explicit cast
-          if (messageData.containsKey('LastMessage')) {
-            userProfile['LastMessage'] = messageData['LastMessage'];
-          } else {
-            userProfile['LastMessage'] = '';
-          }
+          userProfile['LastMessage'] = messageData['LastMessage'] ?? '';
         } else {
           userProfile['LastMessage'] = '';
         }
-      }
+      }).toList();
 
-      // Sort userProfiles based on new messages and total message count
+      // Wait for all last message fetching to complete
+      await Future.wait(messageFutures);
+
+      // Sort userProfiles based on new messages (messageCount) and total messages (totalMessage)
       userProfiles.sort((a, b) {
-        // Check if there's a new message for each user
-        bool hasNewMessageA = a['LastMessage'] != '';
-        bool hasNewMessageB = b['LastMessage'] != '';
-
-        // Sort by new message presence (new messages first)
-        if (hasNewMessageA && !hasNewMessageB) {
-          return -1;
-        } else if (!hasNewMessageA && hasNewMessageB) {
-          return 1;
-        }
-
-        // If both have new messages or no new messages, sort by total message count
         int messageCountA = userMessageCounts[a['email']] ?? 0;
         int messageCountB = userMessageCounts[b['email']] ?? 0;
-        return messageCountB.compareTo(messageCountA); // Descending order
+
+        // Sort by messageCount first (new messages)
+        if (messageCountA != messageCountB) {
+          return messageCountB
+              .compareTo(messageCountA); // New messages at the top
+        }
+
+        // Sort by totalMessage count if messageCount is the same
+        int totalMessageA = int.tryParse(a['totalMessage'] ?? '0') ?? 0;
+        int totalMessageB = int.tryParse(b['totalMessage'] ?? '0') ?? 0;
+        return totalMessageB.compareTo(totalMessageA); // Sort by total messages
       });
 
       // Fetch the email of the selected user
@@ -136,7 +136,8 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
   Future<void> fetchUserTotalMessages() async {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-    for (var userProfile in userProfiles) {
+    List<Future<void>> totalMessageFutures =
+        userProfiles.map((userProfile) async {
       QuerySnapshot totalMessageSnapshot = await firestore
           .collection('UserNewMessage')
           .where('email', isEqualTo: userProfile['email'])
@@ -150,7 +151,10 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
       } else {
         userProfile['totalMessage'] = '0'; // Default string value
       }
-    }
+    }).toList();
+
+    // Wait for all total message count fetching to complete
+    await Future.wait(totalMessageFutures);
   }
 
   Future<void> fetchUserMessageCounts() async {
@@ -161,14 +165,26 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
       QuerySnapshot userMessageCountSnapshot =
           await firestore.collection('UserNewMessage').get();
 
-      // Extract email and message count from each document
+      // Loop through each document and safely extract 'email' and 'messageCount'
       for (var doc in userMessageCountSnapshot.docs) {
-        String email = doc['email'] as String;
-        int messageCount = doc['messageCount'] as int;
+        Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
 
-        // Check if the email exists in 'UserEmails' before adding to userMessageCounts
-        if (userProfiles.any((profile) => profile['email'] == email)) {
-          userMessageCounts[email] = messageCount;
+        if (data != null) {
+          // Check if 'email' exists in the document before accessing it
+          if (data.containsKey('email')) {
+            String email = data['email'] as String;
+            int messageCount =
+                data['messageCount'] ?? 0; // Default to 0 if missing
+
+            // Add message count to userMessageCounts only if the profile exists
+            if (userProfiles.any((profile) => profile['email'] == email)) {
+              userMessageCounts[email] = messageCount;
+            }
+          } else {
+            print('Email field does not exist in this document: ${doc.id}');
+          }
+        } else {
+          print('Document data is null for document ID: ${doc.id}');
         }
       }
 
@@ -293,16 +309,21 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
       await firestore.runTransaction((transaction) async {
         DocumentSnapshot snapshot = await transaction.get(userNewMessageDoc);
         if (!snapshot.exists) {
-          // If the document does not exist, create it with ReceivedCount set to 1
+          // If the document does not exist, create it with ReceivedCount and totalMessage set to 1
           transaction.set(userNewMessageDoc, {
-            'ReceivedCount': 1, // Initialize ReceivedCount
+            'ReceivedCount': 1,
+            'totalMessage': 1,
+            'messageSort': Timestamp.now(),
           });
         } else {
-          // If the document exists, increment only ReceivedCount
+          // If the document exists, increment ReceivedCount and totalMessage
           Map<String, dynamic>? data = snapshot.data() as Map<String, dynamic>?;
           int newReceivedCount = (data?['ReceivedCount'] ?? 0) + 1;
+          int newTotalMessage = (data?['totalMessage'] ?? 0) + 1;
           transaction.update(userNewMessageDoc, {
-            'ReceivedCount': newReceivedCount, // Increment ReceivedCount
+            'ReceivedCount': newReceivedCount,
+            'totalMessage': newTotalMessage,
+            'messageSort': Timestamp.now(),
           });
         }
       });

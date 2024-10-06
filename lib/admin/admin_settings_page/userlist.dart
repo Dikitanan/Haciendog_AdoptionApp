@@ -300,151 +300,155 @@ class _UserListsPageState extends State<UserListsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'User List',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Color.fromARGB(255, 235, 232, 232),
-        actions: [
-          // Add DropdownButton inside the AppBar
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selectedRoleFilter,
-                items: ['All', 'Admin', 'Staff', 'User'].map((role) {
-                  return DropdownMenuItem(
-                    value: role,
-                    child: Text(role),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedRoleFilter = value!;
-                  });
-                },
-                icon: Icon(
-                  Icons
-                      .filter_list, // Add a filter icon to represent the dropdown
-                  color: const Color.fromARGB(255, 0, 0, 0),
-                ),
-                dropdownColor: Colors.white,
-                style: TextStyle(
-                  color: Colors.black, // Text color inside the dropdown
-                  fontSize: 16,
+    return Material(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'User List',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: Color.fromARGB(255, 235, 232, 232),
+          actions: [
+            // Add DropdownButton inside the AppBar
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedRoleFilter,
+                  items: ['All', 'Admin', 'Staff', 'User'].map((role) {
+                    return DropdownMenuItem(
+                      value: role,
+                      child: Text(role),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedRoleFilter = value!;
+                    });
+                  },
+                  icon: Icon(
+                    Icons
+                        .filter_list, // Add a filter icon to represent the dropdown
+                    color: const Color.fromARGB(255, 0, 0, 0),
+                  ),
+                  dropdownColor: Colors.white,
+                  style: TextStyle(
+                    color: Colors.black, // Text color inside the dropdown
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder(
-              stream: _fetchUsersStream(),
-              builder: (context, AsyncSnapshot<List<UserData>> snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else {
-                  final users = snapshot.data;
-                  if (users == null || users.isEmpty) {
-                    return Center(child: Text('No Users Yet'));
+          ],
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: StreamBuilder(
+                stream: _fetchUsersStream(),
+                builder: (context, AsyncSnapshot<List<UserData>> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
                   } else {
-                    // Sort the users by role: Admin first, then Staff, then User
-                    users.sort((a, b) {
-                      const rolePriority = {
-                        'Admin': 1,
-                        'Staff': 2,
-                        'User': 3,
-                      };
-                      return rolePriority[a.role]!
-                          .compareTo(rolePriority[b.role]!);
-                    });
+                    final users = snapshot.data;
+                    if (users == null || users.isEmpty) {
+                      return Center(child: Text('No Users Yet'));
+                    } else {
+                      // Sort the users by role: Admin first, then Staff, then User
+                      users.sort((a, b) {
+                        const rolePriority = {
+                          'Admin': 1,
+                          'Staff': 2,
+                          'User': 3,
+                        };
+                        return rolePriority[a.role]!
+                            .compareTo(rolePriority[b.role]!);
+                      });
 
-                    // Apply the selected role filter
-                    final filteredUsers = _selectedRoleFilter == 'All'
-                        ? users
-                        : users
-                            .where((user) => user.role == _selectedRoleFilter)
-                            .toList();
+                      // Apply the selected role filter
+                      final filteredUsers = _selectedRoleFilter == 'All'
+                          ? users
+                          : users
+                              .where((user) => user.role == _selectedRoleFilter)
+                              .toList();
 
-                    return Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [
-                            Color.fromARGB(255, 244, 217, 217),
-                            Colors.white,
-                          ],
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Color.fromARGB(255, 244, 217, 217),
+                              Colors.white,
+                            ],
+                          ),
                         ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: ListView.builder(
-                          itemCount: filteredUsers.length,
-                          itemBuilder: (context, index) {
-                            final user = filteredUsers[index];
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: ListView.builder(
+                            itemCount: filteredUsers.length,
+                            itemBuilder: (context, index) {
+                              final user = filteredUsers[index];
 
-                            // Define the role color based on the user role
-                            Color roleColor;
-                            if (user.role == 'Admin') {
-                              roleColor = Colors.amber[800]!; // Gold for Admin
-                            } else if (user.role == 'Staff') {
-                              roleColor = Colors.grey; // Silver for Staff
-                            } else {
-                              roleColor = Colors.brown[400]!; // Bronze for User
-                            }
+                              // Define the role color based on the user role
+                              Color roleColor;
+                              if (user.role == 'Admin') {
+                                roleColor =
+                                    Colors.amber[800]!; // Gold for Admin
+                              } else if (user.role == 'Staff') {
+                                roleColor = Colors.grey; // Silver for Staff
+                              } else {
+                                roleColor =
+                                    Colors.brown[400]!; // Bronze for User
+                              }
 
-                            return ListTile(
-                              title: Text(user.email),
-                              subtitle: Text(user.username),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Display the user's role with the appropriate color
-                                  Text(
-                                    user.role == 'Admin'
-                                        ? 'Admin'
-                                        : user.role == 'Staff'
-                                            ? 'Staff'
-                                            : 'User',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: roleColor,
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Icon(Icons.edit),
-                                ],
-                              ),
-                              leading: user.isBanned
-                                  ? Chip(
-                                      label: Text(
-                                        'Banned',
-                                        style: TextStyle(color: Colors.white),
+                              return ListTile(
+                                title: Text(user.email),
+                                subtitle: Text(user.username),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Display the user's role with the appropriate color
+                                    Text(
+                                      user.role == 'Admin'
+                                          ? 'Admin'
+                                          : user.role == 'Staff'
+                                              ? 'Staff'
+                                              : 'User',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: roleColor,
                                       ),
-                                      backgroundColor: Colors.red,
-                                    )
-                                  : null,
-                              onTap: () => _showEditProfileModal(context,
-                                  user.email, user.isBanned, user.role),
-                            );
-                          },
+                                    ),
+                                    SizedBox(width: 10),
+                                    Icon(Icons.edit),
+                                  ],
+                                ),
+                                leading: user.isBanned
+                                    ? Chip(
+                                        label: Text(
+                                          'Banned',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      )
+                                    : null,
+                                onTap: () => _showEditProfileModal(context,
+                                    user.email, user.isBanned, user.role),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    }
                   }
-                }
-              },
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

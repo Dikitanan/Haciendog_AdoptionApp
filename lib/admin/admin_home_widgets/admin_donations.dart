@@ -137,10 +137,13 @@ class _AdminDonationsState extends State<AdminDonations> {
               final name = donation['name'] ?? 'Unknown';
               final amount = donation['amount']?.toString() ??
                   '0'; // Convert amount to string
+              final modeOfPayment =
+                  donation['modeOfPayment'] ?? 'Unknown'; // Get mode of payment
 
               return ListTile(
                 title: Text(name),
-                trailing: Text('Php $amount'), // Add "Php" before the amount
+                trailing: Text(
+                    'Php $amount ($modeOfPayment)'), // Add mode of payment next to the amount
                 onTap: () => _showDonationDetails(context, donation),
               );
             },

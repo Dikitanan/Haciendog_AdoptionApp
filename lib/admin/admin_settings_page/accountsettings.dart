@@ -265,97 +265,101 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [
-              Color.fromARGB(255, 244, 217, 217),
-              Colors.white,
-            ],
-          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Edit Profile',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
-        width: MediaQuery.of(context).size.width,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  Color.fromARGB(255, 244, 217, 217),
-                  Colors.white,
+      ),
+      body: SingleChildScrollView(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              colors: [
+                Color.fromARGB(255, 244, 217, 217),
+                Colors.white,
+              ],
+            ),
+          ),
+          width: MediaQuery.of(context).size.width,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Color.fromARGB(255, 244, 217, 217),
+                    Colors.white,
+                  ],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 20),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      bool isWideScreen = constraints.maxWidth >
+                          800; // Adjust the breakpoint as needed
+                      return Row(
+                        children: [
+                          if (isWideScreen) ...[
+                            Expanded(
+                              child: _buildProfileImageSection(),
+                            ),
+                            SizedBox(width: 20),
+                          ],
+                          Expanded(
+                            flex: 2,
+                            child: _buildProfileFormSection(),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  SizedBox(height: 40),
+                  Divider(),
+                  Text(
+                    'Change Password',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  Center(
+                    child: Container(
+                      constraints: BoxConstraints(maxWidth: 700),
+                      padding: EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 20),
+                          _buildPasswordForm(),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        changePassword();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Color(0xFFE96560),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      ),
+                      child: Text("Change Password"),
+                    ),
+                  ),
                 ],
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Edit Profile',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 20),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    bool isWideScreen = constraints.maxWidth >
-                        800; // Adjust the breakpoint as needed
-                    return Row(
-                      children: [
-                        if (isWideScreen) ...[
-                          Expanded(
-                            child: _buildProfileImageSection(),
-                          ),
-                          SizedBox(width: 20),
-                        ],
-                        Expanded(
-                          flex: 2,
-                          child: _buildProfileFormSection(),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                SizedBox(height: 40),
-                Divider(),
-                Text(
-                  'Change Password',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                Center(
-                  child: Container(
-                    constraints: BoxConstraints(maxWidth: 700),
-                    padding: EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 20),
-                        _buildPasswordForm(),
-                      ],
-                    ),
-                  ),
-                ),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      changePassword();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Color(0xFFE96560),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                    ),
-                    child: Text("Change Password"),
-                  ),
-                ),
-              ],
             ),
           ),
         ),
