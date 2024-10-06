@@ -51,26 +51,31 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
 
       // Filter out "ivory@gmail.com" from the list of user emails
       List<String> userEmails = userEmailsSnapshot.docs
-          .map((doc) => doc['email'] as String)
+          .map((doc) =>
+              (doc['email'] as String).toLowerCase()) // Convert to lowercase
           .where((email) => email != "ivory@gmail.com")
           .toList();
 
+      print('Fetched User Emails: ${userEmails.join(', ')}'); // Debugging log
+
       // Fetch profiles for all user emails in parallel
       List<Future<void>> profileFutures = userEmails.map((email) async {
-        QuerySnapshot profileSnapshot = await firestore
-            .collection('Profiles')
-            .where('email', isEqualTo: email)
-            .get();
-        if (profileSnapshot.docs.isNotEmpty) {
-          var profileDoc = profileSnapshot.docs.first;
-          String? firstName = profileDoc['firstName'] as String?;
-          String? lastName = profileDoc['lastName'] as String?;
+        DocumentSnapshot profileSnapshot =
+            await firestore.collection('Profiles').doc(email).get();
+
+        if (profileSnapshot.exists) {
+          var profileData = profileSnapshot.data()
+              as Map<String, dynamic>; // Explicit cast to Map
+          String? firstName = profileData['firstName'] as String?;
+          String? lastName = profileData['lastName'] as String?;
           String username = '$firstName $lastName';
 
           userProfiles.add({
             'username': username,
             'email': email,
           });
+        } else {
+          print('No profile found for email: $email'); // Debugging log
         }
       }).toList();
 
@@ -85,14 +90,14 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
 
       // Fetch last messages for each user
       List<Future<void>> messageFutures = userProfiles.map((userProfile) async {
-        QuerySnapshot newMessageSnapshot = await firestore
+        DocumentSnapshot newMessageSnapshot = await firestore
             .collection('UserNewMessage')
-            .where('email', isEqualTo: userProfile['email'])
+            .doc(userProfile['email'])
             .get();
-        if (newMessageSnapshot.docs.isNotEmpty) {
-          var messageDoc = newMessageSnapshot.docs.first;
-          var messageData =
-              messageDoc.data() as Map<String, dynamic>; // Explicit cast
+
+        if (newMessageSnapshot.exists) {
+          var messageData = newMessageSnapshot.data()
+              as Map<String, dynamic>; // Explicit cast
           userProfile['LastMessage'] = messageData['LastMessage'] ?? '';
         } else {
           userProfile['LastMessage'] = '';
@@ -378,79 +383,71 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                   ],
                 ),
               ),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: userProfiles.length + 1,
-                      itemBuilder: (BuildContext context, int index) {
-                        if (index == 0) {
-                          return Container(
-                            color: Color(0xFFE96560),
-                            child: ListTile(
-                              title: Text(
-                                'MESSAGES',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              selected: selectedUser == null,
-                              onTap: () async {
-                                setState(() {
-                                  selectedUser = null;
-                                });
-                              },
+              child: ListView.builder(
+                itemCount: userProfiles.length + 1,
+                itemBuilder: (BuildContext context, int index) {
+                  if (index == 0) {
+                    return Container(
+                      color: Color(0xFFE96560),
+                      child: ListTile(
+                        title: Text(
+                          'MESSAGES',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        selected: selectedUser == null,
+                        onTap: () async {
+                          setState(() {
+                            selectedUser = null;
+                          });
+                        },
+                      ),
+                    );
+                  } else {
+                    final userProfile = userProfiles[index - 1];
+                    final username = userProfile['username'];
+                    final email = userProfile['email'];
+                    final lastMessage = userProfile['LastMessage'];
+                    final messageCount = userMessageCounts[email] ?? 0;
+                    return Column(
+                      children: [
+                        ListTile(
+                          title: Text(
+                            username ?? '',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
                             ),
-                          );
-                        } else {
-                          final userProfile = userProfiles[index - 1];
-                          final username = userProfile['username'];
-                          final email = userProfile['email'];
-                          final lastMessage = userProfile['LastMessage'];
-                          final messageCount = userMessageCounts[email] ?? 0;
-                          return Column(
-                            children: [
-                              ListTile(
-                                title: Text(
-                                  username ?? '',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  lastMessage ?? '',
-                                  style: TextStyle(
-                                    color:
-                                        const Color.fromARGB(255, 62, 53, 53),
-                                    fontStyle: FontStyle.italic,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                trailing: CircleAvatar(
-                                  backgroundColor: messageCount > 0
-                                      ? Colors.red
-                                      : Colors.transparent,
-                                  child: Text(
-                                    messageCount > 0 ? '$messageCount' : '',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                                selected: selectedUser == email,
-                                onTap: () async {
-                                  setState(() {
-                                    selectedUser = email;
-                                  });
-                                  await fetchUserEmail(email!);
-                                },
-                              ),
-                              Divider(), // Add Divider between users
-                            ],
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
+                          ),
+                          subtitle: Text(
+                            lastMessage ?? '',
+                            style: TextStyle(
+                              color: const Color.fromARGB(255, 62, 53, 53),
+                              fontStyle: FontStyle.italic,
+                              fontSize: 16,
+                            ),
+                          ),
+                          trailing: CircleAvatar(
+                            backgroundColor: messageCount > 0
+                                ? Colors.red
+                                : Colors.transparent,
+                            child: Text(
+                              messageCount > 0 ? '$messageCount' : '',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          selected: selectedUser == email,
+                          onTap: () async {
+                            setState(() {
+                              selectedUser = email;
+                            });
+                            await fetchUserEmail(email!);
+                          },
+                        ),
+                        Divider(), // Add Divider between users
+                      ],
+                    );
+                  }
+                },
               ),
             ),
           ),
@@ -493,7 +490,6 @@ class _AdminSideMessageState extends State<AdminSideMessage> {
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
                                 child: SingleChildScrollView(
-                                  // Wrap SingleChildScrollView around Column
                                   reverse: true,
                                   child: Column(
                                     crossAxisAlignment:

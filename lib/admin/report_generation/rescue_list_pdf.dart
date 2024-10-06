@@ -42,7 +42,12 @@ class PdfGenerator {
     }
 
     // Define the desired order of statuses
-    const statusOrder = ['Rescued', 'Accepted', 'Rejected', 'Pending'];
+    const statusOrder = [
+      'Rescued',
+      'Pending',
+      'Accepted',
+      'Rejected',
+    ];
 
     // Sort the keys based on the defined order
     final sortedKeys =

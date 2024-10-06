@@ -294,16 +294,14 @@ class _AnimalRescueState extends State<AnimalRescue> {
           }).toList();
 
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start, // Align at the top
-              crossAxisAlignment:
-                  CrossAxisAlignment.center, // Center horizontally
-              children: [
-                SingleChildScrollView(
-                  scrollDirection:
-                      Axis.horizontal, // Scroll if there are many columns
+            child: Container(
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal, // Allow horizontal scrolling
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical, // Allow vertical scrolling
                   child: DataTable(
-                    columnSpacing: 15.0,
+                    columnSpacing: 10.0, // Adjust column spacing as needed
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(5),
                       border: Border.all(
@@ -314,7 +312,7 @@ class _AnimalRescueState extends State<AnimalRescue> {
                     headingRowColor: MaterialStateColor.resolveWith(
                       (states) => const Color(0xFFE96560), // Header row color
                     ),
-                    dataRowHeight: 120.0, // Adjust row height as needed
+                    dataRowHeight: 80.0, // Adjust row height as needed
                     columns: const [
                       DataColumn(
                           label: Center(
@@ -378,48 +376,171 @@ class _AnimalRescueState extends State<AnimalRescue> {
                       return DataRow(cells: [
                         // Image
                         DataCell(
-                          data['imageUrl'] != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  child: Image.network(
-                                    data['imageUrl'],
-                                    width: 80,
-                                    height: 80,
-                                    fit: BoxFit.fill,
-                                  ),
-                                )
-                              : Text('No image'),
+                          Padding(
+                            padding: const EdgeInsets.all(
+                                4.0), // Less padding for the image
+                            child: data['imageUrl'] != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    child: Image.network(
+                                      data['imageUrl'],
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.fill,
+                                    ),
+                                  )
+                                : Text('No image'),
+                          ),
                         ),
-                        DataCell(Text(data['rescuerName'] ?? 'Unknown')),
-
-                        DataCell(Text(data['rescuerEmail'] ?? 'Unknown')),
-
-                        DataCell(Text(data['rescuerContact'] ?? 'Unknown')),
-
-                        // Rescuer Contact
-                        DataCell(Text(data['species'] ?? 'Unknown')),
-
-                        // Rescuer Email
-                        DataCell(Text(data['animalCondition'] ?? 'Unknown')),
-
                         // Rescuer Name
-                        DataCell(Text(data['rescueReason'] ?? 'Unknown')),
-
-                        // Species
-                        DataCell(Text(data['location'] ?? 'Unknown')),
-
+                        DataCell(
+                          Container(
+                            constraints:
+                                BoxConstraints(maxWidth: 100), // Set max width
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 4.0), // Less vertical padding
+                              child: Text(data['rescuerName'] ?? 'Unknown',
+                                  overflow: TextOverflow.visible,
+                                  maxLines: 2, // Allow wrapping to two lines
+                                  style: TextStyle(
+                                      height: 1.2)), // Adjust line height
+                            ),
+                          ),
+                        ),
+                        // Rescuer Email
+                        DataCell(
+                          Container(
+                            constraints:
+                                BoxConstraints(maxWidth: 150), // Set max width
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 4.0), // Less vertical padding
+                              child: Text(data['rescuerEmail'] ?? 'Unknown',
+                                  overflow: TextOverflow.visible,
+                                  maxLines: 2, // Allow wrapping to two lines
+                                  style: TextStyle(
+                                      height: 1.2)), // Adjust line height
+                            ),
+                          ),
+                        ),
+                        // Rescuer Contact
+                        DataCell(
+                          Container(
+                            constraints:
+                                BoxConstraints(maxWidth: 100), // Set max width
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 4.0), // Less vertical padding
+                              child: Text(data['rescuerContact'] ?? 'Unknown',
+                                  overflow: TextOverflow.visible,
+                                  maxLines: 2, // Allow wrapping to two lines
+                                  style: TextStyle(
+                                      height: 1.2)), // Adjust line height
+                            ),
+                          ),
+                        ),
+                        // Animal
+                        DataCell(
+                          Container(
+                            constraints:
+                                BoxConstraints(maxWidth: 100), // Set max width
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 4.0), // Less vertical padding
+                              child: Text(data['species'] ?? 'Unknown',
+                                  overflow: TextOverflow.visible,
+                                  maxLines: 2, // Allow wrapping to two lines
+                                  style: TextStyle(
+                                      height: 1.2)), // Adjust line height
+                            ),
+                          ),
+                        ),
+                        // Animal Condition
+                        DataCell(
+                          Container(
+                            constraints:
+                                BoxConstraints(maxWidth: 150), // Set max width
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 4.0), // Less vertical padding
+                              child: Text(data['animalCondition'] ?? 'Unknown',
+                                  overflow: TextOverflow.visible,
+                                  maxLines: 2, // Allow wrapping to two lines
+                                  style: TextStyle(
+                                      height: 1.2)), // Adjust line height
+                            ),
+                          ),
+                        ),
+                        // Rescue Reason
+                        DataCell(
+                          Container(
+                            constraints:
+                                BoxConstraints(maxWidth: 150), // Set max width
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 4.0), // Less vertical padding
+                              child: Text(data['rescueReason'] ?? 'Unknown',
+                                  overflow: TextOverflow.visible,
+                                  maxLines: 2, // Allow wrapping to two lines
+                                  style: TextStyle(
+                                      height: 1.2)), // Adjust line height
+                            ),
+                          ),
+                        ),
+                        // Location
+                        DataCell(
+                          Container(
+                            constraints:
+                                BoxConstraints(maxWidth: 100), // Set max width
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 4.0), // Less vertical padding
+                              child: Text(data['location'] ?? 'Unknown',
+                                  overflow: TextOverflow.visible,
+                                  maxLines: 2, // Allow wrapping to two lines
+                                  style: TextStyle(
+                                      height: 1.2)), // Adjust line height
+                            ),
+                          ),
+                        ),
                         // Timestamp
-                        DataCell(Center(
-                          child: Text(data['timestamp'] != null
-                              ? formatTimestamp(data['timestamp'])
-                              : 'Unknown'),
-                        )),
-
+                        DataCell(
+                          Center(
+                            child: Container(
+                              constraints: BoxConstraints(
+                                  maxWidth: 150), // Set max width
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 4.0), // Less vertical padding
+                                child: Text(
+                                    data['timestamp'] != null
+                                        ? formatTimestamp(data['timestamp'])
+                                        : 'Unknown',
+                                    overflow: TextOverflow.visible,
+                                    maxLines: 2, // Allow wrapping to two lines
+                                    style: TextStyle(
+                                        height: 1.2)), // Adjust line height
+                              ),
+                            ),
+                          ),
+                        ),
                         // Status
-                        DataCell(Text(data['status'] ?? 'Unknown')),
-
-                        // Action Button
-                        // Inside the DataRow map function
+                        DataCell(
+                          Container(
+                            constraints:
+                                BoxConstraints(maxWidth: 100), // Set max width
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 4.0), // Less vertical padding
+                              child: Text(data['status'] ?? 'Unknown',
+                                  overflow: TextOverflow.visible,
+                                  maxLines: 2, // Allow wrapping to two lines
+                                  style: TextStyle(
+                                      height: 1.2)), // Adjust line height
+                            ),
+                          ),
+                        ),
                         // Action Button
                         DataCell(
                           Center(
@@ -479,7 +600,7 @@ class _AnimalRescueState extends State<AnimalRescue> {
                     }).toList(),
                   ),
                 ),
-              ],
+              ),
             ),
           );
         },
