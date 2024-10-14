@@ -8,6 +8,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mad/admin/report_generation/animal_list_pdf.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:html' as html;
+import 'dart:ui' as ui;
+import 'dart:typed_data';
+import 'package:flutter/rendering.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class AnimalList extends StatefulWidget {
   @override
@@ -15,6 +21,8 @@ class AnimalList extends StatefulWidget {
 }
 
 class _AnimalListState extends State<AnimalList> {
+  final GlobalKey _qrKey = GlobalKey();
+
   late TextEditingController _searchController;
   String _selectedFilter = 'All'; // State variable for the filter
   bool isCustomBreedSelected =
@@ -76,6 +84,61 @@ class _AnimalListState extends State<AnimalList> {
     }
 
     return 'Just now'; // If no time has passed
+  }
+
+  Future<void> _downloadQR(String id) async {
+    try {
+      final qrValidationResult = QrValidator.validate(
+        data: id,
+        version: QrVersions.auto,
+        errorCorrectionLevel: QrErrorCorrectLevel.L,
+      );
+      final qrCode = qrValidationResult.qrCode;
+
+      // Create a new PDF document
+      final pdf = pw.Document();
+
+      // Create a QR code image
+      final painter = QrPainter.withQr(
+        qr: qrCode!,
+        color: const Color(0xFF000000),
+        emptyColor: const Color(0xFFFFFFFF),
+        gapless: true,
+      );
+
+      // Render the QR code as an image data
+      final picData =
+          await painter.toImageData(300.0); // You can adjust the size as needed
+      if (picData != null) {
+        final buffer = picData.buffer.asUint8List();
+
+        // Add the QR code image to the PDF
+        pdf.addPage(
+          pw.Page(
+            build: (pw.Context context) {
+              return pw.Center(
+                child: pw.Image(
+                  pw.MemoryImage(buffer),
+                  width: 300, // Adjust width as necessary
+                  height: 300, // Adjust height as necessary
+                ),
+              );
+            },
+          ),
+        );
+
+        // Save the PDF
+        final pdfBytes = await pdf.save();
+        final blob = html.Blob([pdfBytes]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        final anchor = html.AnchorElement(href: url)
+          ..setAttribute("download", "qr_code.pdf")
+          ..click();
+        html.Url.revokeObjectUrl(url); // Clean up
+      }
+    } catch (e) {
+      print('Error downloading QR code: $e');
+    }
   }
 
   String calculateUpdatedAgeInShelter(
@@ -640,6 +703,7 @@ class _AnimalListState extends State<AnimalList> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        String id = animal.id;
         String name = animal['Name'];
         String breed = animal['Breed'];
         String ageInShelter = animal['AgeInShelter'];
@@ -692,12 +756,85 @@ class _AnimalListState extends State<AnimalList> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'EDIT PET FORM',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 25,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment
+                            .spaceBetween, // Align items to the edges
+                        children: [
+                          const Text(
+                            'EDIT PET FORM',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 25,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Tooltip(
+                                message: 'Generate QR',
+                                child: IconButton(
+                                  icon: const Icon(Icons.qr_code), // QR icon
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text('QR Code'),
+                                          content: SizedBox(
+                                            width: 270,
+                                            height: 300,
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                // Wrap the QrImageView with RepaintBoundary
+                                                RepaintBoundary(
+                                                  key: _qrKey,
+                                                  child: QrImageView(
+                                                    data: id,
+                                                    version: QrVersions.auto,
+                                                    size: 200.0,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 10),
+                                                Text(
+                                                  id,
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 20),
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceEvenly,
+                                                  children: [
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        await _downloadQR(id);
+                                                      },
+                                                      child: Text('Download'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                      },
+                                                      child: Text('Close'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                       const SizedBox(
                         height: 35,
@@ -715,8 +852,7 @@ class _AnimalListState extends State<AnimalList> {
                       ),
                       const SizedBox(height: 35),
                       Column(
-                        crossAxisAlignment: CrossAxisAlignment
-                            .start, // Align label to the start
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Age in Shelter:',
@@ -724,20 +860,17 @@ class _AnimalListState extends State<AnimalList> {
                           ),
                           TextFormField(
                             controller: ageInShelterController,
-                            readOnly:
-                                true, // Prevents the user from manually typing
+                            readOnly: true,
                             decoration: InputDecoration(
                               border: OutlineInputBorder(),
                               hintText: 'Select Date and Time',
                             ),
                             onTap: () async {
-                              // Show the Date Picker with a title
                               DateTime? selectedDate = await showDatePicker(
                                 context: context,
                                 initialDate: DateTime.now(),
-                                firstDate:
-                                    DateTime(2000), // Set the earliest date
-                                lastDate: DateTime.now(), // Set the latest date
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime.now(),
                                 builder: (BuildContext context, Widget? child) {
                                   return SimpleDialog(
                                     title: Text(
@@ -745,8 +878,8 @@ class _AnimalListState extends State<AnimalList> {
                                     children: <Widget>[
                                       SizedBox(
                                         child: child,
-                                        width: 300, // Adjust width as needed
-                                        height: 400, // Adjust height as needed
+                                        width: 300,
+                                        height: 400,
                                       ),
                                     ],
                                   );
@@ -1145,10 +1278,10 @@ class _AnimalListState extends State<AnimalList> {
                               style: ButtonStyle(
                                 backgroundColor:
                                     MaterialStateProperty.all<Color>(
-                                        Colors.red),
+                                        Colors.yellow.shade700),
                               ),
                               child: const Text(
-                                'Delete',
+                                'Archive',
                                 style: TextStyle(color: Colors.white),
                               ),
                             ),

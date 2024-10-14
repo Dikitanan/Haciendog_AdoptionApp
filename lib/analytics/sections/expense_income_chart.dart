@@ -118,13 +118,9 @@ class _ExpenseIncomeChartsState extends State<ExpenseIncomeCharts> {
       // Fetch verified users from Profiles collection by matching emails
       QuerySnapshot profilesSnapshot =
           await FirebaseFirestore.instance.collection('Profiles').get();
-      List<String> verifiedEmails =
-          profilesSnapshot.docs.map((doc) => doc['email'].toString()).toList();
 
       setState(() {
-        totalVerifiedUsers = userEmailsSnapshot.docs
-            .where((doc) => verifiedEmails.contains(doc['email']))
-            .length;
+        totalVerifiedUsers = profilesSnapshot.docs.length;
       });
     } catch (e) {
       print('Error fetching data: $e');

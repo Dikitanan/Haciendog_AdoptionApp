@@ -43,20 +43,21 @@ class _UserListsPageState extends State<UserListsPage> {
 
         final List<Future<void>> userFetchFutures = userEmailsSnapshot.docs.map(
           (userEmailDoc) async {
-            final userEmail = userEmailDoc.data() as Map<String, dynamic>;
+            final userEmail = userEmailDoc.data();
             final email = userEmail['email'];
             final isBanned = userEmail['ban'] ?? false;
             final role = userEmail['role'] ?? 'User';
 
+            // Directly use the email as the identifier to fetch from Profiles collection
             final profileSnapshot = await _firestore
                 .collection('Profiles')
-                .where('email', isEqualTo: email)
+                .doc(email) // Use email as the document ID
                 .get();
 
             String username = 'Profile Not Set';
-            if (profileSnapshot.docs.isNotEmpty) {
-              username = profileSnapshot.docs.first.data()['username'] ??
-                  'Profile Not Set';
+            if (profileSnapshot.exists) {
+              username =
+                  profileSnapshot.data()?['username'] ?? 'Profile Not Set';
             }
 
             users.add(UserData(email, username, isBanned, role));
@@ -72,13 +73,14 @@ class _UserListsPageState extends State<UserListsPage> {
 
   Future<Map<String, dynamic>?> _fetchUserProfile(String email) async {
     try {
-      final QuerySnapshot snapshot = await _firestore
+      // Use email as the document ID to fetch the profile
+      final DocumentSnapshot profileSnapshot = await _firestore
           .collection('Profiles')
-          .where('email', isEqualTo: email)
+          .doc(email) // Using email as the document ID
           .get();
 
-      if (snapshot.docs.isNotEmpty) {
-        return snapshot.docs.first.data() as Map<String, dynamic>;
+      if (profileSnapshot.exists) {
+        return profileSnapshot.data() as Map<String, dynamic>?;
       }
     } catch (e) {
       print('Error fetching user profile: $e');

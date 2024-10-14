@@ -287,9 +287,14 @@ class _LeftSideBarState extends State<LeftSideBar> {
         .map((snapshot) {
       int totalCount = 0;
       snapshot.docs.forEach((doc) {
-        totalCount += int.parse((doc['messageCount'] ?? 0).toString());
+        // Safely get the messageCount or set it to 0 if the field is missing
+        totalCount +=
+            int.tryParse((doc.data()?['messageCount'] ?? '0').toString()) ?? 0;
       });
       return totalCount;
+    }).handleError((error) {
+      print("Error fetching message count: $error");
+      return 0; // Default to 0 on error
     });
   }
 
