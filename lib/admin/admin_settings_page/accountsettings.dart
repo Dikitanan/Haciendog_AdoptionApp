@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -25,6 +26,196 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   TextEditingController newPasswordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
   TextEditingController ageController = TextEditingController();
+  TextEditingController _houseNumberController = TextEditingController();
+
+  String? _selectedBarangay;
+  String? _selectedStreet;
+
+  // Complete list of barangays in Sta. Cruz, Laguna
+  final List<String> barangays = [
+    'Alipit',
+    'Bagong Bayan',
+    'Bubukal',
+    'Calios',
+    'Duhat',
+    'Gatid',
+    'Jasaan',
+    'Labuin',
+    'Malinao',
+    'Oogong',
+    'Pagsawitan',
+    'Palasan',
+    'Patimbao',
+    'Poblacion I',
+    'Poblacion II',
+    'Poblacion III',
+    'San Pablo Norte',
+    'San Pablo Sur',
+    'Santo Angel Central',
+    'Santo Angel Norte',
+    'Santo Angel Sur',
+  ];
+
+  // Map of barangays to their respective streets
+  final Map<String, List<String>> barangayStreets = {
+    'Alipit': ['Alipit Road', 'C. Reyes St'],
+    'Bagong Bayan': ['Mabini St', 'San Jose St'],
+    'Bubukal': ['Bubukal Main Road'],
+    'Calios': ['Calios Road', 'Gat Tayaw St'],
+    'Duhat': ['Duhat St', 'San Vicente St'],
+    'Gatid': ['Gatid Road', 'San Juan St'],
+    'Jasaan': ['Jasaan St', 'Gat Tayaw St'],
+    'Labuin': ['Labuin St', 'Riverbank St'],
+    'Malinao': ['Malinao St'],
+    'Oogong': ['Oogong Main Road', 'Rizal St'],
+    'Pagsawitan': ['Pagsawitan Main Road'],
+    'Palasan': ['Palasan Road'],
+    'Patimbao': ['Patimbao St', 'M. Santos St'],
+    'Poblacion I': ['Rizal St', 'Burgos St'],
+    'Poblacion II': ['J. P. Rizal St', 'Bonifacio St'],
+    'Poblacion III': ['General Luna St', 'Del Pilar St'],
+    'San Pablo Norte': ['San Pablo Norte Road'],
+    'San Pablo Sur': ['San Pablo Sur Road'],
+    'Santo Angel Central': ['Santo Angel Central St'],
+    'Santo Angel Norte': ['Santo Angel Norte St'],
+    'Santo Angel Sur': ['Santo Angel Sur St'],
+  };
+
+  Future<void> _showLocationDialog() async {
+    String? barangay = _selectedBarangay;
+    String? street = _selectedStreet;
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              title: Text("Set Address",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width *
+                    0.5, // Adjust for web view
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Barangay Dropdown
+                    DropdownButtonFormField<String>(
+                      value: barangay,
+                      decoration: InputDecoration(
+                        labelText: 'Barangay',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: barangays.map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setDialogState(() {
+                          barangay = newValue;
+                          street = null; // Reset street selection
+                        });
+                      },
+                    ),
+
+                    SizedBox(height: 10), // Spacing
+
+                    // Street Dropdown (depends on selected barangay)
+                    DropdownButtonFormField<String>(
+                      value: street,
+                      decoration: InputDecoration(
+                        labelText: 'Street',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: barangay != null
+                          ? barangayStreets[barangay]!.map((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList()
+                          : [],
+                      onChanged: (newValue) {
+                        setDialogState(() {
+                          street = newValue;
+                        });
+                      },
+                    ),
+
+                    SizedBox(height: 10), // Spacing
+
+                    // House Number TextFormField with # prefix
+                    TextFormField(
+                      controller: _houseNumberController,
+                      decoration: InputDecoration(
+                        labelText: 'House Number',
+                        prefixText: '#',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: Text("Cancel"),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey,
+                    textStyle: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text("OK"),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).primaryColor,
+                    textStyle: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () {
+                    if (_houseNumberController.text.isEmpty) {
+                      // Optionally, show a message or validation error
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please enter a house number.')),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      _selectedBarangay = barangay;
+                      _selectedStreet = street;
+
+                      // Retrieve house number directly from the controller
+                      String houseNumber = _houseNumberController.text;
+
+                      // Update the location text (ignore null values)
+                      String locationText = '';
+                      if (houseNumber.isNotEmpty)
+                        locationText += '#$houseNumber ';
+                      if (street != null) locationText += '$street, ';
+                      if (barangay != null)
+                        locationText += '$barangay, Sta. Cruz, Laguna';
+
+                      addressController.text = locationText.trim();
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -455,6 +646,12 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             hintText: "Enter your address",
             border: OutlineInputBorder(),
           ),
+          onTap: () {
+            FocusScope.of(context)
+                .requestFocus(FocusNode()); // Prevents keyboard from showing
+            _showLocationDialog();
+          },
+          readOnly: true,
         ),
         SizedBox(height: 10),
         TextFormField(
