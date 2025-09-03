@@ -24,7 +24,7 @@ Built entirely with Dart and Firebase, it connects users with animals in need an
 ---
 
 ## Live Links
-
+- Admin Account: arabo@gmail.com / 12341234
 - Admin Web App: [https://mads-df824.web.app/](https://mads-df824.web.app/)  
 - User Mobile App (Android): [Download via Google Drive](https://drive.google.com/drive/folders/1XDzyfFivYIwbG1xnmSkvy6YQXQJiwFat)
 
