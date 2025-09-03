@@ -1,16 +1,37 @@
-# mad
+🐾 Haciendog: Online Animal Adoption App
+A Flutter-powered cross-platform application designed to simplify animal adoption and rescue. Built with ❤️ using Dart and Firebase, Haciendog connects compassionate users with animals in need.
 
-A new Flutter project.
+📱 Platforms & Roles
+👨‍💼 Admin Panel (Web Only)
+🐶 Post animals available for adoption
 
-## Getting Started
+📥 Manage adoption requests
 
-This project is a starting point for a Flutter application.
+🚨 Handle rescue requests
 
-A few resources to get you started if this is your first Flutter project:
+📝 Share rescue stories
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+💰 Track and manage donations
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+🧑‍🤝‍🧑 User App (Android Only)
+🐾 Browse adoptable animals
+
+🏠 Submit adoption requests
+
+🆘 Request animal rescues
+
+📚 Read rescue stories
+
+🎁 Make donations to support shelters
+
+🔗 Live Links
+🌐 Admin Web App: https://mads-df824.web.app/
+
+📲 User Mobile App (Android): Download via Google Drive
+
+🛠️ Tech Stack
+Framework: Flutter
+
+Language: Dart
+
+Backend & Hosting: Firebase
